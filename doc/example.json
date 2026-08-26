@@ -1,0 +1,94 @@
+{
+  "isFull": false,
+  "list": [
+    {
+      "title": "配置式表单搭建",
+      "description": "通过字段列表添加/编辑/排序字段，右侧实时预览 form-info 渲染结果，并导出 Schema JSON",
+      "code": "./base.js",
+      "isFull": true,
+      "scope": [
+        {
+          "name": "_FormCreator",
+          "packageName": "@kne/current-lib_form-creator",
+          "importStatement": "import * as _FormCreator from \"@kne/form-creator\""
+        },
+        {
+          "name": "_JsonView",
+          "packageName": "@kne/json-view",
+          "importStatement": "import * as _JsonView from \"@kne/json-view\""
+        },
+        {
+          "packageName": "@kne/json-view/dist/index.css",
+          "importStatement": "import \"@kne/json-view/dist/index.css\""
+        },
+        {
+          "name": "antd",
+          "packageName": "antd",
+          "importStatement": "import antd from \"antd\""
+        },
+        {
+          "name": "_FormInfo",
+          "packageName": "@kne/form-info",
+          "importStatement": "import * as _FormInfo from \"@kne/form-info\""
+        }
+      ]
+    },
+    {
+      "title": "Schema 直接渲染表单",
+      "description": "传入已有 Schema，用 SchemaRenderer 直接展示可提交表单（运行时，不经过编辑器）",
+      "code": "./schema-render.js",
+      "scope": [
+        {
+          "name": "_FormCreator",
+          "packageName": "@kne/current-lib_form-creator",
+          "importStatement": "import * as _FormCreator from \"@kne/form-creator\""
+        },
+        {
+          "name": "_JsonView",
+          "packageName": "@kne/json-view",
+          "importStatement": "import * as _JsonView from \"@kne/json-view\""
+        },
+        {
+          "packageName": "@kne/json-view/dist/index.css",
+          "importStatement": "import \"@kne/json-view/dist/index.css\""
+        },
+        {
+          "name": "antd",
+          "packageName": "antd",
+          "importStatement": "import antd from \"antd\""
+        }
+      ]
+    },
+    {
+      "title": "扩展组件与校验规则",
+      "description": "通过 registerField 扩展填写项，通过 preset + registerRulePreset 扩展运行时校验与规则勾选面板",
+      "code": "./preset-extend.js",
+      "scope": [
+        {
+          "name": "_FormCreator",
+          "packageName": "@kne/current-lib_form-creator",
+          "importStatement": "import * as _FormCreator from \"@kne/form-creator\""
+        },
+        {
+          "name": "_ReactFormAntd",
+          "packageName": "@kne/react-form-antd",
+          "importStatement": "import * as _ReactFormAntd from \"@kne/react-form-antd\""
+        },
+        {
+          "name": "_JsonView",
+          "packageName": "@kne/json-view",
+          "importStatement": "import * as _JsonView from \"@kne/json-view\""
+        },
+        {
+          "packageName": "@kne/json-view/dist/index.css",
+          "importStatement": "import \"@kne/json-view/dist/index.css\""
+        },
+        {
+          "name": "antd",
+          "packageName": "antd",
+          "importStatement": "import antd from \"antd\""
+        }
+      ]
+    }
+  ]
+}
