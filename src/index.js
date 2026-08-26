@@ -12,15 +12,21 @@ export {
   createFieldId,
   createBlock,
   createStep,
+  createChoiceOption,
   normalizeSchema,
   normalizeBlock,
   moveItem,
   isFieldNameUnique,
   collectSchemaFields,
+  collectBlockFieldNames,
   updateBlocks,
   mapBlocks,
   findBlock,
-  hasRenderableContent
+  findBlockInTree,
+  removeBlockInTree,
+  moveBlockInTree,
+  hasRenderableContent,
+  MAX_BLOCK_DEPTH
 } from './schema';
 export { getBlockKindOptions, getBlockDefinition, blockToFormValues, formValuesToBlock } from './blockRegistry';
 export { getFieldDefinition, getFieldComponent, getFieldTypes, fieldToFormValues, formValuesToField, normalizeOptions, pickFromPropsSchema, applyFromPropsSchema, pickFieldProps } from './fieldRegistry';

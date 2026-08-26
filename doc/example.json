@@ -3,7 +3,7 @@
   "list": [
     {
       "title": "配置式表单搭建",
-      "description": "通过字段列表添加/编辑/排序字段，右侧实时预览 form-info 渲染结果，并导出 Schema JSON",
+      "description": "通过模块列表添加/编辑/排序，右侧实时预览；默认示例含列表嵌套与选项切换",
       "code": "./base.js",
       "isFull": true,
       "scope": [
@@ -41,6 +41,36 @@
       "title": "Schema 直接渲染表单",
       "description": "传入已有 Schema，用 SchemaRenderer 直接展示可提交表单（运行时，不经过编辑器）",
       "code": "./schema-render.js",
+      "scope": [
+        {
+          "name": "_FormCreator",
+          "packageName": "@kne/current-lib_form-creator",
+          "importStatement": "import * as _FormCreator from \"@kne/form-creator\""
+        },
+        {
+          "packageName": "@kne/current-lib_form-creator/dist/index.css",
+          "importStatement": "import \"@kne/form-creator/dist/index.css\""
+        },
+        {
+          "name": "_JsonView",
+          "packageName": "@kne/json-view",
+          "importStatement": "import * as _JsonView from \"@kne/json-view\""
+        },
+        {
+          "packageName": "@kne/json-view/dist/index.css",
+          "importStatement": "import \"@kne/json-view/dist/index.css\""
+        },
+        {
+          "name": "antd",
+          "packageName": "antd",
+          "importStatement": "import antd from \"antd\""
+        }
+      ]
+    },
+    {
+      "title": "列表嵌套与选项切换",
+      "description": "列表每一条里可再放分组或子列表；选项切换支持单选/多选，每个选项可添加填写项",
+      "code": "./nested-choice.js",
       "scope": [
         {
           "name": "_FormCreator",

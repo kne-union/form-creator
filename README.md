@@ -33,11 +33,11 @@ npm i --save @kne/form-creator
 #### 示例代码
 
 - 配置式表单搭建(全屏)
-- 通过字段列表添加/编辑/排序字段，右侧实时预览 form-info 渲染结果，并导出 Schema JSON
+- 通过模块列表添加/编辑/排序，右侧实时预览；默认示例含列表嵌套与选项切换
 - _FormCreator(@kne/current-lib_form-creator)[import * as _FormCreator from "@kne/form-creator"],(@kne/current-lib_form-creator/dist/index.css)[import "@kne/form-creator/dist/index.css"],_JsonView(@kne/json-view)[import * as _JsonView from "@kne/json-view"],(@kne/json-view/dist/index.css)[import "@kne/json-view/dist/index.css"],antd(antd)[import antd from "antd"],_FormInfo(@kne/form-info)[import * as _FormInfo from "@kne/form-info"]
 
 ```jsx
-const {default: FormCreator, defaultSchema, createBlock, createField, createStep} = _FormCreator;
+const {default: FormCreator, defaultSchema, createBlock, createField, createStep, createChoiceOption} = _FormCreator;
 const {default: JsonView} = _JsonView;
 const {useState} = React;
 const {Typography} = antd;
@@ -168,6 +168,167 @@ const BaseExample = () => {
                     })
                 ]
             }),
+            createBlock('list', {
+                title: '项目经历（含嵌套）',
+                name: 'projects',
+                addText: '添加项目',
+                minLength: 0,
+                list: [
+                    createField({
+                        type: 'Input',
+                        name: 'projectName',
+                        label: '项目名称',
+                        rule: 'REQ',
+                        props: {placeholder: '请输入项目名称'}
+                    }),
+                    createField({
+                        type: 'Input',
+                        name: 'role',
+                        label: '担任角色',
+                        props: {placeholder: '如：前端开发'}
+                    })
+                ],
+                itemBlocks: [
+                    createBlock('object', {
+                        name: 'period',
+                        title: '项目周期',
+                        column: 2,
+                        list: [
+                            createField({
+                                type: 'DatePicker',
+                                name: 'start',
+                                label: '开始时间',
+                                props: {placeholder: '请选择'}
+                            }),
+                            createField({
+                                type: 'DatePicker',
+                                name: 'end',
+                                label: '结束时间',
+                                props: {placeholder: '请选择'}
+                            })
+                        ]
+                    }),
+                    createBlock('list', {
+                        title: '项目成果',
+                        name: 'achievements',
+                        addText: '添加成果',
+                        list: [
+                            createField({
+                                type: 'Input',
+                                name: 'content',
+                                label: '成果说明',
+                                props: {placeholder: '请输入成果'}
+                            })
+                        ]
+                    })
+                ]
+            }),
+            createBlock('choice', {
+                title: '客户类型',
+                mode: 'single',
+                selectorName: 'customerType',
+                selectorInData: true,
+                options: [
+                    createChoiceOption({
+                        id: 'enterprise',
+                        title: '企业',
+                        list: [
+                            createField({
+                                type: 'Input',
+                                name: 'companyName',
+                                label: '公司名',
+                                rule: 'REQ',
+                                props: {placeholder: '公司名称'}
+                            }),
+                            createField({
+                                type: 'Input',
+                                name: 'creditCode',
+                                label: '信用代码',
+                                props: {placeholder: '统一社会信用代码'}
+                            })
+                        ]
+                    }),
+                    createChoiceOption({
+                        id: 'person',
+                        title: '个人',
+                        list: [
+                            createField({
+                                type: 'Input',
+                                name: 'idName',
+                                label: '姓名',
+                                rule: 'REQ',
+                                props: {placeholder: '姓名'}
+                            }),
+                            createField({
+                                type: 'Input',
+                                name: 'idNo',
+                                label: '证件号',
+                                props: {placeholder: '证件号码'}
+                            })
+                        ]
+                    }),
+                    createChoiceOption({
+                        id: 'other',
+                        title: '其他',
+                        list: [
+                            createField({
+                                type: 'TextArea',
+                                name: 'otherNote',
+                                label: '说明',
+                                block: true,
+                                props: {rows: 3, placeholder: '补充说明'}
+                            })
+                        ]
+                    })
+                ]
+            }),
+            createBlock('choice', {
+                title: '兴趣标签',
+                mode: 'multiple',
+                minLength: 1,
+                maxLength: 2,
+                selectorName: 'interests',
+                selectorInData: true,
+                options: [
+                    createChoiceOption({
+                        id: 'sports',
+                        title: '运动',
+                        list: [
+                            createField({
+                                type: 'Input',
+                                name: 'sportsNote',
+                                label: '擅长项目',
+                                props: {placeholder: '如：篮球'}
+                            })
+                        ]
+                    }),
+                    createChoiceOption({
+                        id: 'music',
+                        title: '音乐',
+                        list: [
+                            createField({
+                                type: 'Input',
+                                name: 'musicNote',
+                                label: '偏好风格',
+                                props: {placeholder: '如：古典'}
+                            })
+                        ]
+                    }),
+                    createChoiceOption({
+                        id: 'reading',
+                        title: '阅读',
+                        list: [
+                            createField({
+                                type: 'TextArea',
+                                name: 'readingNote',
+                                label: '近期书单',
+                                block: true,
+                                props: {rows: 2, placeholder: '选填'}
+                            })
+                        ]
+                    })
+                ]
+            }),
             createBlock('multiField', {
                 title: '备用联系方式',
                 name: 'backupContacts',
@@ -254,7 +415,7 @@ const BaseExample = () => {
         <FormCreator value={schema} onChange={setSchema} />
         <div style={{marginTop: 16}}>
             <JsonView data={schema} theme="light" collapsedFrom={2} searchable={false} />
-            <Text type="secondary">初始示例已包含 FormInfo / List / TableList / MultiField / Steps 五种模块。</Text>
+            <Text type="secondary">初始示例已包含表单分组、列表、表格列表、列表嵌套、选项切换、多字段、分步等模块。</Text>
         </div>
     </div>;
 };
@@ -362,6 +523,134 @@ const SchemaRenderExample = () => {
 };
 
 render(<SchemaRenderExample />);
+
+```
+
+- 列表嵌套与选项切换
+- 列表每一条里可再放分组或子列表；选项切换支持单选/多选，每个选项可添加填写项
+- _FormCreator(@kne/current-lib_form-creator)[import * as _FormCreator from "@kne/form-creator"],(@kne/current-lib_form-creator/dist/index.css)[import "@kne/form-creator/dist/index.css"],_JsonView(@kne/json-view)[import * as _JsonView from "@kne/json-view"],(@kne/json-view/dist/index.css)[import "@kne/json-view/dist/index.css"],antd(antd)[import antd from "antd"]
+
+```jsx
+const { SchemaRenderer, createBlock, createField, createChoiceOption } = _FormCreator;
+const { default: JsonView } = _JsonView;
+const { useState } = React;
+const { Alert, Space, Switch } = antd;
+
+const NestedChoiceExample = () => {
+  const [multiple, setMultiple] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const schema = {
+    actions: {
+      showSubmit: true,
+      showReset: true,
+      submitText: '提交',
+      resetText: '重置'
+    },
+    blocks: [
+      createBlock('list', {
+        title: '教育经历',
+        name: 'education',
+        addText: '添加教育经历',
+        minLength: 1,
+        list: [
+          createField({ type: 'Input', name: 'schoolName', label: '学校', rule: 'REQ', props: { placeholder: '学校名称' } }),
+          createField({ type: 'Input', name: 'major', label: '专业', props: { placeholder: '专业' } })
+        ],
+        itemBlocks: [
+          createBlock('object', {
+            name: 'time',
+            title: '在校时间',
+            column: 2,
+            list: [
+              createField({ type: 'Input', name: 'startTime', label: '开始', props: { placeholder: '开始时间' } }),
+              createField({ type: 'Input', name: 'endTime', label: '结束', props: { placeholder: '结束时间' } })
+            ]
+          }),
+          createBlock('list', {
+            title: '课程',
+            name: 'courses',
+            addText: '添加课程',
+            list: [createField({ type: 'Input', name: 'courseName', label: '课程名', props: { placeholder: '课程名' } })]
+          })
+        ]
+      }),
+      createBlock('choice', {
+        title: '客户类型',
+        mode: multiple ? 'multiple' : 'single',
+        minLength: multiple ? 1 : undefined,
+        maxLength: multiple ? 2 : undefined,
+        selectorName: 'customerType',
+        selectorInData: true,
+        options: [
+          createChoiceOption({
+            id: 'enterprise',
+            title: '企业',
+            blocks: [
+              createBlock('formInfo', {
+                title: '企业信息',
+                column: 2,
+                list: [
+                  createField({ type: 'Input', name: 'companyName', label: '公司名', rule: 'REQ', props: { placeholder: '公司名称' } }),
+                  createField({ type: 'Input', name: 'creditCode', label: '信用代码', props: { placeholder: '统一社会信用代码' } })
+                ]
+              })
+            ]
+          }),
+          createChoiceOption({
+            id: 'person',
+            title: '个人',
+            blocks: [
+              createBlock('formInfo', {
+                title: '个人信息',
+                column: 2,
+                list: [
+                  createField({ type: 'Input', name: 'idName', label: '姓名', rule: 'REQ', props: { placeholder: '姓名' } }),
+                  createField({ type: 'Input', name: 'idNo', label: '证件号', props: { placeholder: '证件号码' } })
+                ]
+              })
+            ]
+          }),
+          createChoiceOption({
+            id: 'other',
+            title: '其他',
+            blocks: [
+              createBlock('formInfo', {
+                column: 1,
+                list: [createField({ type: 'TextArea', name: 'otherNote', label: '说明', block: true, props: { rows: 3, placeholder: '补充说明' } })]
+              })
+            ]
+          })
+        ]
+      })
+    ]
+  };
+
+  return (
+    <Space direction="vertical" size={16} style={{ width: '100%' }}>
+      <Alert
+        type="info"
+        showIcon
+        message="列表嵌套与选项切换"
+        description={<span>列表每一条里可以再放分组信息或子列表；选项切换可设为「只能选一个」或「可以选多个」（多选可限制最少/最多几项），下方会显示对应填写内容。</span>}
+      />
+      <Space>
+        <span>允许多选</span>
+        <Switch checked={multiple} onChange={setMultiple} />
+      </Space>
+      <SchemaRenderer
+        key={multiple ? 'multiple' : 'single'}
+        schema={schema}
+        formProps={{
+          onSubmit: data => setResult(data)
+        }}
+      />
+      {result ? <JsonView data={result} theme="light" collapsedFrom={2} searchable={false} /> : null}
+    </Space>
+  );
+};
+
+render(<NestedChoiceExample />);
 
 ```
 
@@ -618,11 +907,15 @@ import { Form, SubmitButton } from '@kne/form-info';
   },
   blocks: [{
     id: string,
-    kind: 'formInfo' | 'list' | 'tableList' | 'multiField' | 'steps',
+    kind: 'formInfo' | 'list' | 'tableList' | 'multiField' | 'object' | 'choice' | 'steps',
     title?, subtitle?, column?, gap?, bordered?, important?,
     name?, label?, addText?, maxLength?, minLength?, fieldType?, autoStep?,
+    mode?, selectorName?, selectorInData?, discriminator?,
     list?: [{ id, type, name, label, tips?, description?, rule?, block?, hidden?, props? }],
-    items?: [{ id, title, column, list: [...] }] // steps 专用
+    itemBlocks?: Block[], // list：列表项内子模块
+    blocks?: Block[], // formInfo / object：子模块
+    options?: [{ id, title, list?, blocks?: Block[] }], // choice
+    items?: [{ id, title, column, list: [...], blocks?: Block[] }] // steps 专用
   }]
 }
 ```
@@ -632,11 +925,15 @@ import { Form, SubmitButton } from '@kne/form-info';
 
 | kind | 说明 | 主要参数 |
 |------|------|----------|
-| formInfo | 表单信息区块 | title, subtitle, column, gap, bordered, list |
-| list | 动态列表 | name, title, important, bordered, maxLength, list |
-| tableList | 表格列表 | name, title, bordered, maxLength, list |
-| multiField | 同类型多值 | name, label, fieldType, addText |
-| steps | 步骤表单 | title, subtitle, bordered, autoStep, items[{ title, column, list }] |
+| formInfo | 表单信息区块 | title, subtitle, column, gap, bordered, list, **blocks** |
+| list | 动态列表 | name, title, important, bordered, maxLength, list, **itemBlocks** |
+| tableList | 表格列表 | name, title, bordered, maxLength, list（不支持子模块） |
+| object | 对象分组 | name, title, column, gap, list（字段名渲染为 `name.field`）, **blocks** |
+| choice | 选项分支 | title, **mode**(`single`\|`multiple`), **minLength** / **maxLength**（仅多选：最少/最多选几项）, selectorName, selectorInData, options[{ title, list, **blocks** }] |
+| multiField | 同类型多值 | name, label, fieldType, addText（不支持子模块） |
+| steps | 步骤表单 | title, subtitle, bordered, autoStep, items[{ title, column, list, **blocks** }] |
+
+`choice`：顶部同一条选项 UI；`single` 只挂载当前选项内容，`multiple` 平铺所有选中项。多选时可配置 `minLength` / `maxLength` 限制最少、最多选择几个（提交时校验；达到上限后未选项禁用）。JSON Schema 的 oneOf/anyOf 可分别映射为 `mode: 'single'/'multiple'`。`allOf` 无需独立 kind，展开为多个 sibling blocks 即可。
 
 兼容旧版：若仅有顶层 `list` 且无 `blocks`，会自动迁移为一个 `formInfo` 区块。
 
@@ -647,7 +944,7 @@ import { Form, SubmitButton } from '@kne/form-info';
 
 #### 工具方法
 
-- `createBlock(kind)` / `createStep()` / `normalizeSchema(schema)`
+- `createBlock(kind)` / `createStep()` / `createChoiceOption()` / `normalizeSchema(schema)`
 - `preset({ rules, fields })` 一次注册扩展规则与填写项（推荐）
 - `parseRuleString(rule)` / `buildRuleString(config)` 校验规则字符串解析/组装
 

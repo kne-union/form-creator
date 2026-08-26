@@ -25,6 +25,19 @@ export const BLOCK_KINDS = {
     requiresName: true,
     description: '同一种填写项可以输入多个值，例如多个手机号'
   },
+  object: {
+    label: '分组信息',
+    color: 'orange',
+    hasFieldList: true,
+    requiresName: true,
+    description: '把相关的填写项放在一起，例如「在校时间」下的开始与结束'
+  },
+  choice: {
+    label: '选项切换',
+    color: 'magenta',
+    hasChoiceOptions: true,
+    description: '先选一类情况，再填写对应内容；可设为单选或多选'
+  },
   steps: {
     label: '分步表单',
     color: 'gold',
@@ -55,26 +68,43 @@ export const blockToFormValues = block => ({
   maxLength: block.maxLength ?? null,
   minLength: block.minLength ?? null,
   fieldType: block.fieldType || 'Input',
-  autoStep: block.autoStep !== false
+  autoStep: block.autoStep !== false,
+  mode: block.mode === 'multiple' ? 'multiple' : 'single',
+  selectorName: block.selectorName || '',
+  selectorInData: block.selectorInData !== false
 });
 
-export const formValuesToBlock = (values, existingBlock = {}) => ({
-  ...existingBlock,
-  kind: values.kind || existingBlock.kind,
-  title: values.title,
-  subtitle: values.subtitle,
-  column: values.column ?? 2,
-  gap: values.gap ?? 24,
-  bordered: !!values.bordered,
-  important: !!values.important,
-  name: values.name,
-  label: values.label,
-  addText: values.addText || undefined,
-  maxLength: values.maxLength ?? undefined,
-  minLength: values.minLength ?? undefined,
-  fieldType: values.fieldType || 'Input',
-  autoStep: values.autoStep !== false
-});
+export const formValuesToBlock = (values, existingBlock = {}) => {
+  const kind = values.kind || existingBlock.kind;
+  const mode = values.mode === 'multiple' ? 'multiple' : 'single';
+  const next = {
+    ...existingBlock,
+    kind,
+    title: values.title,
+    subtitle: values.subtitle,
+    column: values.column ?? 2,
+    gap: values.gap ?? 24,
+    bordered: !!values.bordered,
+    important: !!values.important,
+    name: values.name,
+    label: values.label,
+    addText: values.addText || undefined,
+    maxLength: values.maxLength ?? undefined,
+    minLength: values.minLength ?? undefined,
+    fieldType: values.fieldType || 'Input',
+    autoStep: values.autoStep !== false,
+    mode,
+    selectorName: values.selectorName || '',
+    selectorInData: values.selectorInData !== false
+  };
+
+  if (kind === 'choice' && mode !== 'multiple') {
+    next.minLength = undefined;
+    next.maxLength = undefined;
+  }
+
+  return next;
+};
 
 export const stepToFormValues = step => ({
   title: step.title || '',
@@ -85,4 +115,13 @@ export const formValuesToStep = (values, existingStep = {}) => ({
   ...existingStep,
   title: values.title,
   column: values.column ?? 2
+});
+
+export const choiceOptionToFormValues = option => ({
+  title: option.title || ''
+});
+
+export const formValuesToChoiceOption = (values, existingOption = {}) => ({
+  ...existingOption,
+  title: values.title
 });
