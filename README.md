@@ -36,7 +36,7 @@ npm i --save @kne/form-creator
 
 - 配置式表单搭建(全屏)
 - 通过字段列表添加/编辑/排序字段，右侧实时预览 form-info 渲染结果，并导出 Schema JSON
-- _FormCreator(@kne/current-lib_form-creator)[import * as _FormCreator from "@kne/form-creator"],_JsonView(@kne/json-view)[import * as _JsonView from "@kne/json-view"],(@kne/json-view/dist/index.css)[import "@kne/json-view/dist/index.css"],antd(antd)[import antd from "antd"],_FormInfo(@kne/form-info)[import * as _FormInfo from "@kne/form-info"]
+- _FormCreator(@kne/current-lib_form-creator)[import * as _FormCreator from "@kne/form-creator"],(@kne/current-lib_form-creator/dist/index.css)[import "@kne/form-creator/dist/index.css"],_JsonView(@kne/json-view)[import * as _JsonView from "@kne/json-view"],(@kne/json-view/dist/index.css)[import "@kne/json-view/dist/index.css"],antd(antd)[import antd from "antd"],_FormInfo(@kne/form-info)[import * as _FormInfo from "@kne/form-info"]
 
 ```jsx
 const {default: FormCreator, defaultSchema, createBlock, createField, createStep} = _FormCreator;
@@ -267,7 +267,7 @@ render(<BaseExample />);
 
 - Schema 直接渲染表单
 - 传入已有 Schema，用 SchemaRenderer 直接展示可提交表单（运行时，不经过编辑器）
-- _FormCreator(@kne/current-lib_form-creator)[import * as _FormCreator from "@kne/form-creator"],_JsonView(@kne/json-view)[import * as _JsonView from "@kne/json-view"],(@kne/json-view/dist/index.css)[import "@kne/json-view/dist/index.css"],antd(antd)[import antd from "antd"]
+- _FormCreator(@kne/current-lib_form-creator)[import * as _FormCreator from "@kne/form-creator"],(@kne/current-lib_form-creator/dist/index.css)[import "@kne/form-creator/dist/index.css"],_JsonView(@kne/json-view)[import * as _JsonView from "@kne/json-view"],(@kne/json-view/dist/index.css)[import "@kne/json-view/dist/index.css"],antd(antd)[import antd from "antd"]
 
 ```jsx
 const { SchemaRenderer, createBlock, createField } = _FormCreator;
@@ -369,7 +369,7 @@ render(<SchemaRenderExample />);
 
 - 扩展组件与校验规则
 - 通过 registerField 扩展填写项，通过 preset + registerRulePreset 扩展运行时校验与规则勾选面板
-- _FormCreator(@kne/current-lib_form-creator)[import * as _FormCreator from "@kne/form-creator"],_ReactFormAntd(@kne/react-form-antd)[import * as _ReactFormAntd from "@kne/react-form-antd"],_JsonView(@kne/json-view)[import * as _JsonView from "@kne/json-view"],(@kne/json-view/dist/index.css)[import "@kne/json-view/dist/index.css"],antd(antd)[import antd from "antd"]
+- _FormCreator(@kne/current-lib_form-creator)[import * as _FormCreator from "@kne/form-creator"],(@kne/current-lib_form-creator/dist/index.css)[import "@kne/form-creator/dist/index.css"],_ReactFormAntd(@kne/react-form-antd)[import * as _ReactFormAntd from "@kne/react-form-antd"],_JsonView(@kne/json-view)[import * as _JsonView from "@kne/json-view"],(@kne/json-view/dist/index.css)[import "@kne/json-view/dist/index.css"],antd(antd)[import antd from "antd"]
 
 ```jsx
 const {
