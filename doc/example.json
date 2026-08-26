@@ -13,6 +13,10 @@
           "importStatement": "import * as _FormCreator from \"@kne/form-creator\""
         },
         {
+          "packageName": "@kne/current-lib_form-creator/dist/index.css",
+          "importStatement": "import \"@kne/form-creator/dist/index.css\""
+        },
+        {
           "name": "_JsonView",
           "packageName": "@kne/json-view",
           "importStatement": "import * as _JsonView from \"@kne/json-view\""
@@ -44,6 +48,10 @@
           "importStatement": "import * as _FormCreator from \"@kne/form-creator\""
         },
         {
+          "packageName": "@kne/current-lib_form-creator/dist/index.css",
+          "importStatement": "import \"@kne/form-creator/dist/index.css\""
+        },
+        {
           "name": "_JsonView",
           "packageName": "@kne/json-view",
           "importStatement": "import * as _JsonView from \"@kne/json-view\""
@@ -68,6 +76,10 @@
           "name": "_FormCreator",
           "packageName": "@kne/current-lib_form-creator",
           "importStatement": "import * as _FormCreator from \"@kne/form-creator\""
+        },
+        {
+          "packageName": "@kne/current-lib_form-creator/dist/index.css",
+          "importStatement": "import \"@kne/form-creator/dist/index.css\""
         },
         {
           "name": "_ReactFormAntd",
