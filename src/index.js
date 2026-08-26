@@ -1,3 +1,6 @@
+import './style.module.scss';
+import '@kne/form-info/dist/index.css';
+import '@kne/info-page/dist/index.css';
 import FormCreator from './FormCreator';
 import SchemaRenderer, { SchemaRendererInner } from './SchemaRenderer';
 
