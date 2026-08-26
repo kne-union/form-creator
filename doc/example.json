@@ -69,7 +69,7 @@
     },
     {
       "title": "扩展组件与校验规则",
-      "description": "通过 registerField 扩展填写项，通过 preset + registerRulePreset 扩展运行时校验与规则勾选面板",
+      "description": "通过 preset({ rules, fields }) 一次扩展运行时校验、规则勾选面板与自定义填写项",
       "code": "./preset-extend.js",
       "scope": [
         {

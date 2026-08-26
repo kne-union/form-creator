@@ -25,5 +25,6 @@ export {
 export { getBlockKindOptions, getBlockDefinition, blockToFormValues, formValuesToBlock } from './blockRegistry';
 export { registerField, getFieldDefinition, getFieldComponent, getFieldTypes, fieldToFormValues, formValuesToField, normalizeOptions, pickFromPropsSchema, applyFromPropsSchema, pickFieldProps } from './fieldRegistry';
 export { RULE_PRESET_ITEMS, RULE_LEN_PRESET, registerRulePreset, getRulePresetItems, parseRuleString, buildRuleString } from './rulePresets';
+export { preset } from './preset';
 export { SchemaRenderer, SchemaRendererInner, FormCreator };
 export default FormCreator;

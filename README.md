@@ -366,99 +366,89 @@ render(<SchemaRenderExample />);
 ```
 
 - 扩展组件与校验规则
-- 通过 registerField 扩展填写项，通过 preset + registerRulePreset 扩展运行时校验与规则勾选面板
+- 通过 preset({ rules, fields }) 一次扩展运行时校验、规则勾选面板与自定义填写项
 - _FormCreator(@kne/current-lib_form-creator)[import * as _FormCreator from "@kne/form-creator"],(@kne/current-lib_form-creator/dist/index.css)[import "@kne/form-creator/dist/index.css"],_ReactFormAntd(@kne/react-form-antd)[import * as _ReactFormAntd from "@kne/react-form-antd"],_JsonView(@kne/json-view)[import * as _JsonView from "@kne/json-view"],(@kne/json-view/dist/index.css)[import "@kne/json-view/dist/index.css"],antd(antd)[import antd from "antd"]
 
 ```jsx
-const {
-  default: FormCreator,
-  registerField,
-  registerRulePreset,
-  defaultSchema,
-  createBlock,
-  createField
-} = _FormCreator;
-const { Rate, Slider, preset, RULES } = _ReactFormAntd;
+const { default: FormCreator, preset, defaultSchema, createBlock, createField } = _FormCreator;
+const { Rate, Slider } = _ReactFormAntd;
 const { default: JsonView } = _JsonView;
 const { useState } = React;
 const { Alert, Typography, Space } = antd;
 const { Text, Paragraph } = Typography;
 
-// 1) 用 react-form-antd preset 注册运行时校验规则
+// 一次 preset：运行时校验 + 编辑器规则面板 + 扩展填写项
 preset({
-  rules: Object.assign({}, RULES, {
-    // 身份证号（简化示例）
+  rules: {
     ID_CARD: {
+      label: '身份证格式',
       reg: /^\d{17}[\dXx]$/,
       message: '%s格式不正确'
     },
-    // 评分至少 3 星
-    RATE_MIN: value => {
-      const score = Number(value) || 0;
-      return {
-        result: score >= 3,
-        errMsg: score >= 3 ? '' : '评分至少 3 星'
-      };
+    RATE_MIN: {
+      label: '评分至少3星',
+      validator: value => {
+        const score = Number(value) || 0;
+        return {
+          result: score >= 3,
+          errMsg: score >= 3 ? '' : '评分至少 3 星'
+        };
+      }
     }
-  })
-});
-
-// 2) 同步注册到 form-creator 规则勾选面板
-registerRulePreset({ value: 'ID_CARD', label: '身份证格式' });
-registerRulePreset({ value: 'RATE_MIN', label: '评分至少3星' });
-
-// 3) 扩展自定义填写项：用 propsSchema 声明可编辑的额外参数
-registerField('Rate', {
-  label: '评分',
-  groupName: '评价组件',
-  component: Rate,
-  defaultProps: { count: 5, allowHalf: false, allowClear: true },
-  propsSchema: [
-    {
-      name: 'count',
-      label: '星星总数',
-      type: 'number',
-      min: 1,
-      max: 10,
-      defaultValue: 5
-    },
-    {
-      name: 'allowHalf',
-      label: '允许半星',
-      type: 'boolean',
-      defaultValue: false
-    },
-    {
-      name: 'allowClear',
-      label: '允许清除',
-      type: 'boolean',
-      defaultValue: true
-    }
-  ]
-});
-
-registerField('Slider', {
-  label: '滑块',
-  component: Slider,
-  defaultProps: { min: 0, max: 100, step: 1 },
-  propsSchema: [
-    { name: 'min', label: '最小值', type: 'number', defaultValue: 0 },
-    { name: 'max', label: '最大值', type: 'number', defaultValue: 100 },
-    { name: 'step', label: '步长', type: 'number', min: 0, defaultValue: 1 },
-    {
-      name: 'tooltipPlacement',
-      label: '提示位置',
-      type: 'select',
-      defaultValue: 'top',
-      options: [
-        { label: '上', value: 'top' },
-        { label: '下', value: 'bottom' },
-        { label: '左', value: 'left' },
-        { label: '右', value: 'right' }
+  },
+  fields: {
+    Rate: {
+      label: '评分',
+      groupName: '评价组件',
+      component: Rate,
+      defaultProps: { count: 5, allowHalf: false, allowClear: true },
+      propsSchema: [
+        {
+          name: 'count',
+          label: '星星总数',
+          type: 'number',
+          min: 1,
+          max: 10,
+          defaultValue: 5
+        },
+        {
+          name: 'allowHalf',
+          label: '允许半星',
+          type: 'boolean',
+          defaultValue: false
+        },
+        {
+          name: 'allowClear',
+          label: '允许清除',
+          type: 'boolean',
+          defaultValue: true
+        }
       ]
     },
-    { name: 'dots', label: '显示刻度点', type: 'boolean', defaultValue: false }
-  ]
+    Slider: {
+      label: '滑块',
+      component: Slider,
+      defaultProps: { min: 0, max: 100, step: 1 },
+      propsSchema: [
+        { name: 'min', label: '最小值', type: 'number', defaultValue: 0 },
+        { name: 'max', label: '最大值', type: 'number', defaultValue: 100 },
+        { name: 'step', label: '步长', type: 'number', min: 0, defaultValue: 1 },
+        {
+          name: 'tooltipPlacement',
+          label: '提示位置',
+          type: 'select',
+          defaultValue: 'top',
+          options: [
+            { label: '上', value: 'top' },
+            { label: '下', value: 'bottom' },
+            { label: '左', value: 'left' },
+            { label: '右', value: 'right' }
+          ]
+        },
+        { name: 'dots', label: '显示刻度点', type: 'boolean', defaultValue: false }
+      ]
+    }
+  }
 });
 
 const PresetExtendExample = () => {
@@ -467,7 +457,7 @@ const PresetExtendExample = () => {
     blocks: [
       createBlock('formInfo', {
         title: '扩展字段与校验',
-        subtitle: '演示 registerField + preset rules + registerRulePreset',
+        subtitle: '演示 preset({ rules, fields }) 一次注册',
         column: 2,
         list: [
           createField({
@@ -507,13 +497,10 @@ const PresetExtendExample = () => {
         description={
           <div>
             <Paragraph style={{ marginBottom: 4 }}>
-              1. <Text code>{'preset({ rules })'}</Text>：注册运行时校验（@kne/react-form-antd）
-            </Paragraph>
-            <Paragraph style={{ marginBottom: 4 }}>
-              2. <Text code>registerRulePreset</Text>：把规则挂到「填写规则」勾选面板
+              调用 <Text code>{'preset({ rules, fields })'}</Text> 即可同时注册：运行时校验（@kne/react-form-antd）、编辑器「填写规则」勾选面板、扩展填写项类型。
             </Paragraph>
             <Paragraph style={{ marginBottom: 0 }}>
-              3. <Text code>registerField</Text>：扩展填写项；可用 <Text code>groupName</Text> 自定义分组，并用 <Text code>propsSchema</Text> 声明额外参数
+              规则项在 <Text code>rules</Text> 中写 <Text code>label</Text> + 校验定义（<Text code>reg/message</Text> 或 <Text code>validator</Text>）；字段在 <Text code>fields</Text> 中按 type 配置，支持 <Text code>groupName</Text> 与 <Text code>propsSchema</Text>。
             </Paragraph>
           </div>
         }
@@ -661,27 +648,65 @@ import { Form, SubmitButton } from '@kne/form-info';
 #### 工具方法
 
 - `createBlock(kind)` / `createStep()` / `normalizeSchema(schema)`
-- `registerField(type, definition)` 扩展字段类型；可用 `groupName` 指定类型下拉分组，不传则归入「扩展字段」；用 `propsSchema` 声明额外参数（`string` / `number` / `boolean` / `select`）
-- `registerRulePreset({ value, label })` 扩展「填写规则」勾选面板中的规则项
+- `preset({ rules, fields })` 一次注册扩展规则与填写项（推荐）
 - `parseRuleString(rule)` / `buildRuleString(config)` 校验规则字符串解析/组装
 
-#### 扩展组件与校验（示例见「扩展组件与校验规则」）
+#### preset（推荐）
 
-运行时校验由 `@kne/react-form-antd` 的 `preset({ rules })` 注册；勾选面板需同步调用 `registerRulePreset`，否则 Schema 里写了规则名但编辑器勾选不到。
+应用入口调用一次，同时完成：
+
+1. **运行时校验**：合并进 `@kne/react-form-antd` 的 `RULES`
+2. **编辑器规则面板**：写入「填写规则」勾选列表
+3. **扩展填写项**：注册到字段类型 registry
+
+内置规则 `REQ` / `TEL` / `EMAIL` 已内置，无需重复配置；传入同名 key 可覆盖运行时规则并更新编辑器 label。
+
+```js
+import { preset } from '@kne/form-creator';
+import { Rate, Slider } from '@kne/react-form-antd';
+
+preset({
+  rules: {
+    ID_CARD: {
+      label: '身份证格式',
+      reg: /^\d{17}[\dXx]$/,
+      message: '%s格式不正确'
+    },
+    RATE_MIN: {
+      label: '评分至少3星',
+      validator: value => ({
+        result: Number(value) >= 3,
+        errMsg: Number(value) >= 3 ? '' : '评分至少 3 星'
+      })
+    }
+  },
+  fields: {
+    Rate: {
+      label: '评分',
+      groupName: '评价组件',
+      component: Rate,
+      defaultProps: { count: 5 },
+      propsSchema: [
+        { name: 'count', label: '星星总数', type: 'number', min: 1, max: 10, defaultValue: 5 }
+      ]
+    }
+  }
+});
+```
+
+| 配置 | 类型 | 说明 |
+|------|------|------|
+| `rules` | `Record<string, RuleDef>` | key 为规则 token；`RuleDef` 含 `label` + `reg/message` 或 `validator` |
+| `fields` | `Record<string, FieldDef>` | key 为字段 type，形状同 `registerField` 第二参数 |
+
+#### 高级用法（一般请用 preset）
+
+- `registerField(type, definition)` 单独扩展字段类型
+- `registerRulePreset({ value, label })` 单独扩展规则勾选项
 
 扩展填写项时，用 `propsSchema` 声明可编辑的额外参数（写入字段 `props`），编辑器会按声明自动生成「填写项设置」表单：
 
 ```js
-registerField('Rate', {
-  label: '评分',
-  groupName: '评价组件', // 自定义分组；不传则归入「扩展字段」
-  component: Rate,
-  defaultProps: { count: 5 },
-  propsSchema: [
-    { name: 'count', label: '星星总数', type: 'number', min: 1, max: 10, defaultValue: 5 }
-  ]
-});
-
 registerField('Slider', {
   label: '滑块',
   component: Slider,
@@ -704,6 +729,10 @@ registerField('Slider', {
   ]
 });
 ```
+
+#### 扩展组件与校验（示例见「扩展组件与校验规则」）
+
+使用 `preset({ rules, fields })` 即可，无需再单独调用 `registerField` / `registerRulePreset` / react-form-antd 的 `preset`。
 
 `propsSchema` 项约定：
 
