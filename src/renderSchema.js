@@ -1,10 +1,11 @@
 import { createElement, Fragment } from 'react';
 import { Tooltip } from 'antd';
-import { QuestionCircleOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, ArrowRightOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import FormInfo, { Form, List, TableList, MultiField, Steps } from '@kne/form-info';
 import { getFieldComponent, getFieldDefinition } from './fieldRegistry';
 import { createApiFromOptions } from './fields/optionsApi';
-import { normalizeSchema } from './schema';
+import { MAX_BLOCK_DEPTH, normalizeSchema, collectBlockFieldNames } from './schema';
+import ChoiceBlock from './ChoiceBlock';
 import style from './style.module.scss';
 
 const buildLabelTips = tips => {
@@ -14,7 +15,7 @@ const buildLabelTips = tips => {
   return createElement(Tooltip, { title: tips }, createElement(QuestionCircleOutlined, { className: style['field-label-tips-icon'] }));
 };
 
-const renderFieldElements = (fields = [], preview = false) =>
+const renderFieldElements = (fields = [], preview = false, { namePrefix } = {}) =>
   fields
     .filter(field => !field.hidden)
     .map(field => {
@@ -29,19 +30,18 @@ const renderFieldElements = (fields = [], preview = false) =>
         props.api = createApiFromOptions(props.options);
       }
 
-      // 空字符串会盖掉 react-form-antd / SuperSelect 的默认「请输入/请选择」占位
       if (!Array.isArray(props.placeholder) && props.placeholder != null && !String(props.placeholder).trim()) {
         delete props.placeholder;
       }
 
-      // schema 内部标记，不传给 antd
       delete props.range;
 
       const description = field.description != null && String(field.description).trim() ? field.description : undefined;
+      const fieldName = namePrefix && field.name ? `${namePrefix}.${field.name}` : field.name;
 
       return createElement(Component, {
         key: field.id,
-        name: field.name,
+        name: fieldName,
         label: field.label,
         rule: field.rule || undefined,
         block: field.block || undefined,
@@ -52,77 +52,206 @@ const renderFieldElements = (fields = [], preview = false) =>
     })
     .filter(Boolean);
 
-export const renderBlockElement = (block, preview = false, { isMobile = false, formatMessage } = {}) => {
-  const fields = renderFieldElements(block.list, preview);
+const withBlockLayout = (element, forceBlock) => {
+  if (!element || !forceBlock) {
+    return element;
+  }
+  return createElement(element.type, {
+    ...element.props,
+    key: element.key,
+    block: true
+  });
+};
+
+/** 列表子项内嵌的 FormInfo / List：表头圆角、去掉底边，压过 antd Card CSS-in-JS */
+const nestedListItemPartProps = {
+  styles: {
+    header: {
+      borderBottom: 'none',
+      borderRadius: 'var(--radius-default, 8px) var(--radius-default, 8px) 0 0'
+    }
+  },
+  style: {
+    borderRadius: 'var(--radius-default, 8px)',
+    overflow: 'hidden'
+  }
+};
+
+export const renderBlockElement = (block, preview = false, ctx = {}) => {
+  const { isMobile = false, formatMessage, depth = 0, asListItem = false } = ctx;
+  if (!block || depth > MAX_BLOCK_DEPTH) {
+    return null;
+  }
+
+  const nextCtx = { ...ctx, depth: depth + 1, asListItem: false };
   const bordered = isMobile ? false : block.bordered || undefined;
+  const listItemPartProps = asListItem ? nestedListItemPartProps : null;
+
+  const renderChildBlocks = (blocks = [], childCtx = nextCtx) => (blocks || []).map(child => renderBlockElement(child, preview, childCtx)).filter(Boolean);
 
   switch (block.kind) {
-    case 'formInfo':
-      return createElement(FormInfo, {
-        key: block.id,
-        title: block.title || undefined,
-        subtitle: block.subtitle || undefined,
-        column: block.column,
-        gap: block.gap,
-        bordered,
-        list: fields
-      });
-    case 'list':
-      return createElement(List, {
-        key: block.id,
-        name: block.name,
-        title: block.title || undefined,
-        important: block.important || undefined,
-        bordered,
-        maxLength: block.maxLength,
-        minLength: block.minLength,
-        // 不要传 addText: undefined，会盖掉 form-info 内部默认文案，变成畸形 icon-only 按钮
-        ...(block.addText ? { addText: block.addText } : {}),
-        ...(typeof block.itemTitle === 'function' || block.itemTitle ? { itemTitle: block.itemTitle } : {}),
-        list: fields
-      });
-    case 'tableList':
-      return createElement(TableList, {
-        key: block.id,
-        name: block.name,
-        title: block.title || undefined,
-        bordered,
-        maxLength: block.maxLength,
-        minLength: block.minLength,
-        ...(block.addText ? { addText: block.addText } : {}),
-        list: fields
-      });
+    case 'formInfo': {
+      const fields = renderFieldElements(block.list, preview);
+      const nested = renderChildBlocks(block.blocks || [], nextCtx).map(node => withBlockLayout(node, true));
+      return withBlockLayout(
+        createElement(FormInfo, {
+          key: block.id,
+          title: block.title || undefined,
+          subtitle: block.subtitle || undefined,
+          column: block.column,
+          gap: block.gap,
+          bordered,
+          list: [...fields, ...nested],
+          ...(listItemPartProps || {})
+        }),
+        asListItem
+      );
+    }
+    case 'object': {
+      const fields = renderFieldElements(block.list, preview, { namePrefix: block.name || '' });
+      const nested = renderChildBlocks(block.blocks || [], nextCtx).map(node => withBlockLayout(node, true));
+      return withBlockLayout(
+        createElement(FormInfo, {
+          key: block.id,
+          title: block.title || undefined,
+          subtitle: block.subtitle || undefined,
+          column: block.column,
+          gap: block.gap,
+          bordered,
+          list: [...fields, ...nested],
+          ...(listItemPartProps || {})
+        }),
+        asListItem
+      );
+    }
+    case 'list': {
+      const fields = renderFieldElements(block.list, preview);
+      const nested = renderChildBlocks(block.itemBlocks || [], { ...nextCtx, asListItem: true }).map(node => withBlockLayout(node, true));
+      return withBlockLayout(
+        createElement(List, {
+          key: block.id,
+          name: block.name,
+          title: block.title || undefined,
+          important: block.important || undefined,
+          bordered,
+          maxLength: block.maxLength,
+          minLength: block.minLength,
+          ...(block.addText ? { addText: block.addText } : {}),
+          ...(typeof block.itemTitle === 'function' || block.itemTitle ? { itemTitle: block.itemTitle } : {}),
+          list: [...fields, ...nested],
+          ...(listItemPartProps || {})
+        }),
+        asListItem
+      );
+    }
+    case 'tableList': {
+      const fields = renderFieldElements(block.list, preview);
+      return withBlockLayout(
+        createElement(TableList, {
+          key: block.id,
+          name: block.name,
+          title: block.title || undefined,
+          bordered,
+          maxLength: block.maxLength,
+          minLength: block.minLength,
+          ...(block.addText ? { addText: block.addText } : {}),
+          list: fields,
+          ...(listItemPartProps || {})
+        }),
+        asListItem
+      );
+    }
     case 'multiField': {
       const FieldComponent = getFieldComponent(block.fieldType);
       if (!FieldComponent) {
         return null;
       }
-      return createElement(MultiField, {
-        key: block.id,
-        name: block.name,
-        label: block.label,
-        field: FieldComponent,
-        block: block.block || undefined,
-        ...(block.addText ? { addText: block.addText } : {})
-      });
+      return withBlockLayout(
+        createElement(MultiField, {
+          key: block.id,
+          name: block.name,
+          label: block.label,
+          field: FieldComponent,
+          block: block.block || undefined,
+          ...(block.addText ? { addText: block.addText } : {})
+        }),
+        asListItem
+      );
     }
     case 'steps': {
-      const bordered = isMobile ? false : block.bordered || undefined;
-      return createElement(Steps, {
-        key: block.id,
-        title: block.title || undefined,
-        subtitle: block.subtitle || undefined,
-        bordered,
-        items: (block.items || []).map(step => ({
-          key: step.id,
-          title: step.title,
-          column: step.column,
-          gap: block.gap,
-          list: renderFieldElements(step.list, preview),
-          fieldNames: (step.list || []).filter(field => field && !field.hidden && field.name).map(field => field.name)
-        }))
-      });
+      return withBlockLayout(
+        createElement(Steps, {
+          key: block.id,
+          title: block.title || undefined,
+          subtitle: block.subtitle || undefined,
+          bordered,
+          prevIcon: createElement(ArrowLeftOutlined),
+          nextIcon: createElement(ArrowRightOutlined),
+          items: (block.items || []).map(step => {
+            const fields = renderFieldElements(step.list, preview);
+            const nested = renderChildBlocks(step.blocks || [], nextCtx);
+            const fieldNames = [...(step.list || []).filter(field => field && !field.hidden && field.name).map(field => field.name), ...collectBlockFieldNames(step.blocks || [])];
+            if (nested.length) {
+              return {
+                key: step.id,
+                title: step.title,
+                column: step.column,
+                gap: block.gap,
+                fieldNames,
+                children: createElement(
+                  Fragment,
+                  { key: `${step.id}-body` },
+                  fields.length
+                    ? createElement(FormInfo, {
+                        key: `${step.id}-fields`,
+                        column: step.column,
+                        gap: block.gap,
+                        list: fields
+                      })
+                    : null,
+                  ...nested
+                )
+              };
+            }
+            return {
+              key: step.id,
+              title: step.title,
+              column: step.column,
+              gap: block.gap,
+              list: fields,
+              fieldNames
+            };
+          })
+        }),
+        asListItem
+      );
     }
+    case 'choice':
+      return withBlockLayout(
+        createElement(ChoiceBlock, {
+          key: block.id,
+          block,
+          preview,
+          isMobile,
+          formatMessage,
+          renderOptionContent: option => {
+            const nodes = [];
+            if ((option.list || []).length) {
+              nodes.push(
+                createElement(FormInfo, {
+                  key: `${option.id}-fields`,
+                  column: block.column || 2,
+                  gap: block.gap,
+                  list: renderFieldElements(option.list, preview)
+                })
+              );
+            }
+            nodes.push(...renderChildBlocks(option.blocks || [], nextCtx));
+            return nodes.filter(Boolean);
+          }
+        }),
+        asListItem
+      );
     default:
       return null;
   }

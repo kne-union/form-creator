@@ -16,13 +16,13 @@ const BlockConfigFields = ({ kind }) => {
 
   const list = [];
 
-  if (kind === 'formInfo' || kind === 'list' || kind === 'tableList') {
+  if (kind === 'formInfo' || kind === 'list' || kind === 'tableList' || kind === 'object') {
     list.push(
       <Input key="title" name="title" label={formatMessage({ id: 'blockTitle' })} placeholder={formatMessage({ id: 'blockTitlePlaceholder' })} />,
       kind === 'formInfo' ? <Input key="subtitle" name="subtitle" label={formatMessage({ id: 'blockSubtitle' })} placeholder={formatMessage({ id: 'blockSubtitlePlaceholder' })} /> : null,
       kind !== 'formInfo' ? <Input key="name" name="name" label={formatMessage({ id: 'blockName' })} rule="REQ" placeholder={formatMessage({ id: 'fieldNamePlaceholder' })} /> : null,
       <InputNumber key="column" name="column" label={formatMessage({ id: 'formColumnPlaceholder' })} min={1} max={4} />,
-      kind === 'formInfo' ? <InputNumber key="gap" name="gap" label={formatMessage({ id: 'blockGap' })} min={0} max={48} /> : null,
+      kind === 'formInfo' || kind === 'object' ? <InputNumber key="gap" name="gap" label={formatMessage({ id: 'blockGap' })} min={0} max={48} /> : null,
       <Checkbox key="bordered" name="bordered">
         {formatMessage({ id: 'blockBordered' })}
       </Checkbox>,
@@ -31,9 +31,31 @@ const BlockConfigFields = ({ kind }) => {
           {formatMessage({ id: 'blockImportant' })}
         </Checkbox>
       ) : null,
-      kind !== 'formInfo' ? <Input key="addText" name="addText" label={formatMessage({ id: 'blockAddText' })} placeholder={formatMessage({ id: 'blockAddTextPlaceholder' })} /> : null,
-      kind !== 'formInfo' ? <InputNumber key="maxLength" name="maxLength" label={formatMessage({ id: 'blockMaxLength' })} min={1} /> : null,
-      kind !== 'formInfo' ? <InputNumber key="minLength" name="minLength" label={formatMessage({ id: 'blockMinLength' })} min={0} /> : null
+      kind === 'list' || kind === 'tableList' ? <Input key="addText" name="addText" label={formatMessage({ id: 'blockAddText' })} placeholder={formatMessage({ id: 'blockAddTextPlaceholder' })} /> : null,
+      kind === 'list' || kind === 'tableList' ? <InputNumber key="maxLength" name="maxLength" label={formatMessage({ id: 'blockMaxLength' })} min={1} /> : null,
+      kind === 'list' || kind === 'tableList' ? <InputNumber key="minLength" name="minLength" label={formatMessage({ id: 'blockMinLength' })} min={0} /> : null
+    );
+  }
+
+  if (kind === 'choice') {
+    list.push(
+      <Input key="title" name="title" label={formatMessage({ id: 'blockTitle' })} placeholder={formatMessage({ id: 'choiceTitlePlaceholder' })} />,
+      <Select
+        key="mode"
+        name="mode"
+        label={formatMessage({ id: 'choiceMode' })}
+        rule="REQ"
+        options={[
+          { label: formatMessage({ id: 'choiceModeSingle' }), value: 'single' },
+          { label: formatMessage({ id: 'choiceModeMultiple' }), value: 'multiple' }
+        ]}
+      />,
+      <InputNumber key="minLength" name="minLength" label={formatMessage({ id: 'choiceMinSelect' })} min={0} placeholder={formatMessage({ id: 'propOptionalNumber' })} display={({ openApi }) => openApi?.data?.mode === 'multiple'} />,
+      <InputNumber key="maxLength" name="maxLength" label={formatMessage({ id: 'choiceMaxSelect' })} min={1} placeholder={formatMessage({ id: 'propOptionalNumber' })} display={({ openApi }) => openApi?.data?.mode === 'multiple'} />,
+      <Input key="selectorName" name="selectorName" label={formatMessage({ id: 'choiceSelectorName' })} placeholder={formatMessage({ id: 'choiceSelectorNamePlaceholder' })} />,
+      <Checkbox key="selectorInData" name="selectorInData">
+        {formatMessage({ id: 'choiceSelectorInData' })}
+      </Checkbox>
     );
   }
 
@@ -73,7 +95,7 @@ const BlockEditorModal = ({ open, block, onCancel, onSave, renderModal }) => {
   const formData = useMemo(() => blockToFormValues(block || createBlock('formInfo')), [block, open]);
 
   const handleSubmit = async values => {
-    if ((block?.kind === 'list' || block?.kind === 'tableList' || block?.kind === 'multiField') && !values.name) {
+    if ((block?.kind === 'list' || block?.kind === 'tableList' || block?.kind === 'multiField' || block?.kind === 'object') && !values.name) {
       message.error(formatMessage({ id: 'blockNameRequired' }));
       return false;
     }

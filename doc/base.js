@@ -1,4 +1,4 @@
-const {default: FormCreator, defaultSchema, createBlock, createField, createStep} = _FormCreator;
+const {default: FormCreator, defaultSchema, createBlock, createField, createStep, createChoiceOption} = _FormCreator;
 const {default: JsonView} = _JsonView;
 const {useState} = React;
 const {Typography} = antd;
@@ -129,6 +129,167 @@ const BaseExample = () => {
                     })
                 ]
             }),
+            createBlock('list', {
+                title: '项目经历（含嵌套）',
+                name: 'projects',
+                addText: '添加项目',
+                minLength: 0,
+                list: [
+                    createField({
+                        type: 'Input',
+                        name: 'projectName',
+                        label: '项目名称',
+                        rule: 'REQ',
+                        props: {placeholder: '请输入项目名称'}
+                    }),
+                    createField({
+                        type: 'Input',
+                        name: 'role',
+                        label: '担任角色',
+                        props: {placeholder: '如：前端开发'}
+                    })
+                ],
+                itemBlocks: [
+                    createBlock('object', {
+                        name: 'period',
+                        title: '项目周期',
+                        column: 2,
+                        list: [
+                            createField({
+                                type: 'DatePicker',
+                                name: 'start',
+                                label: '开始时间',
+                                props: {placeholder: '请选择'}
+                            }),
+                            createField({
+                                type: 'DatePicker',
+                                name: 'end',
+                                label: '结束时间',
+                                props: {placeholder: '请选择'}
+                            })
+                        ]
+                    }),
+                    createBlock('list', {
+                        title: '项目成果',
+                        name: 'achievements',
+                        addText: '添加成果',
+                        list: [
+                            createField({
+                                type: 'Input',
+                                name: 'content',
+                                label: '成果说明',
+                                props: {placeholder: '请输入成果'}
+                            })
+                        ]
+                    })
+                ]
+            }),
+            createBlock('choice', {
+                title: '客户类型',
+                mode: 'single',
+                selectorName: 'customerType',
+                selectorInData: true,
+                options: [
+                    createChoiceOption({
+                        id: 'enterprise',
+                        title: '企业',
+                        list: [
+                            createField({
+                                type: 'Input',
+                                name: 'companyName',
+                                label: '公司名',
+                                rule: 'REQ',
+                                props: {placeholder: '公司名称'}
+                            }),
+                            createField({
+                                type: 'Input',
+                                name: 'creditCode',
+                                label: '信用代码',
+                                props: {placeholder: '统一社会信用代码'}
+                            })
+                        ]
+                    }),
+                    createChoiceOption({
+                        id: 'person',
+                        title: '个人',
+                        list: [
+                            createField({
+                                type: 'Input',
+                                name: 'idName',
+                                label: '姓名',
+                                rule: 'REQ',
+                                props: {placeholder: '姓名'}
+                            }),
+                            createField({
+                                type: 'Input',
+                                name: 'idNo',
+                                label: '证件号',
+                                props: {placeholder: '证件号码'}
+                            })
+                        ]
+                    }),
+                    createChoiceOption({
+                        id: 'other',
+                        title: '其他',
+                        list: [
+                            createField({
+                                type: 'TextArea',
+                                name: 'otherNote',
+                                label: '说明',
+                                block: true,
+                                props: {rows: 3, placeholder: '补充说明'}
+                            })
+                        ]
+                    })
+                ]
+            }),
+            createBlock('choice', {
+                title: '兴趣标签',
+                mode: 'multiple',
+                minLength: 1,
+                maxLength: 2,
+                selectorName: 'interests',
+                selectorInData: true,
+                options: [
+                    createChoiceOption({
+                        id: 'sports',
+                        title: '运动',
+                        list: [
+                            createField({
+                                type: 'Input',
+                                name: 'sportsNote',
+                                label: '擅长项目',
+                                props: {placeholder: '如：篮球'}
+                            })
+                        ]
+                    }),
+                    createChoiceOption({
+                        id: 'music',
+                        title: '音乐',
+                        list: [
+                            createField({
+                                type: 'Input',
+                                name: 'musicNote',
+                                label: '偏好风格',
+                                props: {placeholder: '如：古典'}
+                            })
+                        ]
+                    }),
+                    createChoiceOption({
+                        id: 'reading',
+                        title: '阅读',
+                        list: [
+                            createField({
+                                type: 'TextArea',
+                                name: 'readingNote',
+                                label: '近期书单',
+                                block: true,
+                                props: {rows: 2, placeholder: '选填'}
+                            })
+                        ]
+                    })
+                ]
+            }),
             createBlock('multiField', {
                 title: '备用联系方式',
                 name: 'backupContacts',
@@ -215,7 +376,7 @@ const BaseExample = () => {
         <FormCreator value={schema} onChange={setSchema} />
         <div style={{marginTop: 16}}>
             <JsonView data={schema} theme="light" collapsedFrom={2} searchable={false} />
-            <Text type="secondary">初始示例已包含 FormInfo / List / TableList / MultiField / Steps 五种模块。</Text>
+            <Text type="secondary">初始示例已包含表单分组、列表、表格列表、列表嵌套、选项切换、多字段、分步等模块。</Text>
         </div>
     </div>;
 };

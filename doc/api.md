@@ -99,11 +99,15 @@ import { Form, SubmitButton } from '@kne/form-info';
   },
   blocks: [{
     id: string,
-    kind: 'formInfo' | 'list' | 'tableList' | 'multiField' | 'steps',
+    kind: 'formInfo' | 'list' | 'tableList' | 'multiField' | 'object' | 'choice' | 'steps',
     title?, subtitle?, column?, gap?, bordered?, important?,
     name?, label?, addText?, maxLength?, minLength?, fieldType?, autoStep?,
+    mode?, selectorName?, selectorInData?, discriminator?,
     list?: [{ id, type, name, label, tips?, description?, rule?, block?, hidden?, props? }],
-    items?: [{ id, title, column, list: [...] }] // steps 专用
+    itemBlocks?: Block[], // list：列表项内子模块
+    blocks?: Block[], // formInfo / object：子模块
+    options?: [{ id, title, list?, blocks?: Block[] }], // choice
+    items?: [{ id, title, column, list: [...], blocks?: Block[] }] // steps 专用
   }]
 }
 ```
@@ -113,11 +117,15 @@ import { Form, SubmitButton } from '@kne/form-info';
 
 | kind | 说明 | 主要参数 |
 |------|------|----------|
-| formInfo | 表单信息区块 | title, subtitle, column, gap, bordered, list |
-| list | 动态列表 | name, title, important, bordered, maxLength, list |
-| tableList | 表格列表 | name, title, bordered, maxLength, list |
-| multiField | 同类型多值 | name, label, fieldType, addText |
-| steps | 步骤表单 | title, subtitle, bordered, autoStep, items[{ title, column, list }] |
+| formInfo | 表单信息区块 | title, subtitle, column, gap, bordered, list, **blocks** |
+| list | 动态列表 | name, title, important, bordered, maxLength, list, **itemBlocks** |
+| tableList | 表格列表 | name, title, bordered, maxLength, list（不支持子模块） |
+| object | 对象分组 | name, title, column, gap, list（字段名渲染为 `name.field`）, **blocks** |
+| choice | 选项分支 | title, **mode**(`single`\|`multiple`), **minLength** / **maxLength**（仅多选：最少/最多选几项）, selectorName, selectorInData, options[{ title, list, **blocks** }] |
+| multiField | 同类型多值 | name, label, fieldType, addText（不支持子模块） |
+| steps | 步骤表单 | title, subtitle, bordered, autoStep, items[{ title, column, list, **blocks** }] |
+
+`choice`：顶部同一条选项 UI；`single` 只挂载当前选项内容，`multiple` 平铺所有选中项。多选时可配置 `minLength` / `maxLength` 限制最少、最多选择几个（提交时校验；达到上限后未选项禁用）。JSON Schema 的 oneOf/anyOf 可分别映射为 `mode: 'single'/'multiple'`。`allOf` 无需独立 kind，展开为多个 sibling blocks 即可。
 
 兼容旧版：若仅有顶层 `list` 且无 `blocks`，会自动迁移为一个 `formInfo` 区块。
 
@@ -128,7 +136,7 @@ import { Form, SubmitButton } from '@kne/form-info';
 
 ### 工具方法
 
-- `createBlock(kind)` / `createStep()` / `normalizeSchema(schema)`
+- `createBlock(kind)` / `createStep()` / `createChoiceOption()` / `normalizeSchema(schema)`
 - `preset({ rules, fields })` 一次注册扩展规则与填写项（推荐）
 - `parseRuleString(rule)` / `buildRuleString(config)` 校验规则字符串解析/组装
 
