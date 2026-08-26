@@ -12,7 +12,7 @@ export const DEFAULT_RULE_CONFIG = () => ({
 
 export const RULE_LEN_PRESET = 'LEN';
 
-/** 注册填写项校验规则 preset，会在规则勾选面板中展示 */
+/** 内部：注册填写项校验规则，会在规则勾选面板中展示（请通过 preset 注册） */
 export const registerRulePreset = item => {
   if (!item?.value) {
     return;

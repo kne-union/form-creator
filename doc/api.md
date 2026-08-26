@@ -178,42 +178,41 @@ preset({
 | 配置 | 类型 | 说明 |
 |------|------|------|
 | `rules` | `Record<string, RuleDef>` | key 为规则 token；`RuleDef` 含 `label` + `reg/message` 或 `validator` |
-| `fields` | `Record<string, FieldDef>` | key 为字段 type，形状同 `registerField` 第二参数 |
+| `fields` | `Record<string, FieldDef>` | key 为字段 type；见下方 FieldDef |
 
-### 高级用法（一般请用 preset）
+**FieldDef** 常用字段：`label`、`component`、`groupName`、`defaultProps`、`propsSchema`、`hasOptions`、`hasFieldProps` 等。
 
-- `registerField(type, definition)` 单独扩展字段类型
-- `registerRulePreset({ value, label })` 单独扩展规则勾选项
-
-扩展填写项时，用 `propsSchema` 声明可编辑的额外参数（写入字段 `props`），编辑器会按声明自动生成「填写项设置」表单：
+扩展填写项时，用 `fields` 内的 `propsSchema` 声明可编辑的额外参数（写入字段 `props`），编辑器会按声明自动生成「填写项设置」表单：
 
 ```js
-registerField('Slider', {
-  label: '滑块',
-  component: Slider,
-  defaultProps: { min: 0, max: 100, step: 1 },
-  propsSchema: [
-    { name: 'min', label: '最小值', type: 'number', defaultValue: 0 },
-    { name: 'max', label: '最大值', type: 'number', defaultValue: 100 },
-    { name: 'step', label: '步长', type: 'number', min: 0, defaultValue: 1 },
-    {
-      name: 'tooltipPlacement',
-      label: '提示位置',
-      type: 'select',
-      defaultValue: 'top',
-      options: [
-        { label: '上', value: 'top' },
-        { label: '下', value: 'bottom' }
-      ]
-    },
-    { name: 'dots', label: '显示刻度点', type: 'boolean' }
-  ]
-});
+fields: {
+  Slider: {
+    label: '滑块',
+    component: Slider,
+    defaultProps: { min: 0, max: 100, step: 1 },
+    propsSchema: [
+      { name: 'min', label: '最小值', type: 'number', defaultValue: 0 },
+      { name: 'max', label: '最大值', type: 'number', defaultValue: 100 },
+      { name: 'step', label: '步长', type: 'number', min: 0, defaultValue: 1 },
+      {
+        name: 'tooltipPlacement',
+        label: '提示位置',
+        type: 'select',
+        defaultValue: 'top',
+        options: [
+          { label: '上', value: 'top' },
+          { label: '下', value: 'bottom' }
+        ]
+      },
+      { name: 'dots', label: '显示刻度点', type: 'boolean' }
+    ]
+  }
+}
 ```
 
 ### 扩展组件与校验（示例见「扩展组件与校验规则」）
 
-使用 `preset({ rules, fields })` 即可，无需再单独调用 `registerField` / `registerRulePreset` / react-form-antd 的 `preset`。
+使用 `preset({ rules, fields })` 即可，无需再单独调用 react-form-antd 的 `preset`。
 
 `propsSchema` 项约定：
 
