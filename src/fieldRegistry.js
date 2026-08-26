@@ -206,7 +206,7 @@ defineField('DatePicker', {
  * - min / max?: number（type=number）
  * - options?: { label, value }[]（type=select）
  *
- * registerField(type, definition) 还可传：
+ * preset({ type, definition }) 的 fields 项还可传：
  * - groupName?: string 自定义类型下拉分组名；不传则归入「扩展字段」
  */
 export const registerField = (type, definition) => {
