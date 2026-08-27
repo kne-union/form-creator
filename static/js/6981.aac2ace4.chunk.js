@@ -1,0 +1,2 @@
+"use strict";(globalThis.webpackChunk_form_creator_0_1_12||=[]).push([[6981],{70701(r,e,o){o.r(e);const a={FormCreator:o(69666).A};o.d(e,["default",0,a,"manifest",0,{name:"form-creator",version:"0.1.12","open-version":!0,"public-url":"/form-creator",modules:[{name:"form-creator",baseDir:"/home/runner/work/form-creator/form-creator",description:"\u914d\u7f6e\u5f0f\u8868\u5355\u642d\u5efa\u7ec4\u4ef6\uff0c\u4ea7\u51fa Schema \u5e76\u7528 @kne/form-info \u6e32\u67d3",packageName:"@kne/form-creator"}]}])}}]);
+//# sourceMappingURL=6981.aac2ace4.chunk.js.map
