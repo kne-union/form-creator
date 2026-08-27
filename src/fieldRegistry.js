@@ -31,12 +31,38 @@ const FIELD_GROUPS = [
   }
 ];
 
+const optionEnumValues = field => {
+  const options = field?.props?.options;
+  if (!Array.isArray(options) || !options.length) {
+    return undefined;
+  }
+  const values = options.map(item => item?.value).filter(value => value !== undefined && value !== null && value !== '');
+  return values.length ? values : undefined;
+};
+
+const stringWithEnumSchema = field => {
+  const schema = { type: 'string' };
+  const enums = optionEnumValues(field);
+  if (enums) {
+    schema.enum = enums;
+  }
+  return schema;
+};
+
+const superSelectValueSchema = field => {
+  if (field?.props?.single) {
+    return { type: 'object' };
+  }
+  return { type: 'array', items: { type: 'object' } };
+};
+
 defineField('Input', {
   label: '单行文本',
   group: '基础字段',
   component: Input,
   defaultProps: { allowClear: true },
-  hasFieldProps: true
+  hasFieldProps: true,
+  valueSchema: { type: 'string' }
 });
 
 defineField('TextArea', {
@@ -45,7 +71,8 @@ defineField('TextArea', {
   component: TextArea,
   defaultProps: { rows: 3 },
   defaults: { block: true },
-  hasFieldProps: true
+  hasFieldProps: true,
+  valueSchema: { type: 'string' }
 });
 
 defineField('InputNumber', {
@@ -53,7 +80,8 @@ defineField('InputNumber', {
   group: '基础字段',
   component: InputNumber,
   defaultProps: {},
-  hasFieldProps: true
+  hasFieldProps: true,
+  valueSchema: { type: 'number' }
 });
 
 defineField('Select', {
@@ -62,7 +90,8 @@ defineField('Select', {
   component: Select,
   defaultProps: { options: [], allowClear: true },
   hasOptions: true,
-  hasFieldProps: true
+  hasFieldProps: true,
+  valueSchema: stringWithEnumSchema
 });
 
 defineField('RadioGroup', {
@@ -70,7 +99,8 @@ defineField('RadioGroup', {
   group: '选择字段',
   component: RadioGroup,
   defaultProps: { options: [] },
-  hasOptions: true
+  hasOptions: true,
+  valueSchema: stringWithEnumSchema
 });
 
 defineField('CheckboxGroup', {
@@ -78,7 +108,15 @@ defineField('CheckboxGroup', {
   group: '选择字段',
   component: CheckboxGroup,
   defaultProps: { options: [] },
-  hasOptions: true
+  hasOptions: true,
+  valueSchema: field => {
+    const items = { type: 'string' };
+    const enums = optionEnumValues(field);
+    if (enums) {
+      items.enum = enums;
+    }
+    return { type: 'array', items };
+  }
 });
 
 defineField('SuperSelectList', {
@@ -88,7 +126,8 @@ defineField('SuperSelectList', {
   defaultProps: { options: [], isPopup: true, allowClear: true, labelKey: 'label', valueKey: 'value' },
   isSuperSelect: true,
   hasOptions: true,
-  optionsAllowDescription: true
+  optionsAllowDescription: true,
+  valueSchema: superSelectValueSchema
 });
 
 defineField('SuperSelectTableList', {
@@ -106,7 +145,8 @@ defineField('SuperSelectTableList', {
   isSuperSelect: true,
   hasOptions: true,
   hasColumns: true,
-  optionsAllowDescription: true
+  optionsAllowDescription: true,
+  valueSchema: superSelectValueSchema
 });
 
 defineField('SuperSelectTree', {
@@ -117,7 +157,8 @@ defineField('SuperSelectTree', {
   isSuperSelect: true,
   hasOptions: true,
   optionsAllowChildren: true,
-  optionsAllowDescription: true
+  optionsAllowDescription: true,
+  valueSchema: superSelectValueSchema
 });
 
 defineField('SuperSelectCascader', {
@@ -136,7 +177,8 @@ defineField('SuperSelectCascader', {
   hasOptions: true,
   hasOnlyLastLevel: true,
   optionsAllowChildren: true,
-  optionsAllowDescription: true
+  optionsAllowDescription: true,
+  valueSchema: superSelectValueSchema
 });
 
 defineField('SelectFunction', {
@@ -145,7 +187,8 @@ defineField('SelectFunction', {
   component: SelectFunctionField,
   defaultProps: { isPopup: true, allowClear: true },
   isSuperSelect: true,
-  hasBuiltinData: true
+  hasBuiltinData: true,
+  valueSchema: superSelectValueSchema
 });
 
 defineField('SelectIndustry', {
@@ -154,7 +197,8 @@ defineField('SelectIndustry', {
   component: SelectIndustryField,
   defaultProps: { isPopup: true, allowClear: true },
   isSuperSelect: true,
-  hasBuiltinData: true
+  hasBuiltinData: true,
+  valueSchema: superSelectValueSchema
 });
 
 defineField('SelectAddress', {
@@ -163,7 +207,8 @@ defineField('SelectAddress', {
   component: SelectAddressField,
   defaultProps: { isPopup: true, allowClear: true },
   isSuperSelect: true,
-  hasBuiltinData: true
+  hasBuiltinData: true,
+  valueSchema: superSelectValueSchema
 });
 
 defineField('Switch', {
@@ -171,14 +216,16 @@ defineField('Switch', {
   group: '基础字段',
   component: Switch,
   defaultProps: {},
-  hasFieldProps: true
+  hasFieldProps: true,
+  valueSchema: { type: 'boolean' }
 });
 
 defineField('Checkbox', {
   label: '复选框',
   group: '基础字段',
   component: Checkbox,
-  defaultProps: { children: '' }
+  defaultProps: { children: '' },
+  valueSchema: { type: 'boolean' }
 });
 
 defineField('DatePicker', {
@@ -193,7 +240,8 @@ defineField('DatePicker', {
     showTime: false
   },
   hasFieldProps: true,
-  resolveComponent: props => (props?.range ? DatePicker.RangePicker || DatePicker : DatePicker)
+  resolveComponent: props => (props?.range ? DatePicker.RangePicker || DatePicker : DatePicker),
+  valueSchema: field => (field?.props?.range ? { type: 'array', items: { type: 'string' }, minItems: 2, maxItems: 2 } : { type: 'string' })
 });
 
 /**
@@ -208,6 +256,7 @@ defineField('DatePicker', {
  *
  * preset({ type, definition }) 的 fields 项还可传：
  * - groupName?: string 自定义类型下拉分组名；不传则归入「扩展字段」
+ * - valueSchema?: object | (field) => object  提交值的 JSON Schema 片段；缺省回退 { type: 'string' }
  */
 export const registerField = (type, definition) => {
   const propsSchema = Array.isArray(definition?.propsSchema) ? definition.propsSchema : undefined;
@@ -275,6 +324,40 @@ export const applyFromPropsSchema = (props, values = {}, propsSchema = []) => {
 };
 
 export const getFieldDefinition = type => registry.get(type);
+
+/**
+ * 解析字段提交值的 JSON Schema 片段。
+ * 优先用 definition.valueSchema（对象或 (field)=>schema）；缺省 { type: 'string' }。
+ */
+export const resolveFieldValueSchema = field => {
+  if (!field || !field.type) {
+    return { type: 'string' };
+  }
+  const definition = registry.get(field.type);
+  const raw = definition?.valueSchema;
+  let schema;
+  if (typeof raw === 'function') {
+    schema = raw(field);
+  } else if (raw && typeof raw === 'object') {
+    schema = { ...raw };
+  } else {
+    schema = { type: 'string' };
+  }
+  if (!schema || typeof schema !== 'object') {
+    schema = { type: 'string' };
+  } else {
+    schema = { ...schema };
+  }
+  const title = field.label != null && String(field.label).trim() ? String(field.label).trim() : undefined;
+  const description = field.description != null && String(field.description).trim() ? String(field.description).trim() : undefined;
+  if (title && schema.title == null) {
+    schema.title = title;
+  }
+  if (description && schema.description == null) {
+    schema.description = description;
+  }
+  return schema;
+};
 
 export const getFieldComponent = (type, field) => {
   const definition = registry.get(type);

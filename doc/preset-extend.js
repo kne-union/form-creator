@@ -30,6 +30,7 @@ preset({
       groupName: '评价组件',
       component: Rate,
       defaultProps: { count: 5, allowHalf: false, allowClear: true },
+      valueSchema: { type: 'number' },
       propsSchema: [
         {
           name: 'count',
@@ -57,6 +58,7 @@ preset({
       label: '滑块',
       component: Slider,
       defaultProps: { min: 0, max: 100, step: 1 },
+      valueSchema: { type: 'number' },
       propsSchema: [
         { name: 'min', label: '最小值', type: 'number', defaultValue: 0 },
         { name: 'max', label: '最大值', type: 'number', defaultValue: 100 },

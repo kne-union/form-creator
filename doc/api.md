@@ -137,8 +137,36 @@ import { Form, SubmitButton } from '@kne/form-info';
 ### 工具方法
 
 - `createBlock(kind)` / `createStep()` / `createChoiceOption()` / `normalizeSchema(schema)`
+- `schemaToDataSchema(schema)` 根据搭建 Schema 生成**提交数据**的 JSON Schema（见下节）
 - `preset({ rules, fields })` 一次注册扩展规则与填写项（推荐）
 - `parseRuleString(rule)` / `buildRuleString(config)` 校验规则字符串解析/组装
+
+### schemaToDataSchema
+
+将搭建 Schema 转为描述表单提交数据形状的 JSON Schema（`type: 'object'`）。
+
+```js
+import { schemaToDataSchema } from '@kne/form-creator';
+
+const dataSchema = schemaToDataSchema(schema);
+// dataSchema.properties / required / oneOf|anyOf（choice）
+```
+
+| 搭建块 | 提交数据形状 |
+|--------|----------------|
+| formInfo | 字段摊平进当前 object |
+| object | `properties[name]` = nested object（字段名为相对 name） |
+| list / tableList | `properties[name]` = array of object |
+| multiField | `properties[name]` = array，元素为 `fieldType` 的 valueSchema |
+| steps | 各 step 字段/子块并入当前层 |
+| choice（single） | `oneOf`：每支含 selector `const` + 该 option 字段 |
+| choice（multiple） | 当前层 selector 为数组 + `anyOf` 各 option 字段支 |
+
+说明：
+
+- **hidden 字段仍进入** data schema（可提交）
+- 字段值类型来自 registry 的 `valueSchema`；`rule` 含 `REQ` 时写入父 object 的 `required`（choice 支内同样生效）
+- 扩展字段在 `preset` / `registerField` 中声明 `valueSchema`（对象或 `(field) => schema`）；未声明则回退 `{ type: 'string' }`
 
 ### preset（推荐）
 
@@ -188,15 +216,26 @@ preset({
 | `rules` | `Record<string, RuleDef>` | key 为规则 token；`RuleDef` 含 `label` + `reg/message` 或 `validator` |
 | `fields` | `Record<string, FieldDef>` | key 为字段 type；见下方 FieldDef |
 
-**FieldDef** 常用字段：`label`、`component`、`groupName`、`defaultProps`、`propsSchema`、`hasOptions`、`hasFieldProps` 等。
+**FieldDef** 常用字段：`label`、`component`、`groupName`、`defaultProps`、`propsSchema`、`valueSchema`、`hasOptions`、`hasFieldProps` 等。
+
+- `valueSchema`：该类型**提交值**的 JSON Schema 片段；可为对象，或 `(field) => schema`（可按 props 细化）。供 `schemaToDataSchema` 使用；缺省回退 `{ type: 'string' }`。
 
 扩展填写项时，用 `fields` 内的 `propsSchema` 声明可编辑的额外参数（写入字段 `props`），编辑器会按声明自动生成「填写项设置」表单：
 
 ```js
 fields: {
+  Rate: {
+    label: '评分',
+    component: Rate,
+    valueSchema: { type: 'number' },
+    propsSchema: [
+      { name: 'count', label: '星星总数', type: 'number', min: 1, max: 10, defaultValue: 5 }
+    ]
+  },
   Slider: {
     label: '滑块',
     component: Slider,
+    valueSchema: { type: 'number' },
     defaultProps: { min: 0, max: 100, step: 1 },
     propsSchema: [
       { name: 'min', label: '最小值', type: 'number', defaultValue: 0 },
