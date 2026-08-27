@@ -302,11 +302,21 @@
   gap: 8px;
   flex-wrap: wrap;
   margin-bottom: 6px;
+  min-width: 0;
 }
 
 .step-section-title {
   flex: 1;
-  min-width: 120px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.step-section-actions {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .step-index {
@@ -1015,12 +1025,22 @@
     }
 
     .step-section-header {
-      gap: 6px;
+      align-items: flex-start;
+      gap: 8px;
     }
 
+    /* 标题独占一行，避免与常显操作栏挤成竖排字 */
     .step-section-title {
+      flex: 0 0 100%;
       width: 100%;
       min-width: 0;
+      max-width: 100%;
+    }
+
+    .step-section-actions {
+      width: 100%;
+      justify-content: flex-end;
+      gap: 6px;
     }
 
     .field-row {
