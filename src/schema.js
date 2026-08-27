@@ -5,7 +5,7 @@ export const createDataKey = (prefix = 'field') => `${prefix}_${Date.now().toStr
 
 export const isAutoDataKey = (value, prefix = 'field') => new RegExp(`^${prefix}_[a-z0-9]+_[a-z0-9]+$`, 'i').test(String(value || '').trim());
 
-export const MAX_BLOCK_DEPTH = 5;
+export const MAX_BLOCK_DEPTH = 14;
 
 export const createEmptyColumn = () => ({
   title: '',
