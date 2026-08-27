@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Button, Dropdown, Empty, Flex, Space, Tag, Typography } from 'antd';
 import {
   ArrowDownOutlined,
@@ -64,6 +64,7 @@ const BlockListPanel = ({
   const { formatMessage } = useIntl();
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [addFieldMenuId, setAddFieldMenuId] = useState(null);
+  const keepAddFieldMenuOpenRef = useRef(false);
 
   const renderAddBlockMenu = (options, { onSelect, className } = {}) => (
     <div className={className || style['add-block-dropdown']}>
@@ -109,8 +110,19 @@ const BlockListPanel = ({
     return (
       <Dropdown
         open={menuOpen}
-        onOpenChange={open => setAddFieldMenuId(open ? menuKey : null)}
-        trigger={['hover']}
+        onOpenChange={open => {
+          if (open) {
+            setAddFieldMenuId(menuKey);
+            return;
+          }
+          // 已打开时再点触发器：antd 会 toggle 关闭，这里忽略，保持展开
+          if (keepAddFieldMenuOpenRef.current) {
+            keepAddFieldMenuOpenRef.current = false;
+            return;
+          }
+          setAddFieldMenuId(null);
+        }}
+        trigger={['hover', 'click']}
         mouseEnterDelay={0.1}
         mouseLeaveDelay={0.15}
         getPopupContainer={trigger => trigger.parentElement || document.body}
@@ -171,10 +183,12 @@ const BlockListPanel = ({
           size="small"
           icon={<PlusOutlined />}
           className={btnClass}
-          onClick={() => {
-            onAddFieldClick();
-            setAddFieldMenuId(null);
+          onMouseDown={() => {
+            if (menuOpen) {
+              keepAddFieldMenuOpenRef.current = true;
+            }
           }}
+          onClick={() => setAddFieldMenuId(menuKey)}
         >
           {formatMessage({ id: 'addField' })}
         </Button>
@@ -238,25 +252,27 @@ const BlockListPanel = ({
               {(block.items || []).map((step, stepIndex) => (
                 <div key={step.id} className={style['step-section']}>
                   <div className={style['step-section-header']}>
-                    <Space size={8} className={style['step-section-title']}>
+                    <Space size={8} wrap className={style['step-section-title']}>
                       <span className={style['step-index']}>{stepIndex + 1}</span>
                       <Text strong>{step.title || formatMessage({ id: 'untitledStep' }, { index: stepIndex + 1 })}</Text>
                       <Text type="secondary">
                         {(step.blocks || []).length ? formatMessage({ id: 'fieldAndItemBlockCount' }, { fields: step.list?.length || 0, nests: step.blocks.length }) : formatMessage({ id: 'fieldCount' }, { count: step.list?.length || 0 })}
                       </Text>
                     </Space>
-                    <ActionGroup>
-                      <IconBtn title={formatMessage({ id: 'moveUp' })} icon={<ArrowUpOutlined />} disabled={stepIndex === 0} onClick={() => onMoveStep(block.id, step.id, 'up')} />
-                      <IconBtn title={formatMessage({ id: 'moveDown' })} icon={<ArrowDownOutlined />} disabled={stepIndex === (block.items?.length || 0) - 1} onClick={() => onMoveStep(block.id, step.id, 'down')} />
-                      <IconBtn title={formatMessage({ id: 'editStep' })} icon={<EditOutlined />} onClick={() => onEditStep(block.id, step)} />
-                      <IconBtn title={formatMessage({ id: 'deleteStep' })} danger icon={<DeleteOutlined />} onClick={() => onDeleteStep(block.id, step.id)} />
-                    </ActionGroup>
-                    {renderAddFieldButton({
-                      menuKey: `${block.id}:${step.id}`,
-                      depth,
-                      onAddFieldClick: () => onAddField(block.id, { stepId: step.id }),
-                      onAddChildBlock: kind => onAddBlock(kind, { parentBlockId: block.id, stepId: step.id })
-                    })}
+                    <Space size={4} wrap className={style['step-section-actions']}>
+                      <ActionGroup>
+                        <IconBtn title={formatMessage({ id: 'moveUp' })} icon={<ArrowUpOutlined />} disabled={stepIndex === 0} onClick={() => onMoveStep(block.id, step.id, 'up')} />
+                        <IconBtn title={formatMessage({ id: 'moveDown' })} icon={<ArrowDownOutlined />} disabled={stepIndex === (block.items?.length || 0) - 1} onClick={() => onMoveStep(block.id, step.id, 'down')} />
+                        <IconBtn title={formatMessage({ id: 'editStep' })} icon={<EditOutlined />} onClick={() => onEditStep(block.id, step)} />
+                        <IconBtn title={formatMessage({ id: 'deleteStep' })} danger icon={<DeleteOutlined />} onClick={() => onDeleteStep(block.id, step.id)} />
+                      </ActionGroup>
+                      {renderAddFieldButton({
+                        menuKey: `${block.id}:${step.id}`,
+                        depth,
+                        onAddFieldClick: () => onAddField(block.id, { stepId: step.id }),
+                        onAddChildBlock: kind => onAddBlock(kind, { parentBlockId: block.id, stepId: step.id })
+                      })}
+                    </Space>
                   </div>
                   {renderFieldList(step.list, block.id, { stepId: step.id })}
                   {renderNestedBlocks(step.blocks, depth)}
@@ -296,7 +312,7 @@ const BlockListPanel = ({
               {(block.options || []).map((option, optionIndex) => (
                 <div key={option.id} className={style['step-section']}>
                   <div className={style['step-section-header']}>
-                    <Space size={8} className={style['step-section-title']}>
+                    <Space size={8} wrap className={style['step-section-title']}>
                       <span className={style['step-index']}>{optionIndex + 1}</span>
                       <Text strong>{option.title || formatMessage({ id: 'choiceOptionFallback' }, { index: optionIndex + 1 })}</Text>
                       <Text type="secondary">
@@ -305,18 +321,20 @@ const BlockListPanel = ({
                           : formatMessage({ id: 'fieldCount' }, { count: option.list?.length || 0 })}
                       </Text>
                     </Space>
-                    <ActionGroup>
-                      <IconBtn title={formatMessage({ id: 'moveUp' })} icon={<ArrowUpOutlined />} disabled={optionIndex === 0} onClick={() => onMoveChoiceOption(block.id, option.id, 'up')} />
-                      <IconBtn title={formatMessage({ id: 'moveDown' })} icon={<ArrowDownOutlined />} disabled={optionIndex === (block.options?.length || 0) - 1} onClick={() => onMoveChoiceOption(block.id, option.id, 'down')} />
-                      <IconBtn title={formatMessage({ id: 'editChoiceOption' })} icon={<EditOutlined />} onClick={() => onEditChoiceOption(block.id, option)} />
-                      <IconBtn title={formatMessage({ id: 'deleteChoiceOption' })} danger icon={<DeleteOutlined />} onClick={() => onDeleteChoiceOption(block.id, option.id)} />
-                    </ActionGroup>
-                    {renderAddFieldButton({
-                      menuKey: `${block.id}:opt:${option.id}`,
-                      depth,
-                      onAddFieldClick: () => onAddField(block.id, { optionId: option.id }),
-                      onAddChildBlock: kind => onAddBlock(kind, { parentBlockId: block.id, optionId: option.id })
-                    })}
+                    <Space size={4} wrap className={style['step-section-actions']}>
+                      <ActionGroup>
+                        <IconBtn title={formatMessage({ id: 'moveUp' })} icon={<ArrowUpOutlined />} disabled={optionIndex === 0} onClick={() => onMoveChoiceOption(block.id, option.id, 'up')} />
+                        <IconBtn title={formatMessage({ id: 'moveDown' })} icon={<ArrowDownOutlined />} disabled={optionIndex === (block.options?.length || 0) - 1} onClick={() => onMoveChoiceOption(block.id, option.id, 'down')} />
+                        <IconBtn title={formatMessage({ id: 'editChoiceOption' })} icon={<EditOutlined />} onClick={() => onEditChoiceOption(block.id, option)} />
+                        <IconBtn title={formatMessage({ id: 'deleteChoiceOption' })} danger icon={<DeleteOutlined />} onClick={() => onDeleteChoiceOption(block.id, option.id)} />
+                      </ActionGroup>
+                      {renderAddFieldButton({
+                        menuKey: `${block.id}:opt:${option.id}`,
+                        depth,
+                        onAddFieldClick: () => onAddField(block.id, { optionId: option.id }),
+                        onAddChildBlock: kind => onAddBlock(kind, { parentBlockId: block.id, optionId: option.id })
+                      })}
+                    </Space>
                   </div>
                   {renderFieldList(option.list, block.id, { optionId: option.id })}
                   {renderNestedBlocks(option.blocks, depth)}
