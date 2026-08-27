@@ -63,7 +63,8 @@ const withBlockLayout = (element, forceBlock) => {
   });
 };
 
-/** 列表子项内嵌的 FormInfo / List：表头圆角、去掉底边，压过 antd Card CSS-in-JS */
+/** 列表子项内嵌的 FormInfo/object：表头圆角、去掉底边，压过 antd Card CSS-in-JS。
+ * 不要套到嵌套 List 上，否则会干扰 form-info 的 nestDepth / nest-beyond 满宽样式。 */
 const nestedListItemPartProps = {
   styles: {
     header: {
@@ -77,6 +78,8 @@ const nestedListItemPartProps = {
   }
 };
 
+const isFormInfoLikeBlock = kind => kind === 'formInfo' || kind === 'object';
+
 export const renderBlockElement = (block, preview = false, ctx = {}) => {
   const { isMobile = false, formatMessage, depth = 0, asListItem = false } = ctx;
   if (!block || depth > MAX_BLOCK_DEPTH) {
@@ -85,9 +88,19 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
 
   const nextCtx = { ...ctx, depth: depth + 1, asListItem: false };
   const bordered = isMobile ? false : block.bordered || undefined;
-  const listItemPartProps = asListItem ? nestedListItemPartProps : null;
+  // 仅 FormInfo/object 吃列表项 Part 样式；List 等交给 form-info nestDepth
+  const listItemPartProps = asListItem && isFormInfoLikeBlock(block.kind) ? nestedListItemPartProps : null;
 
   const renderChildBlocks = (blocks = [], childCtx = nextCtx) => (blocks || []).map(child => renderBlockElement(child, preview, childCtx)).filter(Boolean);
+
+  /** list.itemBlocks：object/formInfo 走 asListItem；嵌套 list 等保持 nestDepth 链路 */
+  const renderItemBlocks = (blocks = []) =>
+    (blocks || [])
+      .map(child => {
+        const childCtx = { ...nextCtx, asListItem: isFormInfoLikeBlock(child.kind) };
+        return withBlockLayout(renderBlockElement(child, preview, childCtx), true);
+      })
+      .filter(Boolean);
 
   switch (block.kind) {
     case 'formInfo': {
@@ -126,7 +139,7 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
     }
     case 'list': {
       const fields = renderFieldElements(block.list, preview);
-      const nested = renderChildBlocks(block.itemBlocks || [], { ...nextCtx, asListItem: true }).map(node => withBlockLayout(node, true));
+      const nested = renderItemBlocks(block.itemBlocks || []);
       return withBlockLayout(
         createElement(List, {
           key: block.id,
@@ -138,8 +151,7 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
           minLength: block.minLength,
           ...(block.addText ? { addText: block.addText } : {}),
           ...(typeof block.itemTitle === 'function' || block.itemTitle ? { itemTitle: block.itemTitle } : {}),
-          list: [...fields, ...nested],
-          ...(listItemPartProps || {})
+          list: [...fields, ...nested]
         }),
         asListItem
       );
