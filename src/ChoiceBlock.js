@@ -1,4 +1,4 @@
-import { createElement, useEffect, useMemo } from 'react';
+import { createElement, useCallback, useEffect, useMemo } from 'react';
 import { useFormContext, RadioGroup, CheckboxGroup } from '@kne/react-form-antd';
 import InfoPage from '@kne/info-page';
 import { collectBlockFieldNames } from './schema';
@@ -39,7 +39,7 @@ const resolveSelectedIds = (value, mode) => {
   return [String(value)];
 };
 
-const clearUnselectedOptionFields = (openApi, keepIds, allOptions) => {
+const clearUnselectedOptionFields = (openApi, formData, keepIds, allOptions) => {
   if (!openApi?.setFields) {
     return;
   }
@@ -49,12 +49,19 @@ const clearUnselectedOptionFields = (openApi, keepIds, allOptions) => {
       return;
     }
     (option.list || []).forEach(field => {
-      if (field?.name) {
+      if (!field?.name) {
+        return;
+      }
+      const current = getByPath(formData, field.name);
+      if (current !== undefined) {
         entries.push({ name: field.name, value: undefined });
       }
     });
     collectBlockFieldNames(option.blocks || []).forEach(name => {
-      entries.push({ name, value: undefined });
+      const current = getByPath(formData, name);
+      if (current !== undefined) {
+        entries.push({ name, value: undefined });
+      }
     });
   });
   if (!entries.length) {
@@ -100,85 +107,95 @@ const ChoiceBlock = ({ block, preview = false, isMobile = false, formatMessage, 
   const { minLength, maxLength } = mode === 'multiple' ? resolveSelectLimits(block) : {};
   const firstOptionId = options[0] != null ? String(options[0].id) : undefined;
 
+  const rawValue = getByPath(formData || {}, selectorName);
+  // 仅随 selector 值变化；勿依赖整个 formData，否则清空未选支字段会触发 options 重算 → CheckboxGroup 死循环
+  const selectorValueKey = mode === 'multiple' ? (Array.isArray(rawValue) ? rawValue.map(String).join('\0') : String(rawValue ?? '')) : String(rawValue ?? '');
+
   // 单选且未选时，写入第一项，保证预览/提交与选项面板一致
   useEffect(() => {
     if (mode !== 'single' || !firstOptionId || !openApi?.setFields) {
       return;
     }
-    const current = getByPath(formData || {}, selectorName);
-    if (current != null && current !== '') {
+    if (selectorValueKey !== '') {
       return;
     }
     openApi.setFields([{ name: selectorName, value: firstOptionId }], { runValidate: false });
-  }, [mode, firstOptionId, selectorName, openApi, formData]);
+  }, [mode, firstOptionId, selectorName, openApi, selectorValueKey]);
+
+  const selectedIdsFromValue = useMemo(() => resolveSelectedIds(rawValue, mode), [selectorValueKey, mode]);
 
   const selectorOptions = useMemo(() => {
-    const rawValue = getByPath(formData || {}, selectorName);
-    const selectedIds = resolveSelectedIds(rawValue, mode);
-    const atMax = mode === 'multiple' && maxLength != null && selectedIds.length >= maxLength;
+    const atMax = mode === 'multiple' && maxLength != null && selectedIdsFromValue.length >= maxLength;
 
     return options.map((option, index) => {
       const value = String(option.id);
       return {
         label: option.title || (formatMessage ? formatMessage({ id: 'choiceOptionFallback' }, { index: index + 1 }) : `选项${index + 1}`),
         value,
-        disabled: atMax && !selectedIds.includes(value)
+        disabled: atMax && !selectedIdsFromValue.includes(value)
       };
     });
-  }, [options, formatMessage, formData, selectorName, mode, maxLength]);
+  }, [options, formatMessage, selectedIdsFromValue, mode, maxLength]);
 
-  const rawValue = getByPath(formData || {}, selectorName);
-  let selectedIds = resolveSelectedIds(rawValue, mode);
+  let selectedIds = selectedIdsFromValue;
   if (mode === 'single' && !selectedIds.length && firstOptionId) {
     selectedIds = [firstOptionId];
   }
   const activeOptions = options.filter(option => selectedIds.includes(String(option.id)));
 
-  const handleChange = value => {
-    let nextIds = resolveSelectedIds(value, mode);
-    if (mode === 'multiple' && maxLength != null && nextIds.length > maxLength) {
-      nextIds = nextIds.slice(0, maxLength);
-      openApi?.setFields?.([{ name: selectorName, value: nextIds }], { runValidate: false });
-    }
-    clearUnselectedOptionFields(openApi, nextIds, options);
-  };
+  const handleChange = useCallback(
+    value => {
+      let nextIds = resolveSelectedIds(value, mode);
+      if (mode === 'multiple' && maxLength != null && nextIds.length > maxLength) {
+        nextIds = nextIds.slice(0, maxLength);
+        openApi?.setFields?.([{ name: selectorName, value: nextIds }], { runValidate: false });
+      }
+      clearUnselectedOptionFields(openApi, formData, nextIds, options);
+    },
+    [mode, maxLength, openApi, selectorName, formData, options]
+  );
 
-  const selectorRule =
-    mode === 'multiple' && (minLength != null || maxLength != null)
-      ? value => {
-          const ids = resolveSelectedIds(value, 'multiple');
-          if (minLength != null && ids.length < minLength) {
-            return {
-              result: false,
-              errMsg: formatMessage ? formatMessage({ id: 'choiceMinSelectError' }, { count: minLength }) : `请至少选择 ${minLength} 项`
-            };
-          }
-          if (maxLength != null && ids.length > maxLength) {
-            return {
-              result: false,
-              errMsg: formatMessage ? formatMessage({ id: 'choiceMaxSelectError' }, { count: maxLength }) : `最多只能选择 ${maxLength} 项`
-            };
-          }
-          return { result: true, errMsg: '' };
-        }
-      : undefined;
+  const selectorRule = useCallback(
+    value => {
+      const ids = resolveSelectedIds(value, 'multiple');
+      if (minLength != null && ids.length < minLength) {
+        return {
+          result: false,
+          errMsg: formatMessage ? formatMessage({ id: 'choiceMinSelectError' }, { count: minLength }) : `请至少选择 ${minLength} 项`
+        };
+      }
+      if (maxLength != null && ids.length > maxLength) {
+        return {
+          result: false,
+          errMsg: formatMessage ? formatMessage({ id: 'choiceMaxSelectError' }, { count: maxLength }) : `最多只能选择 ${maxLength} 项`
+        };
+      }
+      return { result: true, errMsg: '' };
+    },
+    [minLength, maxLength, formatMessage]
+  );
+
+  const hasSelectLimitRule = mode === 'multiple' && (minLength != null || maxLength != null);
 
   const Selector = mode === 'multiple' ? CheckboxGroup : RadioGroup;
   const selectorProps = {
-    key: 'choice-selector',
+    key: `choice-selector-${mode}`,
     name: selectorName,
     label: titleText || (formatMessage ? formatMessage({ id: 'choiceAreaTitle' }) : '请选择'),
     labelHidden: true,
     options: selectorOptions,
     onChange: handleChange,
-    ...(selectorRule ? { rule: selectorRule } : {}),
+    ...(hasSelectLimitRule ? { rule: selectorRule } : {}),
     ...(mode === 'single'
       ? {
           optionType: 'button',
           buttonStyle: 'solid',
           ...(firstOptionId ? { defaultValue: firstOptionId } : {})
         }
-      : {})
+      : {
+          // CheckboxGroup 需要数组初值，避免 undefined↔[] 来回同步
+          defaultValue: []
+        })
   };
 
   const contentChildren = [];

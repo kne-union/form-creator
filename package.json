@@ -1,6 +1,6 @@
 {
   "name": "@kne/form-creator",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "配置式表单搭建组件，产出 Schema 并用 @kne/form-info 渲染",
   "syntax": {
     "esmodules": true
