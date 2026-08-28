@@ -774,14 +774,15 @@
     }
 
     .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
-      background: var(--ant-color-primary, #1677ff) !important;
+      background: var(--primary-color, #1677ff) !important;
       color: #fff !important;
       font-weight: 500;
     }
 
     .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled):hover {
       color: #fff !important;
-      background: var(--ant-color-primary-hover, #4096ff) !important;
+      background: var(--primary-color, #1677ff) !important;
+      filter: brightness(1.08);
     }
   }
 }
