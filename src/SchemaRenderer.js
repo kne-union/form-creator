@@ -1,16 +1,39 @@
-import { Fragment, createElement } from 'react';
+import { createElement } from 'react';
 import { Flex } from 'antd';
 import { useIntl } from '@kne/react-intl';
 import { useIsMobile } from '@kne/responsive-utils';
 import { SubmitButton, ResetButton, CancelButton } from '@kne/react-form-antd';
+import { ButtonFooter } from '@kne/button-group';
 import withLocale from './withLocale';
 import renderSchemaContent, { renderSchemaInner } from './renderSchema';
 import { hasRenderableContent, normalizeFormActions, normalizeSchema } from './schema';
 import style from './style.module.scss';
 import '@kne/form-info/dist/index.css';
 import '@kne/info-page/dist/index.css';
+import '@kne/button-group/dist/index.css';
 
-const resolveActionNode = ({ schema, formatMessage, actions, showActions = true, submitText, resetText, cancelText, submitButtonProps, resetButtonProps, cancelButtonProps, showSubmit, showReset, showCancel, actionsAlign, actionsGap }) => {
+const joinClass = (...names) => names.filter(Boolean).join(' ');
+
+const resolveActionNode = ({
+  schema,
+  formatMessage,
+  actions,
+  showActions = true,
+  submitText,
+  resetText,
+  cancelText,
+  submitButtonProps,
+  resetButtonProps,
+  cancelButtonProps,
+  showSubmit,
+  showReset,
+  showCancel,
+  actionsAlign,
+  actionsGap,
+  footerClassName,
+  buttonFooter = false,
+  buttonFooterProps
+}) => {
   if (showActions === false || actions === false || actions === null) {
     return null;
   }
@@ -47,25 +70,34 @@ const resolveActionNode = ({ schema, formatMessage, actions, showActions = true,
     wrap: 'wrap'
   };
 
+  let actionsEl = null;
+
   if (actions !== undefined) {
-    return createElement('div', { className: style['schema-actions'] }, createElement(Flex, flexProps, actions));
+    actionsEl = createElement('div', { className: joinClass(style['schema-actions'], footerClassName) }, createElement(Flex, flexProps, actions));
+  } else if (resolvedShowSubmit || resolvedShowReset || resolvedShowCancel) {
+    actionsEl = createElement(
+      'div',
+      { className: joinClass(style['schema-actions'], footerClassName) },
+      createElement(
+        Flex,
+        flexProps,
+        resolvedShowSubmit ? createElement(SubmitButton, { type: 'primary', ...resolvedSubmitButtonProps }, resolvedSubmitText) : null,
+        resolvedShowReset ? createElement(ResetButton, resolvedResetButtonProps, resolvedResetText) : null,
+        resolvedShowCancel ? createElement(CancelButton, resolvedCancelButtonProps, resolvedCancelText) : null
+      )
+    );
   }
 
-  if (!resolvedShowSubmit && !resolvedShowReset && !resolvedShowCancel) {
+  if (!actionsEl) {
     return null;
   }
 
-  return createElement(
-    'div',
-    { className: style['schema-actions'] },
-    createElement(
-      Flex,
-      flexProps,
-      resolvedShowSubmit ? createElement(SubmitButton, { type: 'primary', ...resolvedSubmitButtonProps }, resolvedSubmitText) : null,
-      resolvedShowReset ? createElement(ResetButton, resolvedResetButtonProps, resolvedResetText) : null,
-      resolvedShowCancel ? createElement(CancelButton, resolvedCancelButtonProps, resolvedCancelText) : null
-    )
-  );
+  if (!buttonFooter) {
+    return actionsEl;
+  }
+
+  const footerProps = buttonFooterProps || {};
+  return createElement(ButtonFooter, footerProps, actionsEl);
 };
 
 export const SchemaRendererInner = withLocale(props => {
@@ -86,7 +118,11 @@ export const SchemaRendererInner = withLocale(props => {
     showReset,
     showCancel,
     actionsAlign,
-    actionsGap
+    actionsGap,
+    bodyClassName,
+    footerClassName,
+    buttonFooter = false,
+    buttonFooterProps
   } = props;
   const { formatMessage } = useIntl();
   const isMobile = useIsMobile();
@@ -111,12 +147,16 @@ export const SchemaRendererInner = withLocale(props => {
     showReset,
     showCancel,
     actionsAlign,
-    actionsGap
+    actionsGap,
+    footerClassName,
+    buttonFooter,
+    buttonFooterProps
   });
 
   return renderSchemaInner(normalized, {
     preview,
     className,
+    bodyClassName,
     isMobile,
     formatMessage,
     children,
@@ -143,7 +183,11 @@ const SchemaRenderer = withLocale(props => {
     showReset,
     showCancel,
     actionsAlign,
-    actionsGap
+    actionsGap,
+    bodyClassName,
+    footerClassName,
+    buttonFooter = false,
+    buttonFooterProps
   } = props;
   const { formatMessage } = useIntl();
   const isMobile = useIsMobile();
@@ -168,13 +212,17 @@ const SchemaRenderer = withLocale(props => {
     showReset,
     showCancel,
     actionsAlign,
-    actionsGap
+    actionsGap,
+    footerClassName,
+    buttonFooter,
+    buttonFooterProps
   });
 
   return renderSchemaContent(normalized, {
     preview,
     formProps,
     className,
+    bodyClassName,
     isMobile,
     formatMessage,
     children,

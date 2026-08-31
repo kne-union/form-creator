@@ -269,7 +269,7 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
   }
 };
 
-export const renderSchemaInner = (schema, { preview = false, className, isMobile = false, formatMessage, children, actionNode } = {}) => {
+export const renderSchemaInner = (schema, { preview = false, className, bodyClassName, isMobile = false, formatMessage, children, actionNode } = {}) => {
   const normalized = normalizeSchema(schema);
   const blocks = normalized.blocks || [];
   const contentChildren = blocks.map(block => renderBlockElement(block, preview, { isMobile, formatMessage })).filter(Boolean);
@@ -278,12 +278,13 @@ export const renderSchemaInner = (schema, { preview = false, className, isMobile
     return null;
   }
 
-  const body = createElement(Fragment, null, ...contentChildren, children, actionNode || null);
+  const body = createElement('div', { className: [style['schema-body'], bodyClassName].filter(Boolean).join(' ') }, ...contentChildren, children);
+  const content = createElement(Fragment, null, body, actionNode || null);
 
-  return className ? createElement('div', { className }, body) : body;
+  return className ? createElement('div', { className }, content) : content;
 };
 
-export const renderSchemaContent = (schema, { preview = false, formProps = {}, className, isMobile = false, formatMessage, children, actionNode } = {}) => {
+export const renderSchemaContent = (schema, { preview = false, formProps = {}, className, bodyClassName, isMobile = false, formatMessage, children, actionNode } = {}) => {
   const normalized = normalizeSchema(schema);
   const blocks = normalized.blocks || [];
   const contentChildren = blocks.map(block => renderBlockElement(block, preview, { isMobile, formatMessage })).filter(Boolean);
@@ -300,7 +301,7 @@ export const renderSchemaContent = (schema, { preview = false, formProps = {}, c
       ...formProps,
       className: formClassName
     },
-    createElement('div', { className: style['schema-body'] }, ...contentChildren, children),
+    createElement('div', { className: [style['schema-body'], bodyClassName].filter(Boolean).join(' ') }, ...contentChildren, children),
     actionNode || null
   );
 };

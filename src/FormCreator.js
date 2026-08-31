@@ -13,7 +13,7 @@ import FormActionsEditor from './FormActionsEditor';
 import SchemaRenderer from './SchemaRenderer';
 import style from './style.module.scss';
 
-const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = true, className, formProps, renderModal }) => {
+const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = true, className, formProps, renderModal, extraToolbar }) => {
   const { formatMessage } = useIntl();
   const isMobile = useIsMobile();
   const [innerSchema, setInnerSchema] = useState(() => normalizeSchema(defaultValue || defaultSchema()));
@@ -315,6 +315,7 @@ const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = t
   };
 
   const currentFieldScope = fieldContext ? collectSchemaFields(schema, { blockId: fieldContext.blockId, stepId: fieldContext.stepId, optionId: fieldContext.optionId }) : [];
+  const toolbarExtra = typeof extraToolbar === 'function' ? extraToolbar({ schema }) : extraToolbar;
 
   return (
     <div className={[style['form-creator'], RESPONSIVE_BOUNDARY_CLASS, isMobile ? style['is-mobile'] : '', className].filter(Boolean).join(' ')}>
@@ -338,6 +339,7 @@ const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = t
           onDeleteChoiceOption={handleDeleteChoiceOption}
           onMoveChoiceOption={handleMoveChoiceOption}
           onOpenFormActions={() => setFormActionsOpen(true)}
+          extraToolbar={toolbarExtra}
         />
       </div>
       {showPreview ? (
