@@ -58,6 +58,16 @@
   margin-bottom: 10px;
 }
 
+.panel-toolbar-extra {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.schema-content {
+  width: 100%;
+}
+
 .add-block-btn {
   height: 30px !important;
   padding: 0 14px !important;

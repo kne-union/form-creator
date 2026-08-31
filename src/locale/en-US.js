@@ -190,7 +190,12 @@ const locale = {
   formSettingsTitle: 'Form Settings',
   formTitlePlaceholder: 'Form title (optional)',
   formSubtitlePlaceholder: 'Form subtitle (optional)',
-  formColumnPlaceholder: 'Columns per row'
+  formColumnPlaceholder: 'Columns per row',
+  schemaContentEmpty: 'No data',
+  schemaContentEmptyValue: '-',
+  schemaContentYes: 'Yes',
+  schemaContentNo: 'No',
+  schemaContentItemIndex: 'Item {index}'
 };
 
 export default locale;

@@ -1,6 +1,7 @@
 import './style.module.scss';
 import '@kne/form-info/dist/index.css';
 import '@kne/info-page/dist/index.css';
+import '@kne/button-group/dist/index.css';
 import FormCreator from './FormCreator';
 import SchemaRenderer, { SchemaRendererInner } from './SchemaRenderer';
 
@@ -33,5 +34,6 @@ export { getFieldDefinition, getFieldComponent, getFieldTypes, fieldToFormValues
 export { RULE_PRESET_ITEMS, RULE_LEN_PRESET, getRulePresetItems, parseRuleString, buildRuleString } from './rulePresets';
 export { preset } from './preset';
 export { schemaToDataSchema } from './schemaToDataSchema';
+export { default as SchemaContent, SchemaContentInner } from './SchemaContent';
 export { SchemaRenderer, SchemaRendererInner, FormCreator };
 export default FormCreator;

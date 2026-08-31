@@ -59,7 +59,8 @@ const BlockListPanel = ({
   onEditChoiceOption,
   onDeleteChoiceOption,
   onMoveChoiceOption,
-  onOpenFormActions
+  onOpenFormActions,
+  extraToolbar
 }) => {
   const { formatMessage } = useIntl();
   const [addMenuOpen, setAddMenuOpen] = useState(false);
@@ -435,6 +436,7 @@ const BlockListPanel = ({
           </Button>
         </Dropdown>
         <Button type="default" size="small" shape="circle" icon={<SettingOutlined />} className={style['form-actions-setting-btn']} title={formatMessage({ id: 'formActionsSection' })} onClick={onOpenFormActions} />
+        {extraToolbar ? <div className={style['panel-toolbar-extra']}>{extraToolbar}</div> : null}
       </Flex>
       {!blocks.length ? (
         <Empty className={style['field-empty']} image={Empty.PRESENTED_IMAGE_SIMPLE} description={formatMessage({ id: 'emptyBlockList' })} />

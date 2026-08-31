@@ -190,7 +190,12 @@ const locale = {
   formSettingsTitle: '表单设置',
   formTitlePlaceholder: '表单标题（可选）',
   formSubtitlePlaceholder: '表单副标题（可选）',
-  formColumnPlaceholder: '每行显示列数'
+  formColumnPlaceholder: '每行显示列数',
+  schemaContentEmpty: '暂无数据',
+  schemaContentEmptyValue: '-',
+  schemaContentYes: '是',
+  schemaContentNo: '否',
+  schemaContentItemIndex: '第 {index} 项'
 };
 
 export default locale;

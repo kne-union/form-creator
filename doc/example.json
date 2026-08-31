@@ -161,6 +161,48 @@
           "importStatement": "import antd from \"antd\""
         }
       ]
+    },
+    {
+      "title": "扩展添加模块旁的按钮",
+      "description": "extraToolbar：在「添加模块」和设置按钮后面追加自定义操作",
+      "code": "./extra-toolbar.js",
+      "scope": [
+        {
+          "name": "_FormCreator",
+          "packageName": "@kne/current-lib_form-creator",
+          "importStatement": "import * as _FormCreator from \"@kne/form-creator\""
+        },
+        {
+          "packageName": "@kne/current-lib_form-creator/dist/index.css",
+          "importStatement": "import \"@kne/form-creator/dist/index.css\""
+        },
+        {
+          "name": "antd",
+          "packageName": "antd",
+          "importStatement": "import antd from \"antd\""
+        }
+      ]
+    },
+    {
+      "title": "按 Schema 展示提交数据",
+      "description": "SchemaContent：根据搭建 Schema 与字段 valueSchema，用 InfoPage（同 FormInfo 布局）展示提交结果",
+      "code": "./schema-content.js",
+      "scope": [
+        {
+          "name": "_FormCreator",
+          "packageName": "@kne/current-lib_form-creator",
+          "importStatement": "import * as _FormCreator from \"@kne/form-creator\""
+        },
+        {
+          "packageName": "@kne/current-lib_form-creator/dist/index.css",
+          "importStatement": "import \"@kne/form-creator/dist/index.css\""
+        },
+        {
+          "name": "antd",
+          "packageName": "antd",
+          "importStatement": "import antd from \"antd\""
+        }
+      ]
     }
   ]
 }
