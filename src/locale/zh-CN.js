@@ -195,7 +195,9 @@ const locale = {
   schemaContentEmptyValue: '-',
   schemaContentYes: '是',
   schemaContentNo: '否',
-  schemaContentItemIndex: '第 {index} 项'
+  schemaContentItemIndex: '第 {index} 项',
+  schemaContentUntilToday: '至今',
+  schemaContentPasswordMasked: '••••••'
 };
 
 export default locale;

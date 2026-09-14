@@ -24,7 +24,7 @@ const renderFieldElements = (fields = [], preview = false, { namePrefix } = {}) 
         return null;
       }
       const definition = getFieldDefinition(field.type);
-      const props = { ...(field.props || {}) };
+      const props = { ...(definition?.defaultProps || {}), ...(field.props || {}) };
 
       if (definition?.optionsAllowDescription && props.options?.length && !props.api && !definition.optionsAllowChildren) {
         props.api = createApiFromOptions(props.options);

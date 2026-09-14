@@ -4,7 +4,7 @@ import { useIntl } from '@kne/react-intl';
 import { useIsMobile } from '@kne/responsive-utils';
 import InfoPage, { Content } from '@kne/info-page';
 import withLocale from './withLocale';
-import { getFieldDefinition, resolveFieldValueSchema } from './fieldRegistry';
+import { formatFieldDisplayValue } from './formatDisplayValue';
 import { MAX_BLOCK_DEPTH, hasRenderableContent, normalizeSchema } from './schema';
 import style from './style.module.scss';
 
@@ -17,16 +17,6 @@ const getByPath = (data, path) => {
     .reduce((acc, key) => (acc == null ? acc : acc[key]), data);
 };
 
-const isEmptyValue = value => {
-  if (value == null || value === '') {
-    return true;
-  }
-  if (Array.isArray(value) && value.length === 0) {
-    return true;
-  }
-  return false;
-};
-
 const resolveChoiceSelectorName = block => {
   if (block.selectorName != null && String(block.selectorName).trim()) {
     return String(block.selectorName).trim();
@@ -37,85 +27,7 @@ const resolveChoiceSelectorName = block => {
   return `__choice_${block.id}`;
 };
 
-const formatDateValue = (value, format) => {
-  const pattern = format || 'YYYY-MM-DD';
-  if (Array.isArray(value)) {
-    return value
-      .map(item => formatDateValue(item, format))
-      .filter(item => item !== '')
-      .join(' ~ ');
-  }
-  if (value && typeof value.format === 'function') {
-    return value.format(pattern);
-  }
-  return value == null ? '' : String(value);
-};
-
-const mapOptionLabel = (value, options) => {
-  if (!Array.isArray(options) || !options.length) {
-    return value;
-  }
-  const match = options.find(item => item && item.value === value);
-  return match?.label ?? value;
-};
-
-const formatFieldValue = (field, value, formatMessage) => {
-  if (isEmptyValue(value)) {
-    return formatMessage({ id: 'schemaContentEmptyValue' });
-  }
-
-  const definition = getFieldDefinition(field.type);
-  const props = field.props || {};
-  const valueSchema = resolveFieldValueSchema(field);
-  const schemaType = valueSchema?.type;
-
-  if (schemaType === 'boolean' || field.type === 'Switch' || field.type === 'Checkbox') {
-    if (value) {
-      return props.checkedChildren || formatMessage({ id: 'schemaContentYes' });
-    }
-    return props.unCheckedChildren || formatMessage({ id: 'schemaContentNo' });
-  }
-
-  if (field.type === 'DatePicker') {
-    const formatted = formatDateValue(value, props.format);
-    return formatted || formatMessage({ id: 'schemaContentEmptyValue' });
-  }
-
-  if (Array.isArray(props.options) && props.options.length) {
-    if (Array.isArray(value)) {
-      const labels = value.map(item => mapOptionLabel(item, props.options)).filter(item => item != null && item !== '');
-      return labels.length ? labels.join('、') : formatMessage({ id: 'schemaContentEmptyValue' });
-    }
-    return mapOptionLabel(value, props.options);
-  }
-
-  if (definition?.isSuperSelect) {
-    const labelKey = props.labelKey || 'label';
-    const pickLabel = item => {
-      if (item && typeof item === 'object') {
-        return item[labelKey] ?? item.label ?? item.value;
-      }
-      return item;
-    };
-    if (Array.isArray(value)) {
-      const labels = value.map(pickLabel).filter(item => item != null && item !== '');
-      return labels.length ? labels.join('、') : formatMessage({ id: 'schemaContentEmptyValue' });
-    }
-    if (value && typeof value === 'object') {
-      return pickLabel(value) ?? formatMessage({ id: 'schemaContentEmptyValue' });
-    }
-  }
-
-  if (Array.isArray(value)) {
-    return value.map(item => (item && typeof item === 'object' ? JSON.stringify(item) : String(item))).join('、');
-  }
-
-  if (typeof value === 'object') {
-    return JSON.stringify(value);
-  }
-
-  return String(value);
-};
+const formatFieldValue = (field, value, formatMessage) => formatFieldDisplayValue(field, value, { formatMessage });
 
 const renderFieldsContent = (fields, data, formatMessage, column) => {
   const list = (fields || [])

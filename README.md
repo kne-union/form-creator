@@ -1347,7 +1347,7 @@ import { Form, SubmitButton } from '@kne/form-info';
 
 #### SchemaContent
 
-按搭建 Schema 的分组结构展示**已提交数据**（只读）。字段展示形态由各填写项的 `valueSchema` 决定（boolean → 是/否，enum → 选项文案，日期按 `format`）。布局与 FormInfo 相同，使用 `@kne/info-page` 的 Part + Content。示例见「按 Schema 展示提交数据」。
+按搭建 Schema 的分组结构展示**已提交数据**（只读）。字段展示形态由各填写项 `valueSchema` 的 `type` / `format` / `display` 决定（boolean → 是/否，enum → 选项文案，日期按 `format`，对象按 `display`）。可用 `formatDisplayValue` 覆盖。布局与 FormInfo 相同，使用 `@kne/info-page` 的 Part + Content。示例见「按 Schema 展示提交数据」。
 
 | 属性 | 类型 | 默认值 | 说明 |
 |----|----|-----|----|
@@ -1505,9 +1505,13 @@ preset({
 | `rules` | `Record<string, RuleDef>` | key 为规则 token；`RuleDef` 含 `label` + `reg/message` 或 `validator` |
 | `fields` | `Record<string, FieldDef>` | key 为字段 type；见下方 FieldDef |
 
-**FieldDef** 常用字段：`label`、`component`、`groupName`、`defaultProps`、`propsSchema`、`valueSchema`、`hasOptions`、`hasFieldProps` 等。
+**FieldDef** 常用字段：`label`、`component`、`groupName`、`defaultProps`、`propsSchema`、`valueSchema`、`formatDisplayValue`、`hasOptions`、`hasFieldProps` 等。
 
-- `valueSchema`：该类型**提交值**的 JSON Schema 片段；可为对象，或 `(field) => schema`（可按 props 细化）。供 `schemaToDataSchema` 使用；缺省回退 `{ type: 'string' }`。
+- `valueSchema`：该类型**提交值**的 JSON Schema 片段；可为对象，或 `(field) => schema`（可按 props 细化）。供 `schemaToDataSchema` 与 **SchemaContent 预览**使用；缺省回退 `{ type: 'string' }`。
+  - `type`：`string` / `number` / `boolean` / `object` / `array`
+  - `format`（可选）：`date` / `month` / `week` / `time` / `date-time` / `year` / `quarter` / `password` / `color` / `json`
+  - `display`（可选）：`option`（取 label）/ `phone` / `file`（`components-core:File@FileLink`，图片用 `components-core:Image` 缩略图）/ `typed-date-range` / `date-to-today` / `html` / `money`
+- `formatDisplayValue`：`(value, field, { formatMessage }) => string`，有则覆盖 `valueSchema` 默认预览。
 
 扩展填写项时，用 `fields` 内的 `propsSchema` 声明可编辑的额外参数（写入字段 `props`），编辑器会按声明自动生成「填写项设置」表单：
 
