@@ -1,0 +1,2 @@
+"use strict";(globalThis.webpackChunk_form_creator_0_1_15||=[]).push([[5867],{85867(r,e,t){var n=t(94922);t.d(e,["A",0,function(r){let e=arguments.length>1&&void 0!==arguments[1]&&arguments[1];const t=(0,n.useRef)(r);return e||(t.current=r),(0,n.useCallback)(function(){return t.current&&t.current(...arguments)},[])}])}}]);
+//# sourceMappingURL=5867.d81a86d9.chunk.js.map
