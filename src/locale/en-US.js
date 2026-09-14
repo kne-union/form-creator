@@ -195,7 +195,9 @@ const locale = {
   schemaContentEmptyValue: '-',
   schemaContentYes: 'Yes',
   schemaContentNo: 'No',
-  schemaContentItemIndex: 'Item {index}'
+  schemaContentItemIndex: 'Item {index}',
+  schemaContentUntilToday: 'Present',
+  schemaContentPasswordMasked: '••••••'
 };
 
 export default locale;

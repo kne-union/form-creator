@@ -3,17 +3,22 @@ import SelectList, { SelectCascader, SelectTableList, SelectTree } from '@kne/su
 import { SelectFunction, SelectIndustry, SelectAddress } from '@kne/super-select-plus';
 import '@kne/super-select/dist/index.css';
 import '@kne/super-select-plus/dist/index.css';
-import { createApiFromOptions } from './optionsApi';
+import { alignOptionKeys, createApiFromOptions, flattenTreeOptions } from './optionsApi';
 
 const { useOnChange } = hooks;
 
 const hasNestedOptions = options => Array.isArray(options) && options.some(item => Array.isArray(item?.children) && item.children.length);
 
-const createField = (Component, { preferOptions = false, placeholderPrefix = '请选择' } = {}) => {
+const createField = (Component, { preferOptions = false, flattenTree = false, placeholderPrefix = '请选择' } = {}) => {
   const Field = props => {
     const { options, api, placeholder, ...rest } = props;
-    const useOptionsDirectly = preferOptions || hasNestedOptions(options);
-    const mergedApi = api || (!useOptionsDirectly && Array.isArray(options) && options.length ? createApiFromOptions(options) : undefined);
+    const valueKey = rest.valueKey || 'value';
+    const labelKey = rest.labelKey || 'label';
+    const parentKey = rest.parentKey || 'parentId';
+    const flattened = flattenTree && Array.isArray(options) ? flattenTreeOptions(options, { valueKey, parentKey }) : options;
+    const resolvedOptions = Array.isArray(flattened) ? alignOptionKeys(flattened, { valueKey, labelKey }) : flattened;
+    const useOptionsDirectly = preferOptions || hasNestedOptions(resolvedOptions);
+    const mergedApi = api || (!useOptionsDirectly && Array.isArray(resolvedOptions) && resolvedOptions.length ? createApiFromOptions(resolvedOptions) : undefined);
     const resolvedPlaceholder = placeholder != null && String(placeholder).trim() ? placeholder : `${placeholderPrefix}${props.label || ''}`;
 
     const render = useOnChange(
@@ -24,7 +29,11 @@ const createField = (Component, { preferOptions = false, placeholderPrefix = '�
           placeholder: resolvedPlaceholder
         },
         rest,
-        useOptionsDirectly && Array.isArray(options) ? { options } : {},
+        {
+          valueKey,
+          labelKey
+        },
+        useOptionsDirectly && Array.isArray(resolvedOptions) ? { options: resolvedOptions } : {},
         mergedApi ? { api: mergedApi } : {}
       )
     );
@@ -36,7 +45,7 @@ const createField = (Component, { preferOptions = false, placeholderPrefix = '�
 
 export const SuperSelectList = createField(SelectList);
 export const SuperSelectTableList = createField(SelectTableList, { preferOptions: true });
-export const SuperSelectTree = createField(SelectTree, { preferOptions: true });
+export const SuperSelectTree = createField(SelectTree, { preferOptions: true, flattenTree: true });
 export const SuperSelectCascader = createField(SelectCascader, { preferOptions: true });
 
 export const SelectFunctionField = createField(SelectFunction);

@@ -49,11 +49,31 @@ const stringWithEnumSchema = field => {
   return schema;
 };
 
+const optionValueSchema = { type: 'object', display: 'option' };
+
 const superSelectValueSchema = field => {
   if (field?.props?.single) {
-    return { type: 'object' };
+    return { ...optionValueSchema };
   }
-  return { type: 'array', items: { type: 'object' } };
+  return { type: 'array', items: { ...optionValueSchema } };
+};
+
+const PICKER_TO_FORMAT = {
+  date: 'date',
+  week: 'week',
+  month: 'month',
+  quarter: 'quarter',
+  year: 'year'
+};
+
+const datePickerValueSchema = field => {
+  const picker = field?.props?.picker || 'date';
+  const format = field?.props?.showTime ? 'date-time' : PICKER_TO_FORMAT[picker] || 'date';
+  const item = { type: 'string', format };
+  if (field?.props?.range) {
+    return { type: 'array', items: item, minItems: 2, maxItems: 2 };
+  }
+  return item;
 };
 
 defineField('Input', {
@@ -241,7 +261,7 @@ defineField('DatePicker', {
   },
   hasFieldProps: true,
   resolveComponent: props => (props?.range ? DatePicker.RangePicker || DatePicker : DatePicker),
-  valueSchema: field => (field?.props?.range ? { type: 'array', items: { type: 'string' }, minItems: 2, maxItems: 2 } : { type: 'string' })
+  valueSchema: datePickerValueSchema
 });
 
 /**
@@ -257,6 +277,8 @@ defineField('DatePicker', {
  * preset({ type, definition }) 的 fields 项还可传：
  * - groupName?: string 自定义类型下拉分组名；不传则归入「扩展字段」
  * - valueSchema?: object | (field) => object  提交值的 JSON Schema 片段；缺省回退 { type: 'string' }
+ *   可含 format（date/month/week/time/date-time/password/color/json）与 display（option/phone/file/typed-date-range/date-to-today/html/money），供 SchemaContent 预览
+ * - formatDisplayValue?: (value, field, ctx) => string  覆盖 valueSchema 默认预览
  */
 export const registerField = (type, definition) => {
   const propsSchema = Array.isArray(definition?.propsSchema) ? definition.propsSchema : undefined;
