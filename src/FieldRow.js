@@ -1,7 +1,7 @@
 import { Button, Space, Tag, Typography } from 'antd';
 import { ArrowDownOutlined, ArrowUpOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useIntl } from '@kne/react-intl';
-import { getFieldDefinition } from './fieldRegistry';
+import { getFieldDefinition, resolveFieldTypeLabel } from './fieldRegistry';
 import style from './style.module.scss';
 
 const { Text } = Typography;
@@ -38,7 +38,7 @@ const FieldRow = ({ field, index, total, onEdit, onDelete, onMove }) => {
             {field.label || formatMessage({ id: 'untitledField' })}
           </Text>
           <Tag bordered={false} color={TYPE_TAG_COLORS[field.type] || 'default'}>
-            {definition?.label || field.type}
+            {resolveFieldTypeLabel(definition || field.type, formatMessage)}
           </Tag>
           {field.hidden ? <Tag bordered={false}>{formatMessage({ id: 'fieldHiddenTag' })}</Tag> : null}
           {field.block ? (

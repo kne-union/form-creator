@@ -233,6 +233,28 @@
           "importStatement": "import antd from \"antd\""
         }
       ]
+    },
+    {
+      "title": "语言切换",
+      "description": "FormCreator locale prop 切换中/英；检查内置 Field Type 分组与选项、列表类型 Tag、Select/DatePicker 占位",
+      "code": "./locale-switch.js",
+      "isFull": true,
+      "scope": [
+        {
+          "name": "_FormCreator",
+          "packageName": "@kne/current-lib_form-creator",
+          "importStatement": "import * as _FormCreator from \"@kne/form-creator\""
+        },
+        {
+          "packageName": "@kne/current-lib_form-creator/dist/index.css",
+          "importStatement": "import \"@kne/form-creator/dist/index.css\""
+        },
+        {
+          "name": "antd",
+          "packageName": "antd",
+          "importStatement": "import antd from \"antd\""
+        }
+      ]
     }
   ]
 }

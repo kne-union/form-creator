@@ -662,87 +662,95 @@ render(<NestedChoiceExample />);
 const { default: FormCreator, preset, defaultSchema, createBlock, createField } = _FormCreator;
 const { Rate, Slider } = _ReactFormAntd;
 const { default: JsonView } = _JsonView;
-const { useState } = React;
+const { useRef, useState } = React;
 const { Alert, Typography, Space } = antd;
 const { Text, Paragraph } = Typography;
 
-// 一次 preset：运行时校验 + 编辑器规则面板 + 扩展填写项
-preset({
-  rules: {
-    ID_CARD: {
-      label: '身份证格式',
-      reg: /^\d{17}[\dXx]$/,
-      message: '%s格式不正确'
+const applyPresetOnce = () => {
+  // 勿放在模块顶层：modules-dev 会加载全部示例，顶层 preset 会污染其它示例的 Field Type 下拉
+  preset({
+    rules: {
+      ID_CARD: {
+        label: '身份证格式',
+        reg: /^\d{17}[\dXx]$/,
+        message: '%s格式不正确'
+      },
+      RATE_MIN: {
+        label: '评分至少3星',
+        validator: value => {
+          const score = Number(value) || 0;
+          return {
+            result: score >= 3,
+            errMsg: score >= 3 ? '' : '评分至少 3 星'
+          };
+        }
+      }
     },
-    RATE_MIN: {
-      label: '评分至少3星',
-      validator: value => {
-        const score = Number(value) || 0;
-        return {
-          result: score >= 3,
-          errMsg: score >= 3 ? '' : '评分至少 3 星'
-        };
+    fields: {
+      Rate: {
+        label: '评分',
+        groupName: '评价组件',
+        component: Rate,
+        defaultProps: { count: 5, allowHalf: false, allowClear: true },
+        valueSchema: { type: 'number' },
+        propsSchema: [
+          {
+            name: 'count',
+            label: '星星总数',
+            type: 'number',
+            min: 1,
+            max: 10,
+            defaultValue: 5
+          },
+          {
+            name: 'allowHalf',
+            label: '允许半星',
+            type: 'boolean',
+            defaultValue: false
+          },
+          {
+            name: 'allowClear',
+            label: '允许清除',
+            type: 'boolean',
+            defaultValue: true
+          }
+        ]
+      },
+      Slider: {
+        label: '滑块',
+        component: Slider,
+        defaultProps: { min: 0, max: 100, step: 1 },
+        valueSchema: { type: 'number' },
+        propsSchema: [
+          { name: 'min', label: '最小值', type: 'number', defaultValue: 0 },
+          { name: 'max', label: '最大值', type: 'number', defaultValue: 100 },
+          { name: 'step', label: '步长', type: 'number', min: 0, defaultValue: 1 },
+          {
+            name: 'tooltipPlacement',
+            label: '提示位置',
+            type: 'select',
+            defaultValue: 'top',
+            options: [
+              { label: '上', value: 'top' },
+              { label: '下', value: 'bottom' },
+              { label: '左', value: 'left' },
+              { label: '右', value: 'right' }
+            ]
+          },
+          { name: 'dots', label: '显示刻度点', type: 'boolean', defaultValue: false }
+        ]
       }
     }
-  },
-  fields: {
-    Rate: {
-      label: '评分',
-      groupName: '评价组件',
-      component: Rate,
-      defaultProps: { count: 5, allowHalf: false, allowClear: true },
-      valueSchema: { type: 'number' },
-      propsSchema: [
-        {
-          name: 'count',
-          label: '星星总数',
-          type: 'number',
-          min: 1,
-          max: 10,
-          defaultValue: 5
-        },
-        {
-          name: 'allowHalf',
-          label: '允许半星',
-          type: 'boolean',
-          defaultValue: false
-        },
-        {
-          name: 'allowClear',
-          label: '允许清除',
-          type: 'boolean',
-          defaultValue: true
-        }
-      ]
-    },
-    Slider: {
-      label: '滑块',
-      component: Slider,
-      defaultProps: { min: 0, max: 100, step: 1 },
-      valueSchema: { type: 'number' },
-      propsSchema: [
-        { name: 'min', label: '最小值', type: 'number', defaultValue: 0 },
-        { name: 'max', label: '最大值', type: 'number', defaultValue: 100 },
-        { name: 'step', label: '步长', type: 'number', min: 0, defaultValue: 1 },
-        {
-          name: 'tooltipPlacement',
-          label: '提示位置',
-          type: 'select',
-          defaultValue: 'top',
-          options: [
-            { label: '上', value: 'top' },
-            { label: '下', value: 'bottom' },
-            { label: '左', value: 'left' },
-            { label: '右', value: 'right' }
-          ]
-        },
-        { name: 'dots', label: '显示刻度点', type: 'boolean', defaultValue: false }
-      ]
-    }
-  }
-});
+  });
+};
 
 const PresetExtendExample = () => {
+  const presetReady = useRef(false);
+  if (!presetReady.current) {
+    applyPresetOnce();
+    presetReady.current = true;
+  }
+
   const [schema, setSchema] = useState(() => ({
     ...defaultSchema(),
     blocks: [
@@ -1349,6 +1357,96 @@ const FormInfoFieldExample = () => {
 };
 
 render(<FormInfoFieldExample />);
+
+```
+
+- 语言切换(全屏)
+- FormCreator locale prop 切换中/英；检查内置 Field Type 分组与选项、列表类型 Tag、Select/DatePicker 占位
+- _FormCreator(@kne/current-lib_form-creator)[import * as _FormCreator from "@kne/form-creator"],(@kne/current-lib_form-creator/dist/index.css)[import "@kne/form-creator/dist/index.css"],antd(antd)[import antd from "antd"]
+
+```jsx
+const { default: FormCreator, defaultSchema, createBlock, createField } = _FormCreator;
+const { useState } = React;
+const { Radio, Space, Typography, Alert } = antd;
+
+const { Text, Paragraph } = Typography;
+
+const demoSchema = () => ({
+  ...defaultSchema(),
+  blocks: [
+    createBlock('formInfo', {
+      title: 'Basic Info',
+      column: 2,
+      list: [
+        createField({
+          type: 'Input',
+          name: 'name',
+          label: 'Name',
+          rule: 'REQ'
+        }),
+        createField({
+          type: 'Select',
+          name: 'city',
+          label: 'City',
+          props: {
+            options: [
+              { label: 'Shanghai', value: 'sh' },
+              { label: 'Beijing', value: 'bj' }
+            ]
+          }
+        }),
+        createField({
+          type: 'DatePicker',
+          name: 'birthday',
+          label: 'Birthday'
+        })
+      ]
+    })
+  ]
+});
+
+/**
+ * 通过 FormCreator 的 locale prop 切换语言，检查：
+ * - 编辑器壳层文案（Add Section / Field Type 等）
+ * - 内置 Field Type 分组与选项（Single-line Text / Dropdown）
+ * - 左侧列表字段类型 Tag、Select/DatePicker 默认占位
+ *
+ * 注意：扩展字段（Rate/Slider）若曾打开过「preset 扩展」示例，会残留中文 label；
+ * 那是全局 registry 污染，不在本示例内重注册（避免热更新循环）。
+ */
+const LocaleSwitchExample = () => {
+  const [locale, setLocale] = useState('en-US');
+  const [schema, setSchema] = useState(demoSchema);
+
+  return (
+    <Space direction="vertical" size={16} style={{ width: '100%' }}>
+      <Alert
+        type="info"
+        showIcon
+        message="Language switch"
+        description={
+          <Paragraph style={{ marginBottom: 0 }}>
+            Toggle locale, then open <Text code>Edit Field</Text> and check built-in <Text strong>Field Type</Text>{' '}
+            groups/options, type tags, and Select/DatePicker placeholders.
+          </Paragraph>
+        }
+      />
+      <Radio.Group
+        optionType="button"
+        buttonStyle="solid"
+        value={locale}
+        onChange={e => setLocale(e.target.value)}
+        options={[
+          { label: '中文', value: 'zh-CN' },
+          { label: 'English', value: 'en-US' }
+        ]}
+      />
+      <FormCreator key={locale} locale={locale} value={schema} onChange={setSchema} />
+    </Space>
+  );
+};
+
+render(<LocaleSwitchExample />);
 
 ```
 

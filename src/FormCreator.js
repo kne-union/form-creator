@@ -14,7 +14,7 @@ import SchemaRenderer from './SchemaRenderer';
 import style from './style.module.scss';
 
 const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = true, className, formProps, renderModal, extraToolbar }) => {
-  const { formatMessage } = useIntl();
+  const { formatMessage, locale } = useIntl();
   const isMobile = useIsMobile();
   const [innerSchema, setInnerSchema] = useState(() => normalizeSchema(defaultValue || defaultSchema()));
   const [blockEditorOpen, setBlockEditorOpen] = useState(false);
@@ -345,7 +345,7 @@ const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = t
       {showPreview ? (
         <div className={style['preview-pane']}>
           <div className={style['preview-body']}>
-            {hasRenderableContent(schema) ? <SchemaRenderer schema={schema} preview formProps={formProps} /> : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={formatMessage({ id: 'emptyBlockList' })} />}
+            {hasRenderableContent(schema) ? <SchemaRenderer schema={schema} preview formProps={formProps} locale={locale} /> : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={formatMessage({ id: 'emptyBlockList' })} />}
           </div>
         </div>
       ) : null}

@@ -30,7 +30,20 @@ export {
   MAX_BLOCK_DEPTH
 } from './schema';
 export { getBlockKindOptions, getBlockDefinition, blockToFormValues, formValuesToBlock } from './blockRegistry';
-export { getFieldDefinition, getFieldComponent, getFieldTypes, fieldToFormValues, formValuesToField, normalizeOptions, pickFromPropsSchema, applyFromPropsSchema, pickFieldProps, resolveFieldValueSchema } from './fieldRegistry';
+export {
+  getFieldDefinition,
+  getFieldComponent,
+  getFieldTypes,
+  resolveFieldTypeLabel,
+  registerField,
+  fieldToFormValues,
+  formValuesToField,
+  normalizeOptions,
+  pickFromPropsSchema,
+  applyFromPropsSchema,
+  pickFieldProps,
+  resolveFieldValueSchema
+} from './fieldRegistry';
 export { formatFieldDisplayValue, formatByValueSchema } from './formatDisplayValue';
 export { RULE_PRESET_ITEMS, RULE_LEN_PRESET, getRulePresetItems, parseRuleString, buildRuleString } from './rulePresets';
 export { preset } from './preset';

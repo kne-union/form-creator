@@ -14,22 +14,32 @@ const defineField = (type, definition) => {
 
 const FIELD_GROUPS = [
   {
-    label: '基础字段',
+    labelId: 'FieldGroupBasic',
     types: ['Input', 'TextArea', 'InputNumber', 'Switch', 'Checkbox', 'DatePicker']
   },
   {
-    label: '选择字段',
+    labelId: 'FieldGroupSelect',
     types: ['Select', 'RadioGroup', 'CheckboxGroup']
   },
   {
-    label: '高级选择',
+    labelId: 'FieldGroupAdvancedSelect',
     types: ['SuperSelectList', 'SuperSelectTableList', 'SuperSelectTree', 'SuperSelectCascader']
   },
   {
-    label: '业务选择',
+    labelId: 'FieldGroupBusinessSelect',
     types: ['SelectFunction', 'SelectIndustry', 'SelectAddress']
   }
 ];
+
+const resolveRegistryLabel = (formatMessage, labelId, fallbackLabel) => {
+  if (typeof formatMessage === 'function' && labelId) {
+    return formatMessage({ id: labelId });
+  }
+  if (fallbackLabel != null && String(fallbackLabel).trim()) {
+    return String(fallbackLabel).trim();
+  }
+  return labelId || '';
+};
 
 const optionEnumValues = field => {
   const options = field?.props?.options;
@@ -77,8 +87,7 @@ const datePickerValueSchema = field => {
 };
 
 defineField('Input', {
-  label: '单行文本',
-  group: '基础字段',
+  labelId: 'FieldTypeInput',
   component: Input,
   defaultProps: { allowClear: true },
   hasFieldProps: true,
@@ -86,8 +95,7 @@ defineField('Input', {
 });
 
 defineField('TextArea', {
-  label: '多行文本',
-  group: '基础字段',
+  labelId: 'FieldTypeTextArea',
   component: TextArea,
   defaultProps: { rows: 3 },
   defaults: { block: true },
@@ -96,8 +104,7 @@ defineField('TextArea', {
 });
 
 defineField('InputNumber', {
-  label: '数字',
-  group: '基础字段',
+  labelId: 'FieldTypeInputNumber',
   component: InputNumber,
   defaultProps: {},
   hasFieldProps: true,
@@ -105,8 +112,7 @@ defineField('InputNumber', {
 });
 
 defineField('Select', {
-  label: '下拉选择',
-  group: '选择字段',
+  labelId: 'FieldTypeSelect',
   component: Select,
   defaultProps: { options: [], allowClear: true },
   hasOptions: true,
@@ -115,8 +121,7 @@ defineField('Select', {
 });
 
 defineField('RadioGroup', {
-  label: '单选组',
-  group: '选择字段',
+  labelId: 'FieldTypeRadioGroup',
   component: RadioGroup,
   defaultProps: { options: [] },
   hasOptions: true,
@@ -124,8 +129,7 @@ defineField('RadioGroup', {
 });
 
 defineField('CheckboxGroup', {
-  label: '复选组',
-  group: '选择字段',
+  labelId: 'FieldTypeCheckboxGroup',
   component: CheckboxGroup,
   defaultProps: { options: [] },
   hasOptions: true,
@@ -140,8 +144,7 @@ defineField('CheckboxGroup', {
 });
 
 defineField('SuperSelectList', {
-  label: '普通下拉',
-  group: 'SuperSelect',
+  labelId: 'FieldTypeSuperSelectList',
   component: SuperSelectList,
   defaultProps: { options: [], isPopup: true, allowClear: true, labelKey: 'label', valueKey: 'value' },
   isSuperSelect: true,
@@ -151,8 +154,7 @@ defineField('SuperSelectList', {
 });
 
 defineField('SuperSelectTableList', {
-  label: '表格选择',
-  group: 'SuperSelect',
+  labelId: 'FieldTypeSuperSelectTableList',
   component: SuperSelectTableList,
   defaultProps: {
     options: [],
@@ -170,8 +172,7 @@ defineField('SuperSelectTableList', {
 });
 
 defineField('SuperSelectTree', {
-  label: '树形选择',
-  group: 'SuperSelect',
+  labelId: 'FieldTypeSuperSelectTree',
   component: SuperSelectTree,
   defaultProps: { options: [], isPopup: true, allowClear: true, labelKey: 'label', valueKey: 'value' },
   isSuperSelect: true,
@@ -182,8 +183,7 @@ defineField('SuperSelectTree', {
 });
 
 defineField('SuperSelectCascader', {
-  label: '级联选择',
-  group: 'SuperSelect',
+  labelId: 'FieldTypeSuperSelectCascader',
   component: SuperSelectCascader,
   defaultProps: {
     options: [],
@@ -202,8 +202,7 @@ defineField('SuperSelectCascader', {
 });
 
 defineField('SelectFunction', {
-  label: '职能选择',
-  group: 'SuperSelectPlus',
+  labelId: 'FieldTypeSelectFunction',
   component: SelectFunctionField,
   defaultProps: { isPopup: true, allowClear: true },
   isSuperSelect: true,
@@ -212,8 +211,7 @@ defineField('SelectFunction', {
 });
 
 defineField('SelectIndustry', {
-  label: '行业选择',
-  group: 'SuperSelectPlus',
+  labelId: 'FieldTypeSelectIndustry',
   component: SelectIndustryField,
   defaultProps: { isPopup: true, allowClear: true },
   isSuperSelect: true,
@@ -222,8 +220,7 @@ defineField('SelectIndustry', {
 });
 
 defineField('SelectAddress', {
-  label: '地址选择',
-  group: 'SuperSelectPlus',
+  labelId: 'FieldTypeSelectAddress',
   component: SelectAddressField,
   defaultProps: { isPopup: true, allowClear: true },
   isSuperSelect: true,
@@ -232,8 +229,7 @@ defineField('SelectAddress', {
 });
 
 defineField('Switch', {
-  label: '开关',
-  group: '基础字段',
+  labelId: 'FieldTypeSwitch',
   component: Switch,
   defaultProps: {},
   hasFieldProps: true,
@@ -241,16 +237,14 @@ defineField('Switch', {
 });
 
 defineField('Checkbox', {
-  label: '复选框',
-  group: '基础字段',
+  labelId: 'FieldTypeCheckbox',
   component: Checkbox,
   defaultProps: { children: '' },
   valueSchema: { type: 'boolean' }
 });
 
 defineField('DatePicker', {
-  label: '日期',
-  group: '基础字段',
+  labelId: 'FieldTypeDatePicker',
   component: DatePicker,
   defaultProps: {
     format: 'YYYY-MM-DD',
@@ -274,8 +268,9 @@ defineField('DatePicker', {
  * - min / max?: number（type=number）
  * - options?: { label, value }[]（type=select）
  *
- * preset({ type, definition }) 的 fields 项还可传：
- * - groupName?: string 自定义类型下拉分组名；不传则归入「扩展字段」
+ * preset / registerField 的 fields 项还可传：
+ * - label / labelId?: 展示名；有 labelId 时随 formatMessage 切换语言
+ * - groupName / groupNameId?: 自定义类型下拉分组；有 groupNameId 时随语言切换；都不传则归入「扩展字段」
  * - valueSchema?: object | (field) => object  提交值的 JSON Schema 片段；缺省回退 { type: 'string' }
  *   可含 format（date/month/week/time/date-time/password/color/json）与 display（option/phone/file/typed-date-range/date-to-today/html/money），供 SchemaContent 预览
  * - formatDisplayValue?: (value, field, ctx) => string  覆盖 valueSchema 默认预览
@@ -283,10 +278,14 @@ defineField('DatePicker', {
 export const registerField = (type, definition) => {
   const propsSchema = Array.isArray(definition?.propsSchema) ? definition.propsSchema : undefined;
   const groupName = definition?.groupName != null && String(definition.groupName).trim() ? String(definition.groupName).trim() : undefined;
+  const groupNameId = definition?.groupNameId != null && String(definition.groupNameId).trim() ? String(definition.groupNameId).trim() : undefined;
+  const labelId = definition?.labelId != null && String(definition.labelId).trim() ? String(definition.labelId).trim() : undefined;
   defineField(type, {
     ...definition,
     propsSchema,
     groupName,
+    groupNameId,
+    labelId,
     hasFieldProps: definition.hasFieldProps ?? !!(propsSchema && propsSchema.length)
   });
 };
@@ -347,6 +346,15 @@ export const applyFromPropsSchema = (props, values = {}, propsSchema = []) => {
 
 export const getFieldDefinition = type => registry.get(type);
 
+/** 解析字段类型展示名：内置走 labelId；扩展字段可用已翻译的 label */
+export const resolveFieldTypeLabel = (typeOrDefinition, formatMessage) => {
+  const definition = typeof typeOrDefinition === 'string' ? registry.get(typeOrDefinition) : typeOrDefinition;
+  if (!definition) {
+    return typeof typeOrDefinition === 'string' ? typeOrDefinition : '';
+  }
+  return resolveRegistryLabel(formatMessage, definition.labelId, definition.label) || definition.type || '';
+};
+
 /**
  * 解析字段提交值的 JSON Schema 片段。
  * 优先用 definition.valueSchema（对象或 (field)=>schema）；缺省 { type: 'string' }。
@@ -392,13 +400,16 @@ export const getFieldComponent = (type, field) => {
   return definition.component;
 };
 
-export const getFieldTypes = () => {
+export const getFieldTypes = formatMessage => {
   const grouped = FIELD_GROUPS.map(group => ({
-    label: group.label,
+    label: resolveRegistryLabel(formatMessage, group.labelId, group.label),
     options: group.types
       .map(type => registry.get(type))
       .filter(Boolean)
-      .map(({ type, label }) => ({ label, value: type }))
+      .map(item => ({
+        label: resolveFieldTypeLabel(item, formatMessage),
+        value: item.type
+      }))
   }));
 
   const builtinTypes = new Set(FIELD_GROUPS.flatMap(group => group.types));
@@ -408,24 +419,32 @@ export const getFieldTypes = () => {
   const fallback = [];
 
   registered.forEach(item => {
-    const option = { label: item.label, value: item.type };
+    const option = {
+      label: resolveFieldTypeLabel(item, formatMessage),
+      value: item.type
+    };
+    const groupNameId = item.groupNameId != null && String(item.groupNameId).trim() ? String(item.groupNameId).trim() : '';
     const groupName = item.groupName != null && String(item.groupName).trim() ? String(item.groupName).trim() : '';
-    if (!groupName) {
+    if (!groupNameId && !groupName) {
       fallback.push(option);
       return;
     }
-    if (!customGroups.has(groupName)) {
-      customGroups.set(groupName, []);
+    const groupKey = groupNameId || groupName;
+    if (!customGroups.has(groupKey)) {
+      customGroups.set(groupKey, {
+        label: resolveRegistryLabel(formatMessage, groupNameId || null, groupName),
+        options: []
+      });
     }
-    customGroups.get(groupName).push(option);
+    customGroups.get(groupKey).options.push(option);
   });
 
-  customGroups.forEach((options, label) => {
+  customGroups.forEach(({ label, options }) => {
     grouped.push({ label, options });
   });
   if (fallback.length) {
     grouped.push({
-      label: '扩展字段',
+      label: resolveRegistryLabel(formatMessage, 'FieldGroupExtended', '扩展字段'),
       options: fallback
     });
   }

@@ -31,7 +31,7 @@ const FieldConfigFields = ({ initialType, options, onOptionsChange, columns, onC
   const { formatMessage } = useIntl();
   const { openApi } = useFormContext();
   const [fieldType, setFieldType] = useState(initialType);
-  const fieldTypeOptions = useMemo(() => getFieldTypes(), []);
+  const fieldTypeOptions = useMemo(() => getFieldTypes(formatMessage), [formatMessage]);
   const definition = getFieldDefinition(fieldType);
 
   useEffect(() => {
