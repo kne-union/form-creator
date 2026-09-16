@@ -124,7 +124,7 @@ export const SchemaRendererInner = withLocale(props => {
     buttonFooter = false,
     buttonFooterProps
   } = props;
-  const { formatMessage } = useIntl();
+  const { formatMessage, locale } = useIntl();
   const isMobile = useIsMobile();
   const normalized = normalizeSchema(schema);
 
@@ -159,6 +159,7 @@ export const SchemaRendererInner = withLocale(props => {
     bodyClassName,
     isMobile,
     formatMessage,
+    locale,
     children,
     actionNode
   });
@@ -189,7 +190,7 @@ const SchemaRenderer = withLocale(props => {
     buttonFooter = false,
     buttonFooterProps
   } = props;
-  const { formatMessage } = useIntl();
+  const { formatMessage, locale } = useIntl();
   const isMobile = useIsMobile();
   const normalized = normalizeSchema(schema);
 
@@ -225,6 +226,7 @@ const SchemaRenderer = withLocale(props => {
     bodyClassName,
     isMobile,
     formatMessage,
+    locale,
     children,
     actionNode
   });

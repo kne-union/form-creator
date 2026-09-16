@@ -18,6 +18,7 @@ import {
 } from '@ant-design/icons';
 import { useIntl } from '@kne/react-intl';
 import { getBlockDefinition } from './blockRegistry';
+import { resolveFieldTypeLabel } from './fieldRegistry';
 import { MAX_BLOCK_DEPTH } from './schema';
 import FieldRow from './FieldRow';
 import style from './style.module.scss';
@@ -374,7 +375,7 @@ const BlockListPanel = ({
       block.kind === 'steps'
         ? formatMessage({ id: 'stepCount' }, { count: block.items?.length || 0 })
         : block.kind === 'multiField'
-          ? formatMessage({ id: 'multiFieldSummary' }, { type: block.fieldType })
+          ? formatMessage({ id: 'multiFieldSummary' }, { type: resolveFieldTypeLabel(block.fieldType, formatMessage) })
           : block.kind === 'choice'
             ? formatMessage({ id: 'choiceOptionCount' }, { count: block.options?.length || 0 })
             : supportsChildModules && nestCount > 0
@@ -386,7 +387,7 @@ const BlockListPanel = ({
         <header className={style['block-section-header']}>
           <div className={style['block-header-left']}>
             <Tag bordered={false} color={definition?.color || 'default'}>
-              {definition?.label || block.kind}
+              {formatMessage({ id: `blockKind_${block.kind}` })}
             </Tag>
             <Text strong ellipsis className={style['block-title']}>
               {block.title || block.label || block.name || formatMessage({ id: 'untitledBlock' })}

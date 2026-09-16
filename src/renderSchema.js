@@ -22,7 +22,7 @@ const resolvePartRootClassName = (depth, ...extra) => {
   return names.length ? names.join(' ') : undefined;
 };
 
-const renderFieldElements = (fields = [], preview = false, { namePrefix } = {}) =>
+const renderFieldElements = (fields = [], preview = false, { namePrefix, locale } = {}) =>
   fields
     .filter(field => !field.hidden)
     .map(field => {
@@ -45,6 +45,8 @@ const renderFieldElements = (fields = [], preview = false, { namePrefix } = {}) 
 
       const description = field.description != null && String(field.description).trim() ? field.description : undefined;
       const fieldName = namePrefix && field.name ? `${namePrefix}.${field.name}` : field.name;
+      // 显式传 locale，避免 Global 仍为 zh-CN 时 react-form-antd withLocale 盖掉父级英文
+      const localeProps = locale ? { locale } : {};
 
       return createElement(Component, {
         key: field.id,
@@ -53,6 +55,7 @@ const renderFieldElements = (fields = [], preview = false, { namePrefix } = {}) 
         rule: field.rule || undefined,
         block: field.block || undefined,
         ...props,
+        ...localeProps,
         labelTips: buildLabelTips(field.tips),
         description
       });
@@ -88,12 +91,13 @@ const nestedListItemPartProps = {
 const isFormInfoLikeBlock = kind => kind === 'formInfo' || kind === 'object';
 
 export const renderBlockElement = (block, preview = false, ctx = {}) => {
-  const { isMobile = false, formatMessage, depth = 0, asListItem = false } = ctx;
+  const { isMobile = false, formatMessage, depth = 0, asListItem = false, locale } = ctx;
   if (!block || depth > MAX_BLOCK_DEPTH) {
     return null;
   }
 
   const nextCtx = { ...ctx, depth: depth + 1, asListItem: false };
+  const fieldRenderOpts = { locale };
   const bordered = isMobile ? false : block.bordered || undefined;
   // 仅 FormInfo/object 吃列表项 Part 样式；List 等交给 form-info nestDepth
   const listItemPartProps = asListItem && isFormInfoLikeBlock(block.kind) ? nestedListItemPartProps : null;
@@ -111,7 +115,7 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
 
   switch (block.kind) {
     case 'formInfo': {
-      const fields = renderFieldElements(block.list, preview);
+      const fields = renderFieldElements(block.list, preview, fieldRenderOpts);
       const nested = renderChildBlocks(block.blocks || [], nextCtx).map(node => withBlockLayout(node, true));
       return withBlockLayout(
         createElement(FormInfo, {
@@ -129,7 +133,7 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
       );
     }
     case 'object': {
-      const fields = renderFieldElements(block.list, preview, { namePrefix: block.name || '' });
+      const fields = renderFieldElements(block.list, preview, { ...fieldRenderOpts, namePrefix: block.name || '' });
       const nested = renderChildBlocks(block.blocks || [], nextCtx).map(node => withBlockLayout(node, true));
       return withBlockLayout(
         createElement(FormInfo, {
@@ -147,7 +151,7 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
       );
     }
     case 'list': {
-      const fields = renderFieldElements(block.list, preview);
+      const fields = renderFieldElements(block.list, preview, fieldRenderOpts);
       const nested = renderItemBlocks(block.itemBlocks || []);
       return withBlockLayout(
         createElement(List, {
@@ -167,7 +171,7 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
       );
     }
     case 'tableList': {
-      const fields = renderFieldElements(block.list, preview);
+      const fields = renderFieldElements(block.list, preview, fieldRenderOpts);
       return withBlockLayout(
         createElement(TableList, {
           key: block.id,
@@ -212,7 +216,7 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
           prevIcon: createElement(ArrowLeftOutlined),
           nextIcon: createElement(ArrowRightOutlined),
           items: (block.items || []).map(step => {
-            const fields = renderFieldElements(step.list, preview);
+            const fields = renderFieldElements(step.list, preview, fieldRenderOpts);
             const nested = renderChildBlocks(step.blocks || [], nextCtx);
             const fieldNames = [...(step.list || []).filter(field => field && !field.hidden && field.name).map(field => field.name), ...collectBlockFieldNames(step.blocks || [])];
             if (nested.length) {
@@ -282,10 +286,10 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
   }
 };
 
-export const renderSchemaInner = (schema, { preview = false, className, bodyClassName, isMobile = false, formatMessage, children, actionNode } = {}) => {
+export const renderSchemaInner = (schema, { preview = false, className, bodyClassName, isMobile = false, formatMessage, locale, children, actionNode } = {}) => {
   const normalized = normalizeSchema(schema);
   const blocks = normalized.blocks || [];
-  const contentChildren = blocks.map(block => renderBlockElement(block, preview, { isMobile, formatMessage })).filter(Boolean);
+  const contentChildren = blocks.map(block => renderBlockElement(block, preview, { isMobile, formatMessage, locale })).filter(Boolean);
 
   if (!contentChildren.length && !children && !actionNode) {
     return null;
@@ -297,10 +301,10 @@ export const renderSchemaInner = (schema, { preview = false, className, bodyClas
   return className ? createElement('div', { className }, content) : content;
 };
 
-export const renderSchemaContent = (schema, { preview = false, formProps = {}, className, bodyClassName, isMobile = false, formatMessage, children, actionNode } = {}) => {
+export const renderSchemaContent = (schema, { preview = false, formProps = {}, className, bodyClassName, isMobile = false, formatMessage, locale, children, actionNode } = {}) => {
   const normalized = normalizeSchema(schema);
   const blocks = normalized.blocks || [];
-  const contentChildren = blocks.map(block => renderBlockElement(block, preview, { isMobile, formatMessage })).filter(Boolean);
+  const contentChildren = blocks.map(block => renderBlockElement(block, preview, { isMobile, formatMessage, locale })).filter(Boolean);
 
   if (!contentChildren.length && !children) {
     return null;

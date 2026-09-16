@@ -12,7 +12,7 @@ import style from './style.module.scss';
 const BlockConfigFields = ({ kind }) => {
   const { formatMessage } = useIntl();
   const definition = getBlockDefinition(kind);
-  const fieldTypeOptions = useMemo(() => getFieldTypes(), []);
+  const fieldTypeOptions = useMemo(() => getFieldTypes(formatMessage), [formatMessage]);
 
   const list = [];
 
@@ -83,7 +83,7 @@ const BlockConfigFields = ({ kind }) => {
 
   return (
     <div className={style['field-editor-form']}>
-      <FormInfo title={definition?.label || kind} subtitle={definition?.description} column={1} list={list.filter(Boolean)} />
+      <FormInfo title={formatMessage({ id: `blockKind_${kind}` })} subtitle={definition?.description} column={1} list={list.filter(Boolean)} />
     </div>
   );
 };
