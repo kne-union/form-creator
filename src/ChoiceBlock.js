@@ -96,7 +96,7 @@ const buildMultipleHint = (formatMessage, minLength, maxLength) => {
  * choice：同一条选项 UI；mode=single 只挂载一支；mode=multiple 平铺所有选中支。
  * 外层用 InfoPage.Part 的 title 展示标题。
  */
-const ChoiceBlock = ({ block, preview = false, isMobile = false, formatMessage, renderOptionContent }) => {
+const ChoiceBlock = ({ block, preview = false, isMobile = false, isPartRoot = false, formatMessage, renderOptionContent }) => {
   const mode = block.mode === 'multiple' ? 'multiple' : 'single';
   const selectorName = resolveSelectorName(block);
   const options = useMemo(() => block.options || [], [block.options]);
@@ -216,7 +216,7 @@ const ChoiceBlock = ({ block, preview = false, isMobile = false, formatMessage, 
       title,
       subtitle: modeHint,
       bordered,
-      className: style['choice-block'],
+      className: [style['choice-block'], isPartRoot ? InfoPage.partRootClassName : null].filter(Boolean).join(' '),
       'data-choice-mode': mode
     },
     createElement('div', { className: style['choice-selector'] }, createElement(Selector, selectorProps)),

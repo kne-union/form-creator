@@ -2,6 +2,7 @@ import { createElement, Fragment } from 'react';
 import { Tooltip } from 'antd';
 import { ArrowLeftOutlined, ArrowRightOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import FormInfo, { Form, List, TableList, MultiField, Steps } from '@kne/form-info';
+import InfoPage from '@kne/info-page';
 import { getFieldComponent, getFieldDefinition } from './fieldRegistry';
 import { createApiFromOptions } from './fields/optionsApi';
 import { MAX_BLOCK_DEPTH, normalizeSchema, collectBlockFieldNames } from './schema';
@@ -13,6 +14,12 @@ const buildLabelTips = tips => {
     return undefined;
   }
   return createElement(Tooltip, { title: tips }, createElement(QuestionCircleOutlined, { className: style['field-label-tips-icon'] }));
+};
+
+const resolvePartRootClassName = (depth, ...extra) => {
+  // 顶层模块一律重设一级标题，嵌入外层 FormInfo Part 时不降为二级胶囊
+  const names = [depth === 0 ? InfoPage.partRootClassName : null, ...extra].filter(Boolean);
+  return names.length ? names.join(' ') : undefined;
 };
 
 const renderFieldElements = (fields = [], preview = false, { namePrefix } = {}) =>
@@ -115,7 +122,8 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
           gap: block.gap,
           bordered,
           list: [...fields, ...nested],
-          ...(listItemPartProps || {})
+          ...(listItemPartProps || {}),
+          className: resolvePartRootClassName(depth)
         }),
         asListItem
       );
@@ -132,7 +140,8 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
           gap: block.gap,
           bordered,
           list: [...fields, ...nested],
-          ...(listItemPartProps || {})
+          ...(listItemPartProps || {}),
+          className: resolvePartRootClassName(depth)
         }),
         asListItem
       );
@@ -147,6 +156,7 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
           title: block.title || undefined,
           important: block.important || undefined,
           bordered,
+          className: resolvePartRootClassName(depth),
           maxLength: block.maxLength,
           minLength: block.minLength,
           ...(block.addText ? { addText: block.addText } : {}),
@@ -168,7 +178,8 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
           minLength: block.minLength,
           ...(block.addText ? { addText: block.addText } : {}),
           list: fields,
-          ...(listItemPartProps || {})
+          ...(listItemPartProps || {}),
+          className: resolvePartRootClassName(depth)
         }),
         asListItem
       );
@@ -197,6 +208,7 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
           title: block.title || undefined,
           subtitle: block.subtitle || undefined,
           bordered,
+          className: resolvePartRootClassName(depth),
           prevIcon: createElement(ArrowLeftOutlined),
           nextIcon: createElement(ArrowRightOutlined),
           items: (block.items || []).map(step => {
@@ -245,6 +257,7 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
           block,
           preview,
           isMobile,
+          isPartRoot: depth === 0,
           formatMessage,
           renderOptionContent: option => {
             const nodes = [];

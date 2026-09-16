@@ -165,6 +165,8 @@ import { SchemaContent, SchemaContentInner } from '@kne/form-creator';
 ```
 
 `actions` 由 FormCreator 顶部「添加模块」旁的设置按钮弹窗配置，写入 Schema；`SchemaRenderer` 会读取并渲染居中操作按钮（组件 props 可覆盖 Schema）。设置按钮后面可用 `extraToolbar` 追加自定义按钮。
+
+顶层模块渲染时会自动挂上 `InfoPage.partRootClassName`，嵌入外层 FormInfo Part 时标题从一级重新起算；模块内再嵌套仍为二级胶囊。
 ### 区块类型
 
 | kind | 说明 | 主要参数 |
@@ -172,7 +174,7 @@ import { SchemaContent, SchemaContentInner } from '@kne/form-creator';
 | formInfo | 表单信息区块 | title, subtitle, column, gap, bordered, list, **blocks** |
 | list | 动态列表 | name, title, important, bordered, maxLength, list, **itemBlocks** |
 | tableList | 表格列表 | name, title, bordered, maxLength, list（不支持子模块） |
-| object | 对象分组 | name, title, column, gap, list（字段名渲染为 `name.field`）, **blocks** |
+| object | 对象分组 | name, title, column, gap, bordered, list（字段名渲染为 `name.field`）, **blocks** |
 | choice | 选项分支 | title, **mode**(`single`\|`multiple`), **minLength** / **maxLength**（仅多选：最少/最多选几项）, selectorName, selectorInData, options[{ title, list, **blocks** }] |
 | multiField | 同类型多值 | name, label, fieldType, addText（不支持子模块） |
 | steps | 步骤表单 | title, subtitle, bordered, autoStep, items[{ title, column, list, **blocks** }] |

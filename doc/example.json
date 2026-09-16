@@ -203,6 +203,36 @@
           "importStatement": "import antd from \"antd\""
         }
       ]
+    },
+    {
+      "title": "FormInfo 包装为表单字段",
+      "description": "用 form-info 的 FormModal + useDecorator 把 FormCreator 做成字段；复现外层 Part 嵌套导致模块标题变成二级标签",
+      "code": "./forminfo-field.js",
+      "scope": [
+        {
+          "name": "_FormCreator",
+          "packageName": "@kne/current-lib_form-creator",
+          "importStatement": "import * as _FormCreator from \"@kne/form-creator\""
+        },
+        {
+          "packageName": "@kne/current-lib_form-creator/dist/index.css",
+          "importStatement": "import \"@kne/form-creator/dist/index.css\""
+        },
+        {
+          "name": "_FormInfo",
+          "packageName": "@kne/form-info",
+          "importStatement": "import * as _FormInfo from \"@kne/form-info\""
+        },
+        {
+          "packageName": "@kne/form-info/dist/index.css",
+          "importStatement": "import \"@kne/form-info/dist/index.css\""
+        },
+        {
+          "name": "antd",
+          "packageName": "antd",
+          "importStatement": "import antd from \"antd\""
+        }
+      ]
     }
   ]
 }

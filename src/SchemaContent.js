@@ -59,7 +59,8 @@ const renderBlock = (block, data, ctx) => {
     key: block.id,
     title: block.title || block.label || undefined,
     subtitle: block.subtitle || undefined,
-    bordered
+    bordered,
+    className: depth === 0 ? InfoPage.partRootClassName : undefined
   };
 
   switch (block.kind) {
