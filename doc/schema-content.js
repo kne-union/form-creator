@@ -71,7 +71,6 @@ const demoData = {
   mobile: '13800138000',
   gender: 'male',
   agree: true,
-  joinDate: '2024-03-01',
   remark: '可远程办公',
   projects: [
     { projectName: '招聘门户改版', role: '前端' },

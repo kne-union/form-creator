@@ -483,8 +483,8 @@
 }
 
 .add-block-dropdown {
-  width: 320px;
-  padding: 8px;
+  width: 380px;
+  padding: 6px;
   background: #ffffff;
   border-radius: 8px;
   box-shadow:
@@ -495,9 +495,9 @@
 
 .add-block-option {
   display: flex;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 8px;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 6px;
   cursor: pointer;
   border: 1px solid transparent;
   transition:
@@ -511,15 +511,16 @@
 }
 
 .add-block-option-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #f1f7ff;
   color: #4183f0;
   flex-shrink: 0;
+  font-size: 14px;
 }
 
 .add-block-option-text {
@@ -527,18 +528,18 @@
 }
 
 .add-block-option-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  line-height: 20px;
+  line-height: 18px;
 }
 
 .add-block-option-desc {
-  margin-top: 2px;
+  margin-top: 1px;
   color: #667085;
   font-size: 12px;
   line-height: 16px;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1104,7 +1105,7 @@
     }
 
     .add-block-dropdown {
-      width: min(320px, calc(100vw - 32px));
+      width: min(380px, calc(100vw - 32px));
     }
 
     .add-inline-btn {
