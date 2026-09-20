@@ -16,18 +16,21 @@
   }
 }
 
-/* 题目序号在必填 * 之前：helper 的 * 是 label::before，用 flex order 重排 */
+/* 题目序号在必填 * 之前：helper 的 * 是 label::before，用 flex order 重排。
+ * nowrap + 题干 min-width:0：禁止整块题干掉到下一行，序号/* 与题干同一段内折行 */
 .form-info-show-index {
   :global(.react-form__field-label) {
-    display: inline-flex;
+    display: flex;
+    width: 100%;
     align-items: baseline;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
 
   :global(.react-form__field-label.is-req::before) {
     position: static !important;
     transform: none !important;
     order: 2;
+    flex-shrink: 0;
     margin-right: 4px;
   }
 
@@ -37,6 +40,7 @@
 
   :global(.react-form__field_label-tips) {
     order: 4;
+    flex-shrink: 0;
   }
 }
 
@@ -48,6 +52,8 @@
 
 .field-label-main {
   order: 3;
+  flex: 1;
+  min-width: 0;
 }
 
 .form-creator {
