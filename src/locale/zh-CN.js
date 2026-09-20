@@ -204,7 +204,7 @@ const locale = {
   propSwitchOffText: '关闭时显示的文字',
   propSwitchOnTextHint: '例如：开',
   propSwitchOffTextHint: '例如：关',
-  propOptionsInline: '选项单行显示',
+  propOptionsInline: '选项横向排列',
   ruleLen: '长度限制',
   ruleLenRange: '长度范围',
   ruleLenMin: '最少字数',

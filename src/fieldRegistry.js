@@ -710,7 +710,7 @@ const applyFieldProps = (props, values, definition) => {
       break;
     case 'RadioGroup':
     case 'CheckboxGroup':
-      // 始终落盘布尔值，避免 Checkbox 未勾选时字段缺失被当成默认单行
+      // 始终落盘布尔值，避免 Checkbox 未勾选时字段缺失被当成默认横向
       props.inline = values.inline !== false;
       break;
     default:
