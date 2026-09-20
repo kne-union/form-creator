@@ -1113,7 +1113,7 @@ render(<ExtraToolbarExample />);
 ```
 
 - 按 Schema 展示提交数据
-- SchemaContent：根据搭建 Schema 与字段 valueSchema，用 InfoPage（同 FormInfo 布局）展示提交结果
+- SchemaContent：按 Schema + valueSchema 展示提交结果；含长题干问卷与约 480px 窄栏预览，核对上下排布不被 minWidth 撑乱
 - _FormCreator(@kne/current-lib_form-creator)[import * as _FormCreator from "@kne/form-creator"],(@kne/current-lib_form-creator/dist/index.css)[import "@kne/form-creator/dist/index.css"],antd(antd)[import antd from "antd"]
 
 ```jsx
@@ -1155,6 +1155,69 @@ const demoSchema = {
         createField({ type: 'TextArea', name: 'remark', label: '备注', block: true, props: { rows: 2, placeholder: '选填' } })
       ]
     }),
+    createBlock('formInfo', {
+      title: '111',
+      subtitle: '长题干问卷（用于核对窄栏上下排布）',
+      column: 1,
+      list: [
+        createField({
+          type: 'RadioGroup',
+          name: 'yearsInRole',
+          label: '您在本岗位（人才招聘方向）的工作年限是？（单选题）',
+          rule: 'REQ',
+          props: {
+            inline: true,
+            options: [
+              { label: 'A. 不到6个月', value: 'lt6m' },
+              { label: 'B. 6个月-1年', value: '6m1y' },
+              { label: 'C. 1-3年', value: '1to3y' },
+              { label: 'D. 3年以上', value: 'gt3y' }
+            ]
+          }
+        }),
+        createField({
+          type: 'RadioGroup',
+          name: 'aiFrequency',
+          label: '过去一个月，您使用AI工具（如ChatGPT、Kimi、Copilot、文心一言等）辅助工作的频率是？（单选题）',
+          rule: 'REQ',
+          props: {
+            inline: false,
+            options: [
+              { label: 'A. 每天都在用', value: 'daily' },
+              { label: 'B. 每周几次', value: 'weekly' },
+              { label: 'C. 偶尔使用', value: 'rarely' },
+              { label: 'D. 几乎不用', value: 'never' }
+            ]
+          }
+        }),
+        createField({
+          type: 'CheckboxGroup',
+          name: 'aiTasks',
+          label: '目前您用AI辅助过以下哪些具体工作？（多选题）',
+          props: {
+            inline: false,
+            options: [
+              { label: 'A. 撰写或优化职位说明书/JD', value: 'jd' },
+              { label: 'H. 其他（请在下方文本框中说明）', value: 'other' }
+            ]
+          }
+        }),
+        createField({
+          type: 'TextArea',
+          name: 'aiTasksOther',
+          label: 'H. 其他（请在下方文本框中说明）',
+          block: true,
+          props: { rows: 2, placeholder: '选填说明' }
+        }),
+        createField({
+          type: 'TextArea',
+          name: 'workOpinion',
+          label: '您对工作中使用AI工具的整体看法是？（开放题）',
+          block: true,
+          props: { rows: 3, placeholder: '请输入' }
+        })
+      ]
+    }),
     createBlock('list', {
       title: '项目经历',
       name: 'projects',
@@ -1191,6 +1254,11 @@ const demoData = {
   gender: 'male',
   agree: true,
   remark: '可远程办公',
+  yearsInRole: 'lt6m',
+  aiFrequency: 'daily',
+  aiTasks: ['jd', 'other'],
+  aiTasksOther: '示例内容',
+  workOpinion: '希望团队统一工具与规范，再逐步推广。',
   projects: [
     { projectName: '招聘门户改版', role: '前端' },
     { projectName: '表单搭建器', role: '全栈' }
@@ -1211,7 +1279,8 @@ const SchemaContentExample = () => {
         description={
           <span>
             按搭建 Schema 的分组结构展示提交数据；字段展示形态由各填写项的 <Text code>valueSchema</Text>
-            （如 string / number / boolean / enum）决定。布局与 FormInfo 相同，使用 InfoPage.Part + Content。
+            决定。长题干采用 label 在上、值在下。RadioGroup / CheckboxGroup 支持 <Text code>inline</Text>
+            （选项是否单行）；示例中「工作年限」为单行，「AI 频率 / 多选」为纵向。右侧窄栏约 480px 用于核对布局。
           </span>
         }
       />
@@ -1233,6 +1302,9 @@ const SchemaContentExample = () => {
           </Card>
         </Col>
       </Row>
+      <Card size="small" title="窄栏预览（模拟弹窗右栏 ~480px）" bordered style={{ maxWidth: 480 }}>
+        <SchemaContent schema={demoSchema} data={data} />
+      </Card>
     </Space>
   );
 };
