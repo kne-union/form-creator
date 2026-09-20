@@ -4,7 +4,7 @@ import { Input, InputNumber, Select, Checkbox } from '@kne/react-form-antd';
 import { useIntl } from '@kne/react-intl';
 import { getFieldDefinition } from './fieldRegistry';
 
-const BUILTIN_PROP_TYPES = ['Input', 'TextArea', 'InputNumber', 'Select', 'DatePicker', 'Switch'];
+const BUILTIN_PROP_TYPES = ['Input', 'TextArea', 'InputNumber', 'Select', 'DatePicker', 'Switch', 'RadioGroup', 'CheckboxGroup'];
 
 const buildPropsSchemaList = (schema, formatMessage) =>
   (schema || [])
@@ -108,6 +108,13 @@ const buildBuiltinList = (type, formatMessage) => {
       return [
         <Input key="checkedChildren" name="checkedChildren" label={formatMessage({ id: 'propSwitchOnText' })} placeholder={formatMessage({ id: 'propSwitchOnTextHint' })} />,
         <Input key="unCheckedChildren" name="unCheckedChildren" label={formatMessage({ id: 'propSwitchOffText' })} placeholder={formatMessage({ id: 'propSwitchOffTextHint' })} />
+      ];
+    case 'RadioGroup':
+    case 'CheckboxGroup':
+      return [
+        <Checkbox key="inline" name="inline">
+          {formatMessage({ id: 'propOptionsInline' })}
+        </Checkbox>
       ];
     default:
       return [];

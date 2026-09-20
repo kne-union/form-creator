@@ -96,15 +96,17 @@ const buildMultipleHint = (formatMessage, minLength, maxLength) => {
  * choice：同一条选项 UI；mode=single 只挂载一支；mode=multiple 平铺所有选中支。
  * 外层用 InfoPage.Part 的 title 展示标题。
  */
-const ChoiceBlock = ({ block, preview = false, isMobile = false, isPartRoot = false, formatMessage, renderOptionContent }) => {
-  const mode = block.mode === 'multiple' ? 'multiple' : 'single';
-  const selectorName = resolveSelectorName(block);
-  const options = useMemo(() => block.options || [], [block.options]);
+const ChoiceBlock = ({ schemaBlock, block: blockProp, preview = false, isMobile = false, isPartRoot = false, formatMessage, renderOptionContent }) => {
+  // schema 配置用 schemaBlock；兼容旧 prop 名 block（且忽略 withBlockLayout 写入的 boolean true）
+  const block = schemaBlock && typeof schemaBlock === 'object' ? schemaBlock : blockProp && typeof blockProp === 'object' ? blockProp : null;
+  const mode = block?.mode === 'multiple' ? 'multiple' : 'single';
+  const selectorName = block ? resolveSelectorName(block) : '';
+  const options = useMemo(() => (block && Array.isArray(block.options) ? block.options : []), [block]);
   const { formData, openApi } = useFormContext() || {};
-  const titleText = block.title != null ? String(block.title).trim() : '';
+  const titleText = block?.title != null ? String(block.title).trim() : '';
   const title = titleText || (formatMessage ? formatMessage({ id: 'choiceAreaTitle' }) : '请选择');
-  const bordered = isMobile ? false : block.bordered || undefined;
-  const { minLength, maxLength } = mode === 'multiple' ? resolveSelectLimits(block) : {};
+  const bordered = isMobile ? false : block?.bordered || undefined;
+  const { minLength, maxLength } = mode === 'multiple' && block ? resolveSelectLimits(block) : {};
   const firstOptionId = options[0] != null ? String(options[0].id) : undefined;
 
   const rawValue = getByPath(formData || {}, selectorName);
@@ -209,6 +211,10 @@ const ChoiceBlock = ({ block, preview = false, isMobile = false, isPartRoot = fa
   });
 
   const modeHint = mode === 'multiple' ? buildMultipleHint(formatMessage, minLength, maxLength) : formatMessage ? formatMessage({ id: 'choiceModeHintSingle' }) : '请选择其中一项';
+
+  if (!block) {
+    return null;
+  }
 
   return createElement(
     InfoPage.Part,

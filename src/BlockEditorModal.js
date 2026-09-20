@@ -26,6 +26,11 @@ const BlockConfigFields = ({ kind }) => {
       <Checkbox key="bordered" name="bordered">
         {formatMessage({ id: 'blockBordered' })}
       </Checkbox>,
+      kind === 'formInfo' ? (
+        <Checkbox key="showIndex" name="showIndex">
+          {formatMessage({ id: 'blockShowIndex' })}
+        </Checkbox>
+      ) : null,
       kind === 'list' ? (
         <Checkbox key="important" name="important">
           {formatMessage({ id: 'blockImportant' })}
@@ -52,10 +57,16 @@ const BlockConfigFields = ({ kind }) => {
       />,
       <InputNumber key="minLength" name="minLength" label={formatMessage({ id: 'choiceMinSelect' })} min={0} placeholder={formatMessage({ id: 'propOptionalNumber' })} display={({ openApi }) => openApi?.data?.mode === 'multiple'} />,
       <InputNumber key="maxLength" name="maxLength" label={formatMessage({ id: 'choiceMaxSelect' })} min={1} placeholder={formatMessage({ id: 'propOptionalNumber' })} display={({ openApi }) => openApi?.data?.mode === 'multiple'} />,
-      <Input key="selectorName" name="selectorName" label={formatMessage({ id: 'choiceSelectorName' })} placeholder={formatMessage({ id: 'choiceSelectorNamePlaceholder' })} />,
       <Checkbox key="selectorInData" name="selectorInData">
         {formatMessage({ id: 'choiceSelectorInData' })}
-      </Checkbox>
+      </Checkbox>,
+      <Input
+        key="selectorName"
+        name="selectorName"
+        label={formatMessage({ id: 'choiceSelectorName' })}
+        placeholder={formatMessage({ id: 'choiceSelectorNamePlaceholder' })}
+        display={({ openApi }) => openApi?.data?.selectorInData !== false}
+      />
     );
   }
 

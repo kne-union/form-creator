@@ -1,5 +1,55 @@
 @use '~@kne/responsive-utils/scss' as resp;
 
+.option-group-stack {
+  display: flex !important;
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  align-items: flex-start !important;
+  row-gap: 8px;
+  column-gap: 0 !important;
+
+  :global(.ant-radio-wrapper),
+  :global(.ant-checkbox-wrapper),
+  :global(.ant-checkbox-group-item) {
+    margin-inline-end: 0 !important;
+    margin-inline-start: 0 !important;
+  }
+}
+
+/* 题目序号在必填 * 之前：helper 的 * 是 label::before，用 flex order 重排 */
+.form-info-show-index {
+  :global(.react-form__field-label) {
+    display: inline-flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+  }
+
+  :global(.react-form__field-label.is-req::before) {
+    position: static !important;
+    transform: none !important;
+    order: 2;
+    margin-right: 4px;
+  }
+
+  :global(.react-form__field_extra) {
+    display: none;
+  }
+
+  :global(.react-form__field_label-tips) {
+    order: 4;
+  }
+}
+
+.field-label-index {
+  order: 1;
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+
+.field-label-main {
+  order: 3;
+}
+
 .form-creator {
   display: flex;
   flex-wrap: wrap;
@@ -66,6 +116,41 @@
 
 .schema-content {
   width: 100%;
+  min-width: 0;
+}
+
+.schema-content-fields {
+  display: grid;
+  grid-template-columns: repeat(var(--schema-content-cols, 1), minmax(0, 1fr));
+  gap: 12px 24px;
+  width: 100%;
+  min-width: 0;
+}
+
+.schema-content-field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  min-width: 0;
+}
+
+.schema-content-field-block {
+  grid-column: 1 / -1;
+}
+
+.schema-content-field-label {
+  color: var(--font-color-grey-1);
+  word-break: break-word;
+  white-space: normal;
+  line-height: 1.5;
+}
+
+.schema-content-field-value {
+  word-break: break-word;
+  white-space: pre-line;
+  line-height: 1.5;
+  min-width: 0;
 }
 
 .schema-content-file-list {
