@@ -204,7 +204,7 @@ const locale = {
   propSwitchOffText: 'Text when off',
   propSwitchOnTextHint: 'e.g. On',
   propSwitchOffTextHint: 'e.g. Off',
-  propOptionsInline: 'Options in a single row',
+  propOptionsInline: 'Arrange options horizontally',
   ruleLen: 'Length Limit',
   ruleLenRange: 'Length Range',
   ruleLenMin: 'Min',

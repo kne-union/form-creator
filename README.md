@@ -1278,7 +1278,7 @@ const SchemaContentExample = () => {
           <span>
             按搭建 Schema 的分组结构展示提交数据；字段展示形态由各填写项的 <Text code>valueSchema</Text>
             决定。长题干采用 label 在上、值在下。RadioGroup / CheckboxGroup 支持 <Text code>inline</Text>
-            （选项是否单行）；示例中「工作年限」为单行，「AI 频率 / 多选」为纵向。右侧窄栏约 480px 用于核对布局。
+            （选项是否横向排列）；示例中「工作年限」为横向，「AI 频率 / 多选」为纵向。右侧窄栏约 480px 用于核对布局。
           </span>
         }
       />
