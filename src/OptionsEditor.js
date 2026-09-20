@@ -16,6 +16,31 @@ const EMPTY_OPTION = () => ({
   value: ''
 });
 
+/** value 为空或仍等于当前 label 时视为联动中，改 label 会同步 value */
+const isOptionValueLinked = (label, value) => {
+  const labelText = label == null ? '' : String(label);
+  const valueText = value == null ? '' : String(value);
+  return valueText === '' || valueText === labelText;
+};
+
+const patchOptionLabelChange = (item, nextLabel) => {
+  const patch = { label: nextLabel };
+  if (isOptionValueLinked(item.label, item.value)) {
+    patch.value = nextLabel;
+  }
+  return patch;
+};
+
+const trimOptionLabelValue = item => {
+  const label = String(item?.label ?? '').trim();
+  const rawValue = String(item?.value ?? '').trim();
+  const linked = isOptionValueLinked(item?.label, item?.value) || rawValue === '' || rawValue === label;
+  return {
+    label,
+    value: linked ? label : rawValue
+  };
+};
+
 export { createEmptyColumn };
 
 const createEmptyTableRow = columns => {
@@ -52,9 +77,26 @@ const FlatOptionRows = ({ list, onChange, allowDescription }) => {
     <div className={style['options-list']}>
       {rows.map((item, index) => (
         <Flex key={item._key} gap={8} align="start" className={style['options-row']}>
-          <Input value={item.label} placeholder={formatMessage({ id: 'optionLabelPlaceholder' })} onChange={event => updateItem(index, { label: event.target.value })} />
-          <Input value={item.value} placeholder={formatMessage({ id: 'optionValuePlaceholder' })} onChange={event => updateItem(index, { value: event.target.value })} />
-          {allowDescription ? <Input value={item.description || ''} placeholder={formatMessage({ id: 'optionDescPlaceholder' })} onChange={event => updateItem(index, { description: event.target.value })} /> : null}
+          <Input
+            value={item.label}
+            placeholder={formatMessage({ id: 'optionLabelPlaceholder' })}
+            onChange={event => updateItem(index, patchOptionLabelChange(item, event.target.value))}
+            onBlur={() => updateItem(index, trimOptionLabelValue(item))}
+          />
+          <Input
+            value={item.value}
+            placeholder={formatMessage({ id: 'optionValuePlaceholder' })}
+            onChange={event => updateItem(index, { value: event.target.value })}
+            onBlur={() => updateItem(index, { value: String(item.value ?? '').trim() })}
+          />
+          {allowDescription ? (
+            <Input
+              value={item.description || ''}
+              placeholder={formatMessage({ id: 'optionDescPlaceholder' })}
+              onChange={event => updateItem(index, { description: event.target.value })}
+              onBlur={() => updateItem(index, { description: String(item.description ?? '').trim() })}
+            />
+          ) : null}
           <Button
             type="text"
             danger
@@ -105,9 +147,16 @@ const TreeOptionNode = ({ item, index, siblings, onChangeSiblings, allowDescript
     <div className={style['tree-option-node']} data-depth={depth}>
       <div className={style['tree-option-row']}>
         <div className={style['tree-option-fields']}>
-          <Input value={item.label} placeholder={formatMessage({ id: 'optionLabelPlaceholder' })} onChange={e => updateSelf({ label: e.target.value })} />
-          <Input value={item.value} placeholder={formatMessage({ id: 'optionValuePlaceholder' })} onChange={e => updateSelf({ value: e.target.value })} />
-          {allowDescription ? <Input value={item.description || ''} placeholder={formatMessage({ id: 'optionDescPlaceholder' })} onChange={e => updateSelf({ description: e.target.value })} /> : null}
+          <Input value={item.label} placeholder={formatMessage({ id: 'optionLabelPlaceholder' })} onChange={e => updateSelf(patchOptionLabelChange(item, e.target.value))} onBlur={() => updateSelf(trimOptionLabelValue(item))} />
+          <Input value={item.value} placeholder={formatMessage({ id: 'optionValuePlaceholder' })} onChange={e => updateSelf({ value: e.target.value })} onBlur={() => updateSelf({ value: String(item.value ?? '').trim() })} />
+          {allowDescription ? (
+            <Input
+              value={item.description || ''}
+              placeholder={formatMessage({ id: 'optionDescPlaceholder' })}
+              onChange={e => updateSelf({ description: e.target.value })}
+              onBlur={() => updateSelf({ description: String(item.description ?? '').trim() })}
+            />
+          ) : null}
         </div>
         <div className={style['tree-option-actions']}>
           {canAddChild ? (

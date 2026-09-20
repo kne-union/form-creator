@@ -123,16 +123,18 @@ defineField('Select', {
 defineField('RadioGroup', {
   labelId: 'FieldTypeRadioGroup',
   component: RadioGroup,
-  defaultProps: { options: [] },
+  defaultProps: { options: [], inline: true },
   hasOptions: true,
+  hasFieldProps: true,
   valueSchema: stringWithEnumSchema
 });
 
 defineField('CheckboxGroup', {
   labelId: 'FieldTypeCheckboxGroup',
   component: CheckboxGroup,
-  defaultProps: { options: [] },
+  defaultProps: { options: [], inline: true },
   hasOptions: true,
+  hasFieldProps: true,
   valueSchema: field => {
     const items = { type: 'string' };
     const enums = optionEnumValues(field);
@@ -459,16 +461,21 @@ export const normalizeOptions = (options, { allowChildren = false, columns = [] 
 
   return options
     .map(item => {
+      const label = String(item?.label ?? '').trim();
+      let value = String(item?.value ?? '').trim();
+      if (!value && label) {
+        value = label;
+      }
       const next = {
-        label: item?.label ?? '',
-        value: item?.value ?? '',
-        description: item?.description ?? ''
+        label,
+        value,
+        description: String(item?.description ?? '').trim()
       };
       columnNames.forEach(name => {
         next[name] = item?.[name] ?? '';
       });
       if (!String(next.label).trim() && columnNames[0] && String(next[columnNames[0]] || '').trim()) {
-        next.label = String(next[columnNames[0]]);
+        next.label = String(next[columnNames[0]]).trim();
       }
       if (!String(next.value).trim() && String(next.label).trim()) {
         next.value = next.label;
@@ -630,6 +637,11 @@ export const pickFieldProps = (field, definition) => {
         checkedChildren: props.checkedChildren || '',
         unCheckedChildren: props.unCheckedChildren || ''
       };
+    case 'RadioGroup':
+    case 'CheckboxGroup':
+      return {
+        inline: props.inline !== false
+      };
     default:
       if (definition?.propsSchema?.length) {
         return pickFromPropsSchema(props, definition.propsSchema, definition.defaultProps || {});
@@ -695,6 +707,11 @@ const applyFieldProps = (props, values, definition) => {
     case 'Switch':
       setOptionalString(props, 'checkedChildren', values.checkedChildren);
       setOptionalString(props, 'unCheckedChildren', values.unCheckedChildren);
+      break;
+    case 'RadioGroup':
+    case 'CheckboxGroup':
+      // 始终落盘布尔值，避免 Checkbox 未勾选时字段缺失被当成默认单行
+      props.inline = values.inline !== false;
       break;
     default:
       if (definition?.propsSchema?.length) {

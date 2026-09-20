@@ -22,10 +22,22 @@ const resolvePartRootClassName = (depth, ...extra) => {
   return names.length ? names.join(' ') : undefined;
 };
 
-const renderFieldElements = (fields = [], preview = false, { namePrefix, locale } = {}) =>
+const buildFieldLabel = field => {
+  const base = field?.label != null && String(field.label).trim() ? String(field.label).trim() : field?.name || '';
+  return base || undefined;
+};
+
+const buildIndexedLabelRender = index => {
+  return ({ label }) => {
+    const text = label != null ? String(label).replace(/\u200b/g, '') : '';
+    return createElement(Fragment, null, createElement('span', { className: style['field-label-index'] }, `${index + 1}.`), text ? createElement('span', { className: style['field-label-main'] }, text) : null);
+  };
+};
+
+const renderFieldElements = (fields = [], preview = false, { namePrefix, locale, showIndex = false } = {}) =>
   fields
     .filter(field => !field.hidden)
-    .map(field => {
+    .map((field, index) => {
       const Component = getFieldComponent(field.type, field);
       if (!Component) {
         return null;
@@ -43,15 +55,29 @@ const renderFieldElements = (fields = [], preview = false, { namePrefix, locale 
 
       delete props.range;
 
+      // Radio/Checkbox 选项布局：inline=false 纵向；Radio 用 antd vertical，Checkbox 用样式兜底
+      if (field.type === 'RadioGroup' || field.type === 'CheckboxGroup') {
+        const optionsInline = props.inline !== false;
+        delete props.inline;
+        if (!optionsInline) {
+          if (field.type === 'RadioGroup') {
+            props.vertical = true;
+          }
+          props.className = [props.className, style['option-group-stack']].filter(Boolean).join(' ');
+        }
+      }
+
       const description = field.description != null && String(field.description).trim() ? field.description : undefined;
       const fieldName = namePrefix && field.name ? `${namePrefix}.${field.name}` : field.name;
       // 显式传 locale，避免 Global 仍为 zh-CN 时 react-form-antd withLocale 盖掉父级英文
       const localeProps = locale ? { locale } : {};
+      const label = buildFieldLabel(field);
 
       return createElement(Component, {
         key: field.id,
         name: fieldName,
-        label: field.label,
+        label: showIndex ? label || '\u200b' : label,
+        ...(showIndex ? { labelRender: buildIndexedLabelRender(index) } : null),
         rule: field.rule || undefined,
         block: field.block || undefined,
         ...props,
@@ -64,6 +90,10 @@ const renderFieldElements = (fields = [], preview = false, { namePrefix, locale 
 
 const withBlockLayout = (element, forceBlock) => {
   if (!element || !forceBlock) {
+    return element;
+  }
+  // FormInfo / List 等用 block 表示整行占位；勿覆盖 ChoiceBlock 的 schemaBlock
+  if (element.type === ChoiceBlock || element.props?.schemaBlock) {
     return element;
   }
   return createElement(element.type, {
@@ -115,7 +145,8 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
 
   switch (block.kind) {
     case 'formInfo': {
-      const fields = renderFieldElements(block.list, preview, fieldRenderOpts);
+      const showIndex = !!block.showIndex;
+      const fields = renderFieldElements(block.list, preview, { ...fieldRenderOpts, showIndex });
       const nested = renderChildBlocks(block.blocks || [], nextCtx).map(node => withBlockLayout(node, true));
       return withBlockLayout(
         createElement(FormInfo, {
@@ -127,7 +158,7 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
           bordered,
           list: [...fields, ...nested],
           ...(listItemPartProps || {}),
-          className: resolvePartRootClassName(depth)
+          className: resolvePartRootClassName(depth, showIndex ? style['form-info-show-index'] : null)
         }),
         asListItem
       );
@@ -258,7 +289,7 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
       return withBlockLayout(
         createElement(ChoiceBlock, {
           key: block.id,
-          block,
+          schemaBlock: block,
           preview,
           isMobile,
           isPartRoot: depth === 0,

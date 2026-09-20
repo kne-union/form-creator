@@ -92,6 +92,7 @@ export const createBlock = (kind, overrides = {}) => {
     gap: 24,
     bordered: false,
     important: false,
+    showIndex: false,
     name: needsName ? createDataKey(kind === 'object' ? 'obj' : 'block') : '',
     label: '',
     addText: '',

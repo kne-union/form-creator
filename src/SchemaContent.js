@@ -2,7 +2,7 @@ import { Fragment } from 'react';
 import { Empty } from 'antd';
 import { useIntl } from '@kne/react-intl';
 import { useIsMobile } from '@kne/responsive-utils';
-import InfoPage, { Content } from '@kne/info-page';
+import InfoPage from '@kne/info-page';
 import withLocale from './withLocale';
 import { formatFieldDisplayValue } from './formatDisplayValue';
 import { MAX_BLOCK_DEPTH, hasRenderableContent, normalizeSchema } from './schema';
@@ -29,20 +29,39 @@ const resolveChoiceSelectorName = block => {
 
 const formatFieldValue = (field, value, formatMessage) => formatFieldDisplayValue(field, value, { formatMessage });
 
-const renderFieldsContent = (fields, data, formatMessage, column) => {
+/**
+ * 问卷题干往往很长：不用 InfoPage Content 的横向 label 列宽对齐（minWidth），
+ * 改为 label 在上、值在下，避免窄栏（如弹窗双栏预览）被撑乱。
+ */
+const renderFieldsContent = (fields, data, formatMessage, column, { showIndex = false } = {}) => {
   const list = (fields || [])
     .filter(field => field && !field.hidden && field.name)
-    .map(field => ({
-      label: field.label || field.name,
-      content: formatFieldValue(field, getByPath(data, field.name), formatMessage),
-      block: field.block || undefined
-    }));
+    .map((field, index) => {
+      const baseLabel = field.label || field.name;
+      const label = showIndex ? `${index + 1}. ${baseLabel}` : baseLabel;
+      return {
+        label,
+        content: formatFieldValue(field, getByPath(data, field.name), formatMessage),
+        block: field.block === true
+      };
+    });
 
   if (!list.length) {
     return null;
   }
 
-  return <Content col={column || 2} list={list} />;
+  const cols = Math.max(1, Number(column) || 2);
+
+  return (
+    <div className={style['schema-content-fields']} style={{ '--schema-content-cols': cols }}>
+      {list.map((item, index) => (
+        <div key={index} className={[style['schema-content-field'], item.block ? style['schema-content-field-block'] : null].filter(Boolean).join(' ')}>
+          {item.label ? <div className={style['schema-content-field-label']}>{item.label}：</div> : null}
+          <div className={style['schema-content-field-value']}>{item.content}</div>
+        </div>
+      ))}
+    </div>
+  );
 };
 
 const renderBlockList = (blocks, data, ctx) => (blocks || []).map(block => renderBlock(block, data, ctx)).filter(Boolean);
@@ -67,7 +86,7 @@ const renderBlock = (block, data, ctx) => {
     case 'formInfo': {
       return (
         <InfoPage.Part {...partProps}>
-          {renderFieldsContent(block.list, data, formatMessage, block.column)}
+          {renderFieldsContent(block.list, data, formatMessage, block.column, { showIndex: !!block.showIndex })}
           {renderBlockList(block.blocks, data, nextCtx)}
         </InfoPage.Part>
       );
@@ -111,7 +130,12 @@ const renderBlock = (block, data, ctx) => {
       const content = Array.isArray(values) ? values.map(item => formatFieldValue(itemField, item, formatMessage)).join('、') : formatFieldValue(itemField, values, formatMessage);
       return (
         <InfoPage.Part {...partProps}>
-          <Content col={1} list={[{ label: block.label || block.name, content, block: true }]} />
+          <div className={style['schema-content-fields']} style={{ '--schema-content-cols': 1 }}>
+            <div className={[style['schema-content-field'], style['schema-content-field-block']].join(' ')}>
+              {block.label || block.name ? <div className={style['schema-content-field-label']}>{(block.label || block.name) + '：'}</div> : null}
+              <div className={style['schema-content-field-value']}>{content}</div>
+            </div>
+          </div>
         </InfoPage.Part>
       );
     }

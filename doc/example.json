@@ -185,7 +185,7 @@
     },
     {
       "title": "按 Schema 展示提交数据",
-      "description": "SchemaContent：根据搭建 Schema 与字段 valueSchema，用 InfoPage（同 FormInfo 布局）展示提交结果",
+      "description": "SchemaContent：按 Schema + valueSchema 展示提交结果；含长题干问卷与约 480px 窄栏预览，核对上下排布不被 minWidth 撑乱",
       "code": "./schema-content.js",
       "scope": [
         {
