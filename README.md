@@ -170,6 +170,70 @@ const BaseExample = () => {
                     })
                 ]
             }),
+            createBlock('editableList', {
+                title: '证书资质（行内编辑列表）',
+                name: 'certificates',
+                addText: '添加证书',
+                list: [
+                    createField({
+                        type: 'Input',
+                        name: 'certName',
+                        label: '证书名称',
+                        rule: 'REQ',
+                        props: {placeholder: '请输入证书名称'}
+                    }),
+                    createField({
+                        type: 'DatePicker',
+                        name: 'issueDate',
+                        label: '获得时间',
+                        props: {placeholder: '请选择日期'}
+                    })
+                ]
+            }),
+            createBlock('editableList', {
+                title: '岗位核心任务（行内编辑列表 + 嵌套）',
+                name: 'tasks',
+                addText: '添加任务',
+                addPosition: 'top',
+                minLength: 1,
+                list: [
+                    createField({
+                        type: 'Input',
+                        name: 'taskName',
+                        label: '任务名称',
+                        rule: 'REQ',
+                        props: {placeholder: '请输入任务名称'}
+                    }),
+                    createField({
+                        type: 'Select',
+                        name: 'frequency',
+                        label: '执行频率',
+                        props: {
+                            placeholder: '请选择',
+                            options: [
+                                {label: '每天', value: 'daily'},
+                                {label: '每周', value: 'weekly'},
+                                {label: '每月', value: 'monthly'}
+                            ]
+                        }
+                    })
+                ],
+                itemBlocks: [
+                    createBlock('list', {
+                        title: '分析依据',
+                        name: 'evidence',
+                        addText: '添加依据',
+                        list: [
+                            createField({
+                                type: 'Input',
+                                name: 'source',
+                                label: '来源',
+                                props: {placeholder: '如：JD 原文'}
+                            })
+                        ]
+                    })
+                ]
+            }),
             createBlock('list', {
                 title: '项目经历（含嵌套）',
                 name: 'projects',
@@ -417,7 +481,7 @@ const BaseExample = () => {
         <FormCreator value={schema} onChange={setSchema} />
         <div style={{marginTop: 16}}>
             <JsonView data={schema} theme="light" collapsedFrom={2} searchable={false} />
-            <Text type="secondary">初始示例已包含表单分组、列表、表格列表、列表嵌套、选项切换、多字段、分步等模块。</Text>
+            <Text type="secondary">初始示例已包含表单分组、列表、表格列表、行内编辑列表、列表嵌套、选项切换、多字段、分步等模块。</Text>
         </div>
     </div>;
 };
@@ -1227,6 +1291,20 @@ const demoSchema = {
         createField({ type: 'Input', name: 'role', label: '角色' })
       ]
     }),
+    createBlock('editableList', {
+      title: '岗位核心任务（行内编辑列表）',
+      name: 'tasks',
+      addText: '添加任务',
+      addPosition: 'top',
+      list: [createField({ type: 'Input', name: 'taskName', label: '任务名称', rule: 'REQ' }), createField({ type: 'Input', name: 'frequency', label: '执行频率' })],
+      itemBlocks: [
+        createBlock('list', {
+          title: '分析依据',
+          name: 'evidence',
+          list: [createField({ type: 'Input', name: 'source', label: '来源' })]
+        })
+      ]
+    }),
     createBlock('choice', {
       title: '客户类型',
       mode: 'single',
@@ -1262,6 +1340,10 @@ const demoData = {
   projects: [
     { projectName: '招聘门户改版', role: '前端' },
     { projectName: '表单搭建器', role: '全栈' }
+  ],
+  tasks: [
+    { taskName: '梳理招聘需求', frequency: '每周', evidence: [{ source: 'JD 原文' }] },
+    { taskName: '输出岗位画像', frequency: '每月' }
   ],
   customerType: 'enterprise',
   companyName: '示例科技有限公司'
@@ -1679,12 +1761,12 @@ import { SchemaContent, SchemaContentInner } from '@kne/form-creator';
   },
   blocks: [{
     id: string,
-    kind: 'formInfo' | 'list' | 'tableList' | 'multiField' | 'object' | 'choice' | 'steps',
+    kind: 'formInfo' | 'list' | 'tableList' | 'editableList' | 'multiField' | 'object' | 'choice' | 'steps',
     title?, subtitle?, column?, gap?, bordered?, important?,
-    name?, label?, addText?, maxLength?, minLength?, fieldType?, autoStep?,
+    name?, label?, addText?, addPosition?, maxLength?, minLength?, fieldType?, autoStep?,
     mode?, selectorName?, selectorInData?, discriminator?,
     list?: [{ id, type, name, label, tips?, description?, rule?, block?, hidden?, props? }],
-    itemBlocks?: Block[], // list：列表项内子模块
+    itemBlocks?: Block[], // list / editableList：列表项内子模块
     blocks?: Block[], // formInfo / object：子模块
     options?: [{ id, title, list?, blocks?: Block[] }], // choice
     items?: [{ id, title, column, list: [...], blocks?: Block[] }] // steps 专用
@@ -1702,6 +1784,7 @@ import { SchemaContent, SchemaContentInner } from '@kne/form-creator';
 | formInfo | 表单信息区块 | title, subtitle, column, gap, bordered, list, **blocks** |
 | list | 动态列表 | name, title, important, bordered, maxLength, list, **itemBlocks** |
 | tableList | 表格列表 | name, title, bordered, maxLength, list（不支持子模块） |
+| editableList | 行内编辑列表（`@kne/form-info` EditableList）：每条只读摘要展示，点击编辑后单独表单填写、保存写回；父表单只注册一个字段，数据量大不卡顿 | name, title, column（编辑态列数）, bordered, addText, **addPosition**（`bottom` 底部追加 \| `top` 标题右侧插入首项 \| `both`，默认 `bottom`）, minLength, maxLength, list, **itemBlocks** |
 | object | 对象分组 | name, title, column, gap, bordered, list（字段名渲染为 `name.field`）, **blocks** |
 | choice | 选项分支 | title, **mode**(`single`\|`multiple`), **minLength** / **maxLength**（仅多选：最少/最多选几项）, selectorName, selectorInData, options[{ title, list, **blocks** }] |
 | multiField | 同类型多值 | name, label, fieldType, addText（不支持子模块） |
@@ -1739,7 +1822,7 @@ const dataSchema = schemaToDataSchema(schema);
 |--------|----------------|
 | formInfo | 字段摊平进当前 object |
 | object | `properties[name]` = nested object（字段名为相对 name） |
-| list / tableList | `properties[name]` = array of object |
+| list / tableList / editableList | `properties[name]` = array of object |
 | multiField | `properties[name]` = array，元素为 `fieldType` 的 valueSchema |
 | steps | 各 step 字段/子块并入当前层 |
 | choice（single） | `oneOf`：每支含 selector `const` + 该 option 字段 |
