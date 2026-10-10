@@ -14,12 +14,13 @@ import {
   SelectOutlined,
   SettingOutlined,
   ClusterOutlined,
-  PartitionOutlined
+  PartitionOutlined,
+  ProfileOutlined
 } from '@ant-design/icons';
 import { useIntl } from '@kne/react-intl';
 import { getBlockDefinition } from './blockRegistry';
 import { resolveFieldTypeLabel } from './fieldRegistry';
-import { MAX_BLOCK_DEPTH } from './schema';
+import { MAX_BLOCK_DEPTH, supportsItemBlocks as kindSupportsItemBlocks } from './schema';
 import FieldRow from './FieldRow';
 import style from './style.module.scss';
 
@@ -33,6 +34,7 @@ const ROOT_ADD_OPTIONS = [
   { key: 'formInfo', icon: <FormOutlined /> },
   { key: 'list', icon: <UnorderedListOutlined /> },
   { key: 'tableList', icon: <TableOutlined /> },
+  { key: 'editableList', icon: <ProfileOutlined /> },
   { key: 'object', icon: <ClusterOutlined /> },
   { key: 'choice', icon: <PartitionOutlined /> },
   { key: 'multiField', icon: <AppstoreOutlined /> },
@@ -352,7 +354,7 @@ const BlockListPanel = ({
       );
     }
 
-    const supportsItemBlocks = block.kind === 'list';
+    const supportsItemBlocks = kindSupportsItemBlocks(block.kind);
     const supportsBlocks = block.kind === 'formInfo' || block.kind === 'object';
 
     return (
@@ -367,7 +369,7 @@ const BlockListPanel = ({
   const renderBlockSection = (block, blockIndex, total, depth = 0) => {
     const definition = getBlockDefinition(block.kind);
     const canAddField = block.kind !== 'steps' && block.kind !== 'multiField' && block.kind !== 'choice';
-    const supportsItemBlocks = block.kind === 'list';
+    const supportsItemBlocks = kindSupportsItemBlocks(block.kind);
     const supportsBlocks = block.kind === 'formInfo' || block.kind === 'object';
     const supportsChildModules = supportsItemBlocks || supportsBlocks;
     const nestCount = supportsItemBlocks ? block.itemBlocks?.length || 0 : block.blocks?.length || 0;

@@ -108,6 +108,20 @@ const demoSchema = {
         createField({ type: 'Input', name: 'role', label: '角色' })
       ]
     }),
+    createBlock('editableList', {
+      title: '岗位核心任务（行内编辑列表）',
+      name: 'tasks',
+      addText: '添加任务',
+      addPosition: 'top',
+      list: [createField({ type: 'Input', name: 'taskName', label: '任务名称', rule: 'REQ' }), createField({ type: 'Input', name: 'frequency', label: '执行频率' })],
+      itemBlocks: [
+        createBlock('list', {
+          title: '分析依据',
+          name: 'evidence',
+          list: [createField({ type: 'Input', name: 'source', label: '来源' })]
+        })
+      ]
+    }),
     createBlock('choice', {
       title: '客户类型',
       mode: 'single',
@@ -143,6 +157,10 @@ const demoData = {
   projects: [
     { projectName: '招聘门户改版', role: '前端' },
     { projectName: '表单搭建器', role: '全栈' }
+  ],
+  tasks: [
+    { taskName: '梳理招聘需求', frequency: '每周', evidence: [{ source: 'JD 原文' }] },
+    { taskName: '输出岗位画像', frequency: '每月' }
   ],
   customerType: 'enterprise',
   companyName: '示例科技有限公司'

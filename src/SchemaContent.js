@@ -5,7 +5,7 @@ import { useIsMobile } from '@kne/responsive-utils';
 import InfoPage from '@kne/info-page';
 import withLocale from './withLocale';
 import { formatFieldDisplayValue } from './formatDisplayValue';
-import { MAX_BLOCK_DEPTH, hasRenderableContent, normalizeSchema } from './schema';
+import { MAX_BLOCK_DEPTH, hasRenderableContent, normalizeSchema, supportsItemBlocks } from './schema';
 import style from './style.module.scss';
 
 const getByPath = (data, path) => {
@@ -102,7 +102,8 @@ const renderBlock = (block, data, ctx) => {
       );
     }
     case 'list':
-    case 'tableList': {
+    case 'tableList':
+    case 'editableList': {
       const name = block.name != null && String(block.name).trim() ? String(block.name).trim() : '';
       const items = name ? getByPath(data, name) : null;
       const rows = Array.isArray(items) ? items : [];
@@ -112,7 +113,7 @@ const renderBlock = (block, data, ctx) => {
             ? rows.map((item, index) => (
                 <InfoPage.Part key={`${block.id}-${index}`} title={formatMessage({ id: 'schemaContentItemIndex' }, { index: index + 1 })} bordered={false}>
                   {renderFieldsContent(block.list, item || {}, formatMessage, 2)}
-                  {block.kind === 'list' ? renderBlockList(block.itemBlocks, item || {}, nextCtx) : null}
+                  {supportsItemBlocks(block.kind) ? renderBlockList(block.itemBlocks, item || {}, nextCtx) : null}
                 </InfoPage.Part>
               ))
             : formatMessage({ id: 'schemaContentEmptyValue' })}
