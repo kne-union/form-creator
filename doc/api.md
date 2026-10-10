@@ -151,12 +151,12 @@ import { SchemaContent, SchemaContentInner } from '@kne/form-creator';
   },
   blocks: [{
     id: string,
-    kind: 'formInfo' | 'list' | 'tableList' | 'multiField' | 'object' | 'choice' | 'steps',
+    kind: 'formInfo' | 'list' | 'tableList' | 'editableList' | 'multiField' | 'object' | 'choice' | 'steps',
     title?, subtitle?, column?, gap?, bordered?, important?,
-    name?, label?, addText?, maxLength?, minLength?, fieldType?, autoStep?,
+    name?, label?, addText?, addPosition?, maxLength?, minLength?, fieldType?, autoStep?,
     mode?, selectorName?, selectorInData?, discriminator?,
     list?: [{ id, type, name, label, tips?, description?, rule?, block?, hidden?, props? }],
-    itemBlocks?: Block[], // list：列表项内子模块
+    itemBlocks?: Block[], // list / editableList：列表项内子模块
     blocks?: Block[], // formInfo / object：子模块
     options?: [{ id, title, list?, blocks?: Block[] }], // choice
     items?: [{ id, title, column, list: [...], blocks?: Block[] }] // steps 专用
@@ -174,6 +174,7 @@ import { SchemaContent, SchemaContentInner } from '@kne/form-creator';
 | formInfo | 表单信息区块 | title, subtitle, column, gap, bordered, list, **blocks** |
 | list | 动态列表 | name, title, important, bordered, maxLength, list, **itemBlocks** |
 | tableList | 表格列表 | name, title, bordered, maxLength, list（不支持子模块） |
+| editableList | 行内编辑列表（`@kne/form-info` EditableList）：每条只读摘要展示，点击编辑后单独表单填写、保存写回；父表单只注册一个字段，数据量大不卡顿 | name, title, column（编辑态列数）, bordered, addText, **addPosition**（`bottom` 底部追加 \| `top` 标题右侧插入首项 \| `both`，默认 `bottom`）, minLength, maxLength, list, **itemBlocks** |
 | object | 对象分组 | name, title, column, gap, bordered, list（字段名渲染为 `name.field`）, **blocks** |
 | choice | 选项分支 | title, **mode**(`single`\|`multiple`), **minLength** / **maxLength**（仅多选：最少/最多选几项）, selectorName, selectorInData, options[{ title, list, **blocks** }] |
 | multiField | 同类型多值 | name, label, fieldType, addText（不支持子模块） |
@@ -211,7 +212,7 @@ const dataSchema = schemaToDataSchema(schema);
 |--------|----------------|
 | formInfo | 字段摊平进当前 object |
 | object | `properties[name]` = nested object（字段名为相对 name） |
-| list / tableList | `properties[name]` = array of object |
+| list / tableList / editableList | `properties[name]` = array of object |
 | multiField | `properties[name]` = array，元素为 `fieldType` 的 valueSchema |
 | steps | 各 step 字段/子块并入当前层 |
 | choice（single） | `oneOf`：每支含 selector `const` + 该 option 字段 |

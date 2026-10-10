@@ -3,7 +3,22 @@ import { Empty } from 'antd';
 import { useIntl } from '@kne/react-intl';
 import { useIsMobile, RESPONSIVE_BOUNDARY_CLASS } from '@kne/responsive-utils';
 import withLocale from './withLocale';
-import { collectSchemaFields, createBlock, createChoiceOption, createStep, defaultSchema, findBlock, mapBlocks, moveBlockInTree, moveItem, normalizeSchema, hasRenderableContent, removeBlockInTree, updateBlocks } from './schema';
+import {
+  collectSchemaFields,
+  createBlock,
+  createChoiceOption,
+  createStep,
+  defaultSchema,
+  findBlock,
+  mapBlocks,
+  moveBlockInTree,
+  moveItem,
+  normalizeSchema,
+  hasRenderableContent,
+  removeBlockInTree,
+  supportsItemBlocks,
+  updateBlocks
+} from './schema';
 import BlockListPanel from './BlockListPanel';
 import BlockEditorModal from './BlockEditorModal';
 import StepEditorModal from './StepEditorModal';
@@ -86,7 +101,7 @@ const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = t
     } else if (blockParentId) {
       updateSchema(
         mapBlocks(schema, blockParentId, parent => {
-          if (parent.kind === 'list') {
+          if (supportsItemBlocks(parent.kind)) {
             return {
               ...parent,
               itemBlocks: [...(parent.itemBlocks || []), block]

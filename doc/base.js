@@ -129,6 +129,70 @@ const BaseExample = () => {
                     })
                 ]
             }),
+            createBlock('editableList', {
+                title: '证书资质（行内编辑列表）',
+                name: 'certificates',
+                addText: '添加证书',
+                list: [
+                    createField({
+                        type: 'Input',
+                        name: 'certName',
+                        label: '证书名称',
+                        rule: 'REQ',
+                        props: {placeholder: '请输入证书名称'}
+                    }),
+                    createField({
+                        type: 'DatePicker',
+                        name: 'issueDate',
+                        label: '获得时间',
+                        props: {placeholder: '请选择日期'}
+                    })
+                ]
+            }),
+            createBlock('editableList', {
+                title: '岗位核心任务（行内编辑列表 + 嵌套）',
+                name: 'tasks',
+                addText: '添加任务',
+                addPosition: 'top',
+                minLength: 1,
+                list: [
+                    createField({
+                        type: 'Input',
+                        name: 'taskName',
+                        label: '任务名称',
+                        rule: 'REQ',
+                        props: {placeholder: '请输入任务名称'}
+                    }),
+                    createField({
+                        type: 'Select',
+                        name: 'frequency',
+                        label: '执行频率',
+                        props: {
+                            placeholder: '请选择',
+                            options: [
+                                {label: '每天', value: 'daily'},
+                                {label: '每周', value: 'weekly'},
+                                {label: '每月', value: 'monthly'}
+                            ]
+                        }
+                    })
+                ],
+                itemBlocks: [
+                    createBlock('list', {
+                        title: '分析依据',
+                        name: 'evidence',
+                        addText: '添加依据',
+                        list: [
+                            createField({
+                                type: 'Input',
+                                name: 'source',
+                                label: '来源',
+                                props: {placeholder: '如：JD 原文'}
+                            })
+                        ]
+                    })
+                ]
+            }),
             createBlock('list', {
                 title: '项目经历（含嵌套）',
                 name: 'projects',
@@ -376,7 +440,7 @@ const BaseExample = () => {
         <FormCreator value={schema} onChange={setSchema} />
         <div style={{marginTop: 16}}>
             <JsonView data={schema} theme="light" collapsedFrom={2} searchable={false} />
-            <Text type="secondary">初始示例已包含表单分组、列表、表格列表、列表嵌套、选项切换、多字段、分步等模块。</Text>
+            <Text type="secondary">初始示例已包含表单分组、列表、表格列表、行内编辑列表、列表嵌套、选项切换、多字段、分步等模块。</Text>
         </div>
     </div>;
 };

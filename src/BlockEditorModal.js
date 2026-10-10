@@ -4,7 +4,7 @@ import { Input, Select, InputNumber, Checkbox } from '@kne/react-form-antd';
 import { message } from 'antd';
 import { useIntl } from '@kne/react-intl';
 import { useIsMobile } from '@kne/responsive-utils';
-import { blockToFormValues, formValuesToBlock, getBlockDefinition, getBlockKindOptions } from './blockRegistry';
+import { ADD_POSITIONS, blockToFormValues, formValuesToBlock, getBlockDefinition, getBlockKindOptions } from './blockRegistry';
 import { getFieldTypes } from './fieldRegistry';
 import { createBlock } from './schema';
 import style from './style.module.scss';
@@ -15,8 +15,9 @@ const BlockConfigFields = ({ kind }) => {
   const fieldTypeOptions = useMemo(() => getFieldTypes(formatMessage), [formatMessage]);
 
   const list = [];
+  const isListKind = kind === 'list' || kind === 'tableList' || kind === 'editableList';
 
-  if (kind === 'formInfo' || kind === 'list' || kind === 'tableList' || kind === 'object') {
+  if (kind === 'formInfo' || kind === 'list' || kind === 'tableList' || kind === 'editableList' || kind === 'object') {
     list.push(
       <Input key="title" name="title" label={formatMessage({ id: 'blockTitle' })} placeholder={formatMessage({ id: 'blockTitlePlaceholder' })} />,
       kind === 'formInfo' ? <Input key="subtitle" name="subtitle" label={formatMessage({ id: 'blockSubtitle' })} placeholder={formatMessage({ id: 'blockSubtitlePlaceholder' })} /> : null,
@@ -36,9 +37,12 @@ const BlockConfigFields = ({ kind }) => {
           {formatMessage({ id: 'blockImportant' })}
         </Checkbox>
       ) : null,
-      kind === 'list' || kind === 'tableList' ? <Input key="addText" name="addText" label={formatMessage({ id: 'blockAddText' })} placeholder={formatMessage({ id: 'blockAddTextPlaceholder' })} /> : null,
-      kind === 'list' || kind === 'tableList' ? <InputNumber key="maxLength" name="maxLength" label={formatMessage({ id: 'blockMaxLength' })} min={1} /> : null,
-      kind === 'list' || kind === 'tableList' ? <InputNumber key="minLength" name="minLength" label={formatMessage({ id: 'blockMinLength' })} min={0} /> : null
+      isListKind ? <Input key="addText" name="addText" label={formatMessage({ id: 'blockAddText' })} placeholder={formatMessage({ id: 'blockAddTextPlaceholder' })} /> : null,
+      kind === 'editableList' ? (
+        <Select key="addPosition" name="addPosition" label={formatMessage({ id: 'blockAddPosition' })} options={ADD_POSITIONS.map(value => ({ label: formatMessage({ id: `blockAddPosition_${value}` }), value }))} />
+      ) : null,
+      isListKind ? <InputNumber key="maxLength" name="maxLength" label={formatMessage({ id: 'blockMaxLength' })} min={1} /> : null,
+      isListKind ? <InputNumber key="minLength" name="minLength" label={formatMessage({ id: 'blockMinLength' })} min={0} /> : null
     );
   }
 
@@ -106,7 +110,7 @@ const BlockEditorModal = ({ open, block, onCancel, onSave, renderModal }) => {
   const formData = useMemo(() => blockToFormValues(block || createBlock('formInfo')), [block, open]);
 
   const handleSubmit = async values => {
-    if ((block?.kind === 'list' || block?.kind === 'tableList' || block?.kind === 'multiField' || block?.kind === 'object') && !values.name) {
+    if (getBlockDefinition(block?.kind)?.requiresName && !values.name) {
       message.error(formatMessage({ id: 'blockNameRequired' }));
       return false;
     }

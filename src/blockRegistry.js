@@ -19,6 +19,13 @@ export const BLOCK_KINDS = {
     requiresName: true,
     description: '以表格形式展示的可增减列表'
   },
+  editableList: {
+    label: '行内编辑列表',
+    color: 'green',
+    hasFieldList: true,
+    requiresName: true,
+    description: '每条记录只读展示，点击编辑后单独填写并保存；数据量大时不卡顿'
+  },
   multiField: {
     label: '同类多值',
     color: 'purple',
@@ -46,6 +53,9 @@ export const BLOCK_KINDS = {
   }
 };
 
+/** editableList 添加按钮位置，与 @kne/form-info EditableList addPosition 一致 */
+export const ADD_POSITIONS = ['bottom', 'top', 'both'];
+
 export const getBlockKindOptions = () =>
   Object.entries(BLOCK_KINDS).map(([value, config]) => ({
     label: config.label,
@@ -68,6 +78,7 @@ export const blockToFormValues = block => ({
   addText: block.addText || '',
   maxLength: block.maxLength ?? null,
   minLength: block.minLength ?? null,
+  addPosition: ADD_POSITIONS.includes(block.addPosition) ? block.addPosition : 'bottom',
   fieldType: block.fieldType || 'Input',
   autoStep: block.autoStep !== false,
   mode: block.mode === 'multiple' ? 'multiple' : 'single',
@@ -93,6 +104,7 @@ export const formValuesToBlock = (values, existingBlock = {}) => {
     addText: values.addText || undefined,
     maxLength: values.maxLength ?? undefined,
     minLength: values.minLength ?? undefined,
+    addPosition: kind === 'editableList' && ADD_POSITIONS.includes(values.addPosition) && values.addPosition !== 'bottom' ? values.addPosition : undefined,
     fieldType: values.fieldType || 'Input',
     autoStep: values.autoStep !== false,
     mode,

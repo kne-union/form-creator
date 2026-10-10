@@ -1,4 +1,4 @@
-import { normalizeSchema } from './schema';
+import { normalizeSchema, supportsItemBlocks } from './schema';
 import { resolveFieldValueSchema } from './fieldRegistry';
 import { parseRuleString } from './rulePresets';
 
@@ -105,14 +105,15 @@ const walkBlock = (block, layer, depth = 0) => {
       return;
     }
     case 'list':
-    case 'tableList': {
+    case 'tableList':
+    case 'editableList': {
       const name = block.name != null && String(block.name).trim() ? String(block.name).trim() : '';
       if (!name) {
         return;
       }
       const itemLayer = createObjectLayer();
       mergeFieldsIntoLayer(itemLayer, block.list);
-      if (block.kind === 'list') {
+      if (supportsItemBlocks(block.kind)) {
         walkBlocks(block.itemBlocks, itemLayer, depth + 1);
       }
       const items = finalizeObjectSchema(itemLayer);

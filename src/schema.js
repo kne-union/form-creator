@@ -7,6 +7,11 @@ export const isAutoDataKey = (value, prefix = 'field') => new RegExp(`^${prefix}
 
 export const MAX_BLOCK_DEPTH = 14;
 
+/** 列表项内可挂子模块（itemBlocks）的模块类型 */
+export const ITEM_BLOCK_KINDS = ['list', 'editableList'];
+
+export const supportsItemBlocks = kind => ITEM_BLOCK_KINDS.includes(kind);
+
 export const createEmptyColumn = () => ({
   title: '',
   name: createDataKey('col'),
@@ -82,7 +87,7 @@ export const createChoiceOption = (overrides = {}) => ({
 });
 
 export const createBlock = (kind, overrides = {}) => {
-  const needsName = ['list', 'tableList', 'multiField', 'object'].includes(kind);
+  const needsName = ['list', 'tableList', 'editableList', 'multiField', 'object'].includes(kind);
   const base = {
     id: createFieldId(),
     kind,
@@ -164,7 +169,7 @@ export const createBlock = (kind, overrides = {}) => {
     };
   }
 
-  if (kind === 'list') {
+  if (supportsItemBlocks(kind)) {
     return {
       ...base,
       blocks: undefined,
@@ -310,7 +315,7 @@ export const normalizeBlock = (block, depth = 0) => {
   normalized.list = Array.isArray(block.list) ? block.list.map(normalizeField) : [];
   normalized.items = undefined;
   normalized.options = undefined;
-  if (kind === 'list') {
+  if (supportsItemBlocks(kind)) {
     normalized.itemBlocks = Array.isArray(block.itemBlocks) ? block.itemBlocks.map(child => normalizeBlock(child, depth + 1)) : [];
     normalized.blocks = undefined;
   } else if (kind === 'tableList') {
@@ -501,7 +506,7 @@ export const collectBlockFieldNames = (blocks = [], { objectNamePrefix = '' } = 
           }
         });
       }
-      if (block.kind === 'list') {
+      if (supportsItemBlocks(block.kind)) {
         // 列表项内字段相对 GroupList，此处只收集定义名供 choice 清理参考
         walk(block.itemBlocks || [], prefix);
       }

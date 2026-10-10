@@ -1,7 +1,7 @@
 import { createElement, Fragment } from 'react';
 import { Tooltip } from 'antd';
 import { ArrowLeftOutlined, ArrowRightOutlined, QuestionCircleOutlined } from '@ant-design/icons';
-import FormInfo, { Form, List, TableList, MultiField, Steps } from '@kne/form-info';
+import FormInfo, { Form, List, TableList, EditableList, MultiField, Steps } from '@kne/form-info';
 import InfoPage from '@kne/info-page';
 import { getFieldComponent, getFieldDefinition } from './fieldRegistry';
 import { createApiFromOptions } from './fields/optionsApi';
@@ -215,6 +215,27 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
           list: fields,
           ...(listItemPartProps || {}),
           className: resolvePartRootClassName(depth)
+        }),
+        asListItem
+      );
+    }
+    case 'editableList': {
+      const fields = renderFieldElements(block.list, preview, fieldRenderOpts);
+      const nested = renderItemBlocks(block.itemBlocks || []);
+      return withBlockLayout(
+        createElement(EditableList, {
+          key: block.id,
+          name: block.name,
+          title: block.title || undefined,
+          bordered,
+          className: resolvePartRootClassName(depth),
+          column: block.column,
+          maxLength: block.maxLength,
+          minLength: block.minLength,
+          ...(block.addPosition ? { addPosition: block.addPosition } : {}),
+          ...(block.addText ? { addText: block.addText } : {}),
+          ...(typeof block.itemTitle === 'function' || block.itemTitle ? { itemTitle: block.itemTitle } : {}),
+          list: [...fields, ...nested]
         }),
         asListItem
       );
