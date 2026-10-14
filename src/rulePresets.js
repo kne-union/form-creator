@@ -1,7 +1,7 @@
 export const RULE_PRESET_ITEMS = [
-  { value: 'REQ', label: '必填' },
-  { value: 'TEL', label: '手机号格式' },
-  { value: 'EMAIL', label: '邮箱格式' }
+  { value: 'REQ', labelId: 'rulePresetREQ' },
+  { value: 'TEL', labelId: 'rulePresetTEL' },
+  { value: 'EMAIL', labelId: 'rulePresetEMAIL' }
 ];
 
 export const DEFAULT_RULE_CONFIG = () => ({

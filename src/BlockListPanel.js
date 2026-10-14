@@ -90,7 +90,7 @@ const BlockListPanel = ({
             <div className={style['add-block-option-icon']}>{opt.icon}</div>
             <div className={style['add-block-option-text']}>
               <div className={style['add-block-option-title']}>{formatMessage({ id: `blockKind_${opt.key}` })}</div>
-              <div className={style['add-block-option-desc']}>{definition?.description}</div>
+              <div className={style['add-block-option-desc']}>{definition ? formatMessage({ id: definition.descriptionId }) : null}</div>
             </div>
           </div>
         );
@@ -175,7 +175,7 @@ const BlockListPanel = ({
                 >
                   <span className={style['add-field-dropdown-item-icon']}>{opt.icon}</span>
                   <span>{formatMessage({ id: `blockKind_${opt.key}` })}</span>
-                  {definition?.description ? <span className={style['add-field-dropdown-item-desc']}>{definition.description}</span> : null}
+                  {definition ? <span className={style['add-field-dropdown-item-desc']}>{formatMessage({ id: definition.descriptionId })}</span> : null}
                 </div>
               );
             })}

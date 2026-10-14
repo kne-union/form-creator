@@ -65,7 +65,7 @@ const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = t
   };
 
   const handleAddBlock = (kind, { parentBlockId, stepId, optionId } = {}) => {
-    setEditingBlock(createBlock(kind));
+    setEditingBlock(createBlock(kind, kind === 'choice' ? { options: [createChoiceOption({ title: formatMessage({ id: 'choiceOptionFallback' }, { index: 1 }) })] } : undefined));
     setBlockParentId(parentBlockId || null);
     setBlockParentStepId(stepId || null);
     setBlockParentOptionId(optionId || null);

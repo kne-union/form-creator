@@ -1,6 +1,7 @@
 import { createElement } from 'react';
 import { getFieldDefinition, resolveFieldValueSchema } from './fieldRegistry';
 import FileFieldPreview from './FileFieldPreview';
+import defaultLocale from './locale/zh-CN';
 
 const TEMPORAL_PATTERN = {
   date: 'YYYY-MM-DD',
@@ -212,7 +213,7 @@ const formatDateToToday = (value, itemSchema, ctx) => {
   const formatKey = itemSchema?.format || 'date';
   const start = formatByValueSchema(items[0], itemSchema, ctx);
   if (items[1] == null || items[1] === '' || items[1] === true) {
-    const until = ctx.formatMessage?.({ id: 'schemaContentUntilToday' }) || '至今';
+    const until = ctx.formatMessage?.({ id: 'schemaContentUntilToday' }) || defaultLocale.schemaContentUntilToday;
     return [start, until].filter(Boolean).join(' ~ ');
   }
   const end = formatByValueSchema(items[1], itemSchema, ctx);
@@ -273,9 +274,9 @@ const formatPassword = (value, ctx) => {
 const formatBoolean = (value, field, ctx) => {
   const props = field?.props || {};
   if (value) {
-    return props.checkedChildren || ctx.formatMessage?.({ id: 'schemaContentYes' }) || '是';
+    return props.checkedChildren || ctx.formatMessage?.({ id: 'schemaContentYes' }) || defaultLocale.schemaContentYes;
   }
-  return props.unCheckedChildren || ctx.formatMessage?.({ id: 'schemaContentNo' }) || '否';
+  return props.unCheckedChildren || ctx.formatMessage?.({ id: 'schemaContentNo' }) || defaultLocale.schemaContentNo;
 };
 
 const stringifyFallback = value => {

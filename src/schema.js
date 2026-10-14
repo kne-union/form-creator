@@ -148,13 +148,13 @@ export const createBlock = (kind, overrides = {}) => {
       blocks: undefined,
       items: undefined,
       name: '',
-      options: [createChoiceOption({ title: '选项1' })],
+      options: [createChoiceOption()],
       ...overrides,
       kind: 'choice'
     };
     next.mode = next.mode === 'multiple' ? 'multiple' : 'single';
     if (!Array.isArray(next.options)) {
-      next.options = [createChoiceOption({ title: '选项1' })];
+      next.options = [createChoiceOption()];
     }
     return next;
   }

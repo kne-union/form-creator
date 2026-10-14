@@ -81,15 +81,15 @@ const resolveSelectLimits = block => {
 
 const buildMultipleHint = (formatMessage, minLength, maxLength) => {
   if (minLength != null && maxLength != null) {
-    return formatMessage ? formatMessage({ id: 'choiceModeHintMultipleRange' }, { min: minLength, max: maxLength }) : `请选择 ${minLength}–${maxLength} 项`;
+    return formatMessage({ id: 'choiceModeHintMultipleRange' }, { min: minLength, max: maxLength });
   }
   if (minLength != null) {
-    return formatMessage ? formatMessage({ id: 'choiceModeHintMultipleMin' }, { count: minLength }) : `请至少选择 ${minLength} 项`;
+    return formatMessage({ id: 'choiceModeHintMultipleMin' }, { count: minLength });
   }
   if (maxLength != null) {
-    return formatMessage ? formatMessage({ id: 'choiceModeHintMultipleMax' }, { count: maxLength }) : `最多选择 ${maxLength} 项`;
+    return formatMessage({ id: 'choiceModeHintMultipleMax' }, { count: maxLength });
   }
-  return formatMessage ? formatMessage({ id: 'choiceModeHintMultiple' }) : '可以选择多项';
+  return formatMessage({ id: 'choiceModeHintMultiple' });
 };
 
 /**
@@ -104,7 +104,7 @@ const ChoiceBlock = ({ schemaBlock, block: blockProp, preview = false, isMobile 
   const options = useMemo(() => (block && Array.isArray(block.options) ? block.options : []), [block]);
   const { formData, openApi } = useFormContext() || {};
   const titleText = block?.title != null ? String(block.title).trim() : '';
-  const title = titleText || (formatMessage ? formatMessage({ id: 'choiceAreaTitle' }) : '请选择');
+  const title = titleText || formatMessage({ id: 'choiceAreaTitle' });
   const bordered = isMobile ? false : block?.bordered || undefined;
   const { minLength, maxLength } = mode === 'multiple' && block ? resolveSelectLimits(block) : {};
   const firstOptionId = options[0] != null ? String(options[0].id) : undefined;
@@ -132,7 +132,7 @@ const ChoiceBlock = ({ schemaBlock, block: blockProp, preview = false, isMobile 
     return options.map((option, index) => {
       const value = String(option.id);
       return {
-        label: option.title || (formatMessage ? formatMessage({ id: 'choiceOptionFallback' }, { index: index + 1 }) : `选项${index + 1}`),
+        label: option.title || formatMessage({ id: 'choiceOptionFallback' }, { index: index + 1 }),
         value,
         disabled: atMax && !selectedIdsFromValue.includes(value)
       };
@@ -163,13 +163,13 @@ const ChoiceBlock = ({ schemaBlock, block: blockProp, preview = false, isMobile 
       if (minLength != null && ids.length < minLength) {
         return {
           result: false,
-          errMsg: formatMessage ? formatMessage({ id: 'choiceMinSelectError' }, { count: minLength }) : `请至少选择 ${minLength} 项`
+          errMsg: formatMessage({ id: 'choiceMinSelectError' }, { count: minLength })
         };
       }
       if (maxLength != null && ids.length > maxLength) {
         return {
           result: false,
-          errMsg: formatMessage ? formatMessage({ id: 'choiceMaxSelectError' }, { count: maxLength }) : `最多只能选择 ${maxLength} 项`
+          errMsg: formatMessage({ id: 'choiceMaxSelectError' }, { count: maxLength })
         };
       }
       return { result: true, errMsg: '' };
@@ -183,7 +183,7 @@ const ChoiceBlock = ({ schemaBlock, block: blockProp, preview = false, isMobile 
   const selectorProps = {
     key: `choice-selector-${mode}`,
     name: selectorName,
-    label: titleText || (formatMessage ? formatMessage({ id: 'choiceAreaTitle' }) : '请选择'),
+    label: titleText || formatMessage({ id: 'choiceAreaTitle' }),
     labelHidden: true,
     options: selectorOptions,
     onChange: handleChange,
@@ -210,7 +210,7 @@ const ChoiceBlock = ({ schemaBlock, block: blockProp, preview = false, isMobile 
     }
   });
 
-  const modeHint = mode === 'multiple' ? buildMultipleHint(formatMessage, minLength, maxLength) : formatMessage ? formatMessage({ id: 'choiceModeHintSingle' }) : '请选择其中一项';
+  const modeHint = mode === 'multiple' ? buildMultipleHint(formatMessage, minLength, maxLength) : formatMessage({ id: 'choiceModeHintSingle' });
 
   if (!block) {
     return null;
@@ -226,9 +226,7 @@ const ChoiceBlock = ({ schemaBlock, block: blockProp, preview = false, isMobile 
       'data-choice-mode': mode
     },
     createElement('div', { className: style['choice-selector'] }, createElement(Selector, selectorProps)),
-    contentChildren.length
-      ? createElement('div', { className: style['choice-panels'] }, ...contentChildren)
-      : createElement('div', { className: style['choice-panels-empty'] }, formatMessage ? formatMessage({ id: 'choiceSelectFirstHint' }) : '请先在上方选择')
+    contentChildren.length ? createElement('div', { className: style['choice-panels'] }, ...contentChildren) : createElement('div', { className: style['choice-panels-empty'] }, formatMessage({ id: 'choiceSelectFirstHint' }))
   );
 };
 
