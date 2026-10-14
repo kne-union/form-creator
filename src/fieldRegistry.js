@@ -446,7 +446,7 @@ export const getFieldTypes = formatMessage => {
   });
   if (fallback.length) {
     grouped.push({
-      label: resolveRegistryLabel(formatMessage, 'FieldGroupExtended', '扩展字段'),
+      label: resolveRegistryLabel(formatMessage, 'FieldGroupExtended'),
       options: fallback
     });
   }
@@ -695,10 +695,14 @@ const applyFieldProps = (props, values, definition) => {
         delete props.showTime;
       }
       if (values.range) {
-        // RangePicker 用数组 placeholder；单框用字符串
+        // RangePicker 用数组 placeholder；单框用字符串；未填时交给 RangePicker 按 locale 显示默认提示
         const raw = values.placeholder;
-        const text = (Array.isArray(raw) ? raw[0] : raw) || '请选择日期';
-        props.placeholder = [text, text];
+        const text = Array.isArray(raw) ? raw[0] : raw;
+        if (text != null && String(text).trim()) {
+          props.placeholder = [text, text];
+        } else {
+          delete props.placeholder;
+        }
       } else {
         setOptionalString(props, 'placeholder', values.placeholder);
       }

@@ -94,7 +94,7 @@ const buildBuiltinList = (type, formatMessage) => {
           options={[
             { label: 'YYYY-MM-DD', value: 'YYYY-MM-DD' },
             { label: 'YYYY/MM/DD', value: 'YYYY/MM/DD' },
-            { label: 'YYYY年MM月DD日', value: 'YYYY年MM月DD日' },
+            { label: formatMessage({ id: 'propDateFormatLocalized' }), value: formatMessage({ id: 'propDateFormatLocalized' }) },
             { label: 'YYYY-MM-DD HH:mm:ss', value: 'YYYY-MM-DD HH:mm:ss' },
             { label: 'YYYY-MM', value: 'YYYY-MM' },
             { label: 'YYYY', value: 'YYYY' }

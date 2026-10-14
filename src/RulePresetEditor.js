@@ -15,7 +15,7 @@ RulePresetsGroup.field = Checkbox.Group;
 
 const RulePresetEditor = () => {
   const { formatMessage } = useIntl();
-  const options = [...RULE_PRESET_ITEMS.map(item => ({ label: item.label, value: item.value })), { label: formatMessage({ id: 'ruleLen' }), value: RULE_LEN_PRESET }];
+  const options = [...RULE_PRESET_ITEMS.map(item => ({ label: item.labelId ? formatMessage({ id: item.labelId }) : item.label, value: item.value })), { label: formatMessage({ id: 'ruleLen' }), value: RULE_LEN_PRESET }];
 
   const list = [
     <RulePresetsGroup key="rulePresets" name="rulePresets" block options={options} />,

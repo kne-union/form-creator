@@ -183,14 +183,14 @@ const mergeChoiceIntoLayer = (layer, block, depth) => {
   const options = block.options || [];
   const optionIds = options.map(option => String(option.id));
 
-  const branches = options.map((option, index) => {
+  const branches = options.map(option => {
     const branch = createObjectLayer();
-    const optionTitle = option.title || `选项${index + 1}`;
+    const optionTitle = option.title || undefined;
 
     if (selectorInData && mode === 'single') {
       branch.properties[selectorName] = {
         const: String(option.id),
-        title: optionTitle
+        ...(optionTitle ? { title: optionTitle } : {})
       };
       branch.required.push(selectorName);
     }

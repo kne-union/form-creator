@@ -98,7 +98,7 @@ const BlockConfigFields = ({ kind }) => {
 
   return (
     <div className={style['field-editor-form']}>
-      <FormInfo title={formatMessage({ id: `blockKind_${kind}` })} subtitle={definition?.description} column={1} list={list.filter(Boolean)} />
+      <FormInfo title={formatMessage({ id: `blockKind_${kind}` })} subtitle={definition ? formatMessage({ id: definition.descriptionId }) : undefined} column={1} list={list.filter(Boolean)} />
     </div>
   );
 };

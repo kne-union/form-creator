@@ -1,64 +1,64 @@
 export const BLOCK_KINDS = {
   formInfo: {
-    label: '基础表单',
+    labelId: 'blockKind_formInfo',
     color: 'blue',
     hasFieldList: true,
-    description: '最常用的表单模块，可设置标题、列数和间距'
+    descriptionId: 'blockKindDesc_formInfo'
   },
   list: {
-    label: '可增减列表',
+    labelId: 'blockKind_list',
     color: 'cyan',
     hasFieldList: true,
     requiresName: true,
-    description: '用户可以动态添加或删除多条记录，例如工作经历'
+    descriptionId: 'blockKindDesc_list'
   },
   tableList: {
-    label: '表格列表',
+    labelId: 'blockKind_tableList',
     color: 'geekblue',
     hasFieldList: true,
     requiresName: true,
-    description: '以表格形式展示的可增减列表'
+    descriptionId: 'blockKindDesc_tableList'
   },
   editableList: {
-    label: '行内编辑列表',
+    labelId: 'blockKind_editableList',
     color: 'green',
     hasFieldList: true,
     requiresName: true,
-    description: '每条记录只读展示，点击编辑后单独填写并保存；数据量大时不卡顿'
+    descriptionId: 'blockKindDesc_editableList'
   },
   multiField: {
-    label: '同类多值',
+    labelId: 'blockKind_multiField',
     color: 'purple',
     requiresName: true,
-    description: '同一种填写项可以输入多个值，例如多个手机号'
+    descriptionId: 'blockKindDesc_multiField'
   },
   object: {
-    label: '分组信息',
+    labelId: 'blockKind_object',
     color: 'orange',
     hasFieldList: true,
     requiresName: true,
-    description: '把相关的填写项放在一起，例如「在校时间」下的开始与结束'
+    descriptionId: 'blockKindDesc_object'
   },
   choice: {
-    label: '选项切换',
+    labelId: 'blockKind_choice',
     color: 'magenta',
     hasChoiceOptions: true,
-    description: '先选一类情况，再填写对应内容；可设为单选或多选'
+    descriptionId: 'blockKindDesc_choice'
   },
   steps: {
-    label: '分步表单',
+    labelId: 'blockKind_steps',
     color: 'gold',
     hasSteps: true,
-    description: '将表单拆分成多个步骤，引导用户逐步填写'
+    descriptionId: 'blockKindDesc_steps'
   }
 };
 
 /** editableList 添加按钮位置，与 @kne/form-info EditableList addPosition 一致 */
 export const ADD_POSITIONS = ['bottom', 'top', 'both'];
 
-export const getBlockKindOptions = () =>
+export const getBlockKindOptions = formatMessage =>
   Object.entries(BLOCK_KINDS).map(([value, config]) => ({
-    label: config.label,
+    label: typeof formatMessage === 'function' ? formatMessage({ id: config.labelId }) : config.labelId,
     value
   }));
 
