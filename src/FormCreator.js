@@ -26,9 +26,10 @@ import ChoiceOptionEditorModal from './ChoiceOptionEditorModal';
 import FieldEditorModal from './FieldEditorModal';
 import FormActionsEditor from './FormActionsEditor';
 import SchemaRenderer from './SchemaRenderer';
+import { LocaleTextProvider } from './LocaleTextInput';
 import style from './style.module.scss';
 
-const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = true, className, formProps, renderModal, extraToolbar }) => {
+const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = true, className, formProps, renderModal, extraToolbar, languages }) => {
   const { formatMessage, locale } = useIntl();
   const isMobile = useIsMobile();
   const [innerSchema, setInnerSchema] = useState(() => normalizeSchema(defaultValue || defaultSchema()));
@@ -333,81 +334,87 @@ const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = t
   const toolbarExtra = typeof extraToolbar === 'function' ? extraToolbar({ schema }) : extraToolbar;
 
   return (
-    <div className={[style['form-creator'], RESPONSIVE_BOUNDARY_CLASS, isMobile ? style['is-mobile'] : '', className].filter(Boolean).join(' ')}>
-      <div className={style['editor-pane']}>
-        <BlockListPanel
-          blocks={schema.blocks}
-          onAddBlock={handleAddBlock}
-          onEditBlock={handleEditBlock}
-          onDeleteBlock={handleDeleteBlock}
-          onMoveBlock={handleMoveBlock}
-          onAddField={handleAddField}
-          onEditField={handleEditField}
-          onDeleteField={handleDeleteField}
-          onMoveField={handleMoveField}
-          onAddStep={handleAddStep}
-          onEditStep={handleEditStep}
-          onDeleteStep={handleDeleteStep}
-          onMoveStep={handleMoveStep}
-          onAddChoiceOption={handleAddChoiceOption}
-          onEditChoiceOption={handleEditChoiceOption}
-          onDeleteChoiceOption={handleDeleteChoiceOption}
-          onMoveChoiceOption={handleMoveChoiceOption}
-          onOpenFormActions={() => setFormActionsOpen(true)}
-          extraToolbar={toolbarExtra}
+    <LocaleTextProvider languages={languages}>
+      <div className={[style['form-creator'], RESPONSIVE_BOUNDARY_CLASS, isMobile ? style['is-mobile'] : '', className].filter(Boolean).join(' ')}>
+        <div className={style['editor-pane']}>
+          <BlockListPanel
+            blocks={schema.blocks}
+            onAddBlock={handleAddBlock}
+            onEditBlock={handleEditBlock}
+            onDeleteBlock={handleDeleteBlock}
+            onMoveBlock={handleMoveBlock}
+            onAddField={handleAddField}
+            onEditField={handleEditField}
+            onDeleteField={handleDeleteField}
+            onMoveField={handleMoveField}
+            onAddStep={handleAddStep}
+            onEditStep={handleEditStep}
+            onDeleteStep={handleDeleteStep}
+            onMoveStep={handleMoveStep}
+            onAddChoiceOption={handleAddChoiceOption}
+            onEditChoiceOption={handleEditChoiceOption}
+            onDeleteChoiceOption={handleDeleteChoiceOption}
+            onMoveChoiceOption={handleMoveChoiceOption}
+            onOpenFormActions={() => setFormActionsOpen(true)}
+            extraToolbar={toolbarExtra}
+          />
+        </div>
+        {showPreview ? (
+          <div className={style['preview-pane']}>
+            <div className={style['preview-body']}>
+              {hasRenderableContent(schema) ? (
+                <SchemaRenderer schema={schema} preview formProps={formProps} locale={locale} languages={languages} />
+              ) : (
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={formatMessage({ id: 'emptyBlockList' })} />
+              )}
+            </div>
+          </div>
+        ) : null}
+        <BlockEditorModal open={blockEditorOpen} block={editingBlock} renderModal={renderModal} onCancel={clearBlockEditor} onSave={handleSaveBlock} />
+        <StepEditorModal
+          open={stepEditorOpen}
+          step={stepContext?.step}
+          renderModal={renderModal}
+          onCancel={() => {
+            setStepEditorOpen(false);
+            setStepContext(null);
+          }}
+          onSave={handleSaveStep}
+        />
+        <ChoiceOptionEditorModal
+          open={choiceOptionEditorOpen}
+          option={choiceOptionContext?.option}
+          renderModal={renderModal}
+          onCancel={() => {
+            setChoiceOptionEditorOpen(false);
+            setChoiceOptionContext(null);
+          }}
+          onSave={handleSaveChoiceOption}
+        />
+        <FieldEditorModal
+          open={fieldEditorOpen}
+          field={editingField}
+          fieldList={currentFieldScope}
+          renderModal={renderModal}
+          onCancel={() => {
+            setFieldEditorOpen(false);
+            setFieldContext(null);
+            setEditingField(null);
+          }}
+          onSave={handleSaveField}
+        />
+        <FormActionsEditor
+          open={formActionsOpen}
+          value={schema.actions}
+          renderModal={renderModal}
+          onCancel={() => setFormActionsOpen(false)}
+          onSave={actions => {
+            updateSchema({ ...schema, actions });
+            setFormActionsOpen(false);
+          }}
         />
       </div>
-      {showPreview ? (
-        <div className={style['preview-pane']}>
-          <div className={style['preview-body']}>
-            {hasRenderableContent(schema) ? <SchemaRenderer schema={schema} preview formProps={formProps} locale={locale} /> : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={formatMessage({ id: 'emptyBlockList' })} />}
-          </div>
-        </div>
-      ) : null}
-      <BlockEditorModal open={blockEditorOpen} block={editingBlock} renderModal={renderModal} onCancel={clearBlockEditor} onSave={handleSaveBlock} />
-      <StepEditorModal
-        open={stepEditorOpen}
-        step={stepContext?.step}
-        renderModal={renderModal}
-        onCancel={() => {
-          setStepEditorOpen(false);
-          setStepContext(null);
-        }}
-        onSave={handleSaveStep}
-      />
-      <ChoiceOptionEditorModal
-        open={choiceOptionEditorOpen}
-        option={choiceOptionContext?.option}
-        renderModal={renderModal}
-        onCancel={() => {
-          setChoiceOptionEditorOpen(false);
-          setChoiceOptionContext(null);
-        }}
-        onSave={handleSaveChoiceOption}
-      />
-      <FieldEditorModal
-        open={fieldEditorOpen}
-        field={editingField}
-        fieldList={currentFieldScope}
-        renderModal={renderModal}
-        onCancel={() => {
-          setFieldEditorOpen(false);
-          setFieldContext(null);
-          setEditingField(null);
-        }}
-        onSave={handleSaveField}
-      />
-      <FormActionsEditor
-        open={formActionsOpen}
-        value={schema.actions}
-        renderModal={renderModal}
-        onCancel={() => setFormActionsOpen(false)}
-        onSave={actions => {
-          updateSchema({ ...schema, actions });
-          setFormActionsOpen(false);
-        }}
-      />
-    </div>
+    </LocaleTextProvider>
   );
 });
 

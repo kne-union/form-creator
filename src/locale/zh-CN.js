@@ -238,7 +238,13 @@ const locale = {
   schemaContentNo: '否',
   schemaContentItemIndex: '第 {index} 项',
   schemaContentUntilToday: '至今',
-  schemaContentPasswordMasked: '••••••'
+  schemaContentPasswordMasked: '••••••',
+  ruleErrorTEL: '请输入有效的手机号',
+  ruleErrorEMAIL: '请输入有效的邮箱',
+  ruleErrorLenEqual: '%s长度必须等于{end}',
+  ruleErrorLenMin: '%s长度必须大于{start}',
+  ruleErrorLenMax: '%s长度必须小于{end}',
+  localeTextFallback: '留空时使用{language}'
 };
 
 export default locale;

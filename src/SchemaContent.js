@@ -6,6 +6,7 @@ import InfoPage from '@kne/info-page';
 import withLocale from './withLocale';
 import { formatFieldDisplayValue } from './formatDisplayValue';
 import { MAX_BLOCK_DEPTH, hasRenderableContent, normalizeSchema, supportsItemBlocks } from './schema';
+import { localizeSchema } from './localeText';
 import style from './style.module.scss';
 
 const getByPath = (data, path) => {
@@ -175,10 +176,10 @@ const renderBlock = (block, data, ctx) => {
   }
 };
 
-const SchemaContentInnerView = ({ schema, data, className }) => {
-  const { formatMessage } = useIntl();
+const SchemaContentInnerView = ({ schema, data, className, languages }) => {
+  const { formatMessage, locale } = useIntl();
   const isMobile = useIsMobile();
-  const normalized = normalizeSchema(schema);
+  const normalized = normalizeSchema(localizeSchema(schema, locale, languages));
   const children = renderBlockList(normalized.blocks, data || {}, { formatMessage, isMobile, depth: 0 });
 
   if (!children.length) {
@@ -194,9 +195,9 @@ const SchemaContentInnerView = ({ schema, data, className }) => {
 
 export const SchemaContentInner = withLocale(SchemaContentInnerView);
 
-const SchemaContent = withLocale(({ schema, data, className, empty }) => {
-  const { formatMessage } = useIntl();
-  const normalized = normalizeSchema(schema);
+const SchemaContent = withLocale(({ schema, data, className, empty, languages }) => {
+  const { formatMessage, locale } = useIntl();
+  const normalized = normalizeSchema(localizeSchema(schema, locale, languages));
   const emptyNode = empty !== undefined ? empty : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={formatMessage({ id: 'schemaContentEmpty' })} />;
 
   if (data == null || !hasRenderableContent(normalized)) {

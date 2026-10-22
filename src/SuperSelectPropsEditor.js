@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import FormInfo from '@kne/form-info';
-import { Input, InputNumber, Checkbox, useFormContext } from '@kne/react-form-antd';
+import { InputNumber, Checkbox, useFormContext } from '@kne/react-form-antd';
 import { useIntl } from '@kne/react-intl';
+import { LocaleInput } from './LocaleTextInput';
 
 const SuperSelectPropsEditor = ({ definition }) => {
   const { formatMessage } = useIntl();
@@ -47,8 +48,8 @@ const SuperSelectPropsEditor = ({ definition }) => {
 
     items.push(
       <InputNumber key="maxLength" name="maxLength" label={formatMessage({ id: 'superSelectMaxLength' })} min={1} placeholder={formatMessage({ id: 'superSelectMaxLengthPlaceholder' })} display={({ openApi }) => !openApi?.data?.single} />,
-      <Input key="placeholder" name="placeholder" label={formatMessage({ id: 'fieldPlaceholder' })} placeholder={formatMessage({ id: 'superSelectPlaceholderHint' })} />,
-      <Input key="searchPlaceholder" name="searchPlaceholder" label={formatMessage({ id: 'superSelectSearchPlaceholder' })} placeholder={formatMessage({ id: 'superSelectSearchPlaceholderHint' })} />
+      <LocaleInput key="placeholder" name="placeholder" label={formatMessage({ id: 'fieldPlaceholder' })} placeholder={formatMessage({ id: 'superSelectPlaceholderHint' })} />,
+      <LocaleInput key="searchPlaceholder" name="searchPlaceholder" label={formatMessage({ id: 'superSelectSearchPlaceholder' })} placeholder={formatMessage({ id: 'superSelectSearchPlaceholderHint' })} />
     );
 
     return items;

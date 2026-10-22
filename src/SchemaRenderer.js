@@ -7,6 +7,7 @@ import { ButtonFooter } from '@kne/button-group';
 import withLocale from './withLocale';
 import renderSchemaContent, { renderSchemaInner } from './renderSchema';
 import { hasRenderableContent, normalizeFormActions, normalizeSchema } from './schema';
+import { localizeSchema } from './localeText';
 import style from './style.module.scss';
 import '@kne/form-info/dist/index.css';
 import '@kne/info-page/dist/index.css';
@@ -122,11 +123,12 @@ export const SchemaRendererInner = withLocale(props => {
     bodyClassName,
     footerClassName,
     buttonFooter = false,
-    buttonFooterProps
+    buttonFooterProps,
+    languages
   } = props;
   const { formatMessage, locale } = useIntl();
   const isMobile = useIsMobile();
-  const normalized = normalizeSchema(schema);
+  const normalized = normalizeSchema(localizeSchema(schema, locale, languages));
 
   if (!hasRenderableContent(normalized)) {
     return null;
@@ -188,11 +190,12 @@ const SchemaRenderer = withLocale(props => {
     bodyClassName,
     footerClassName,
     buttonFooter = false,
-    buttonFooterProps
+    buttonFooterProps,
+    languages
   } = props;
   const { formatMessage, locale } = useIntl();
   const isMobile = useIsMobile();
-  const normalized = normalizeSchema(schema);
+  const normalized = normalizeSchema(localizeSchema(schema, locale, languages));
 
   if (!hasRenderableContent(normalized)) {
     return null;

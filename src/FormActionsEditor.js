@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import FormInfo, { FormModal } from '@kne/form-info';
-import { Input, Switch, Slider, RadioGroup } from '@kne/react-form-antd';
+import { Switch, Slider, RadioGroup } from '@kne/react-form-antd';
 import { useIntl } from '@kne/react-intl';
 import { useIsMobile } from '@kne/responsive-utils';
 import { normalizeFormActions } from './schema';
 import style from './style.module.scss';
+import { LocaleInput } from './LocaleTextInput';
 
 const FormActionsEditor = ({ open, value, onCancel, onSave, renderModal }) => {
   const { formatMessage } = useIntl();
@@ -55,21 +56,33 @@ const FormActionsEditor = ({ open, value, onCancel, onSave, renderModal }) => {
           column={2}
           list={[
             <Switch key="showSubmit" name="showSubmit" label={formatMessage({ id: 'formActionsShowSubmit' })} className={style['form-actions-switch-field']} />,
-            <Input key="submitText" name="submitText" label={formatMessage({ id: 'formActionsSubmitText' })} placeholder={formatMessage({ id: 'formActionsSubmitTextHint' })} display={({ openApi }) => Boolean(openApi?.data?.showSubmit)} />
+            <LocaleInput
+              key="submitText"
+              name="submitText"
+              label={formatMessage({ id: 'formActionsSubmitText' })}
+              placeholder={formatMessage({ id: 'formActionsSubmitTextHint' })}
+              display={({ openApi }) => Boolean(openApi?.data?.showSubmit)}
+            />
           ]}
         />
         <FormInfo
           column={2}
           list={[
             <Switch key="showReset" name="showReset" label={formatMessage({ id: 'formActionsShowReset' })} className={style['form-actions-switch-field']} />,
-            <Input key="resetText" name="resetText" label={formatMessage({ id: 'formActionsResetText' })} placeholder={formatMessage({ id: 'formActionsResetTextHint' })} display={({ openApi }) => Boolean(openApi?.data?.showReset)} />
+            <LocaleInput key="resetText" name="resetText" label={formatMessage({ id: 'formActionsResetText' })} placeholder={formatMessage({ id: 'formActionsResetTextHint' })} display={({ openApi }) => Boolean(openApi?.data?.showReset)} />
           ]}
         />
         <FormInfo
           column={2}
           list={[
             <Switch key="showCancel" name="showCancel" label={formatMessage({ id: 'formActionsShowCancel' })} className={style['form-actions-switch-field']} />,
-            <Input key="cancelText" name="cancelText" label={formatMessage({ id: 'formActionsCancelText' })} placeholder={formatMessage({ id: 'formActionsCancelTextHint' })} display={({ openApi }) => Boolean(openApi?.data?.showCancel)} />
+            <LocaleInput
+              key="cancelText"
+              name="cancelText"
+              label={formatMessage({ id: 'formActionsCancelText' })}
+              placeholder={formatMessage({ id: 'formActionsCancelTextHint' })}
+              display={({ openApi }) => Boolean(openApi?.data?.showCancel)}
+            />
           ]}
         />
         <div className={style['form-actions-layout-panel']}>

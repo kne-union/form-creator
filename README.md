@@ -1515,44 +1515,56 @@ render(<FormInfoFieldExample />);
 ```
 
 - 语言切换(全屏)
-- FormCreator locale prop 切换中/英；检查内置 Field Type 分组与选项、列表类型 Tag、Select/DatePicker 占位
-- _FormCreator(@kne/current-lib_form-creator)[import * as _FormCreator from "@kne/form-creator"],(@kne/current-lib_form-creator/dist/index.css)[import "@kne/form-creator/dist/index.css"],antd(antd)[import antd from "antd"]
+- FormCreator locale prop 切换中/英；检查内置 Field Type 分组与选项、列表类型 Tag、Select/DatePicker 占位，以及 Schema 多语言文案随语言切换
+- _FormCreator(@kne/current-lib_form-creator)[import * as _FormCreator from "@kne/form-creator"],(@kne/current-lib_form-creator/dist/index.css)[import "@kne/form-creator/dist/index.css"],antd(antd)[import antd from "antd"],remoteLoader(@kne/remote-loader)
 
 ```jsx
 const { default: FormCreator, defaultSchema, createBlock, createField } = _FormCreator;
+const { createWithRemoteLoader } = remoteLoader;
 const { useState } = React;
 const { Radio, Space, Typography, Alert } = antd;
 
 const { Text, Paragraph } = Typography;
 
+const languages = [
+  { value: 'zh-CN', label: '中文' },
+  { value: 'en-US', label: 'English' }
+];
+
 const demoSchema = () => ({
   ...defaultSchema(),
   blocks: [
     createBlock('formInfo', {
-      title: 'Basic Info',
+      title: { 'zh-CN': '基本信息', 'en-US': 'Basic Info' },
       column: 2,
       list: [
         createField({
           type: 'Input',
           name: 'name',
-          label: 'Name',
+          label: { 'zh-CN': '姓名', 'en-US': 'Name' },
           rule: 'REQ'
+        }),
+        createField({
+          type: 'Input',
+          name: 'email',
+          label: { 'zh-CN': '邮箱', 'en-US': 'Email' },
+          rule: 'EMAIL LEN-6-30'
         }),
         createField({
           type: 'Select',
           name: 'city',
-          label: 'City',
+          label: { 'zh-CN': '城市', 'en-US': 'City' },
           props: {
             options: [
-              { label: 'Shanghai', value: 'sh' },
-              { label: 'Beijing', value: 'bj' }
+              { label: { 'zh-CN': '上海', 'en-US': 'Shanghai' }, value: 'sh' },
+              { label: { 'zh-CN': '北京', 'en-US': 'Beijing' }, value: 'bj' }
             ]
           }
         }),
         createField({
           type: 'DatePicker',
           name: 'birthday',
-          label: 'Birthday'
+          label: { 'zh-CN': '生日', 'en-US': 'Birthday' }
         })
       ]
     })
@@ -1564,11 +1576,17 @@ const demoSchema = () => ({
  * - 编辑器壳层文案（Add Section / Field Type 等）
  * - 内置 Field Type 分组与选项（Single-line Text / Dropdown）
  * - 左侧列表字段类型 Tag、Select/DatePicker 默认占位
+ * - Schema 内多语言文案（{ 'zh-CN', 'en-US' }）随 locale 切换；languages 决定编辑时有哪几栏输入
+ * - 内置校验（EMAIL / TEL / LEN）错误提示随 locale 切换
+ * - DatePicker 面板等 antd 内置文案由外层 PureGlobal 的 preset.locale 决定
  *
  * 注意：扩展字段（Rate/Slider）若曾打开过「preset 扩展」示例，会残留中文 label；
  * 那是全局 registry 污染，不在本示例内重注册（避免热更新循环）。
  */
-const LocaleSwitchExample = () => {
+const LocaleSwitchExample = createWithRemoteLoader({
+  modules: ['components-core:Global@PureGlobal']
+})(({ remoteModules }) => {
+  const [PureGlobal] = remoteModules;
   const [locale, setLocale] = useState('en-US');
   const [schema, setSchema] = useState(demoSchema);
 
@@ -1580,8 +1598,7 @@ const LocaleSwitchExample = () => {
         message="Language switch"
         description={
           <Paragraph style={{ marginBottom: 0 }}>
-            Toggle locale, then open <Text code>Edit Field</Text> and check built-in <Text strong>Field Type</Text>{' '}
-            groups/options, type tags, and Select/DatePicker placeholders.
+            Toggle locale, then open <Text code>Edit Field</Text> and check built-in <Text strong>Field Type</Text> groups/options, type tags, and Select/DatePicker placeholders.
           </Paragraph>
         }
       />
@@ -1590,15 +1607,14 @@ const LocaleSwitchExample = () => {
         buttonStyle="solid"
         value={locale}
         onChange={e => setLocale(e.target.value)}
-        options={[
-          { label: '中文', value: 'zh-CN' },
-          { label: 'English', value: 'en-US' }
-        ]}
+        options={languages}
       />
-      <FormCreator key={locale} locale={locale} value={schema} onChange={setSchema} />
+      <PureGlobal key={locale} preset={{ locale }}>
+        <FormCreator locale={locale} languages={languages} value={schema} onChange={setSchema} />
+      </PureGlobal>
     </Space>
   );
-};
+});
 
 render(<LocaleSwitchExample />);
 
@@ -1616,6 +1632,7 @@ render(<LocaleSwitchExample />);
 | formProps | object | {} | 透传给预览区 Form / FormSteps 的属性 |
 | renderModal | function(props) | - | 自定义编辑弹窗渲染，透传给内部 FormModal（同 super-select / form-info） |
 | extraToolbar | ReactNode \| function({ schema }) | - | 追加在「添加模块」与设置按钮后面的自定义按钮区 |
+| languages | { value, label }[] | - | Schema 文案支持的语言，首项为基础语言；不传为单语言输入（见「多语言文案」） |
 
 ```js
 <FormCreator
@@ -1646,6 +1663,7 @@ render(<LocaleSwitchExample />);
 | buttonFooterProps | object | - | 透传给 `ButtonFooter`（如 `placement`、`target`、`className`） |
 | children | ReactNode | - | 追加到表单内容与操作区之间 |
 | showActions | boolean | true | 是否展示提交/重置操作区（默认开启，可不传） |
+| languages | { value, label }[] | - | 多语言文案回退顺序，同 FormCreator；不传按 `zh-CN` → `en-US` |
 | actions | ReactNode \| false | - | 自定义操作区；不传则按 Schema `actions` / 默认居中「提交/重置」；`false` 隐藏 |
 | showSubmit | boolean | - | 覆盖 Schema；不传则读 `schema.actions.showSubmit`（默认 true） |
 | showReset | boolean | - | 覆盖 Schema；不传则读 `schema.actions.showReset`（默认 true） |
@@ -1699,6 +1717,7 @@ import { SchemaRenderer } from '@kne/form-creator';
 | className | string | - | 包在表单区块外层的 className（可选） |
 | children | ReactNode | - | 追加内容 |
 | showActions | boolean | true | 是否展示提交/重置操作区（默认开启，可不传） |
+| languages | { value, label }[] | - | 多语言文案回退顺序，同 FormCreator；不传按 `zh-CN` → `en-US` |
 | actions / showSubmit / showReset / submitText / resetText / \*ButtonProps | - | - | 同 SchemaRenderer |
 | bodyClassName / footerClassName / buttonFooter / buttonFooterProps | - | - | 同 SchemaRenderer |
 
@@ -1727,6 +1746,7 @@ import { Form, SubmitButton } from '@kne/form-info';
 | data | object | - | 提交数据；为 `null` / `undefined` 时展示空状态 |
 | className | string | - | 根节点类名 |
 | empty | ReactNode | - | 自定义空状态；不传则用默认 Empty |
+| languages | { value, label }[] | - | 多语言文案回退顺序，同 FormCreator；不传按 `zh-CN` → `en-US` |
 
 `SchemaContentInner` 只渲染分组内容，**不包**外层 `InfoPage`，便于放入业务已有详情页。
 
@@ -1743,14 +1763,15 @@ import { SchemaContent, SchemaContentInner } from '@kne/form-creator';
 #### Schema 结构
 
 ```js
+// LocaleText = string | { [language: string]: string }，如 { 'zh-CN': '姓名', 'en-US': 'Name' }，title / label 等展示文案均可用（见「多语言文案」）
 {
   actions?: {
     showSubmit?: boolean,   // 默认 true
     showReset?: boolean,    // 默认 true
     showCancel?: boolean,   // 默认 false（可选取消按钮）
-    submitText?: string,    // 空则用「提交」
-    resetText?: string,     // 空则用「重置」
-    cancelText?: string,    // 空则用「取消」
+    submitText?: LocaleText,    // 空则用「提交」
+    resetText?: LocaleText,     // 空则用「重置」
+    cancelText?: LocaleText,    // 空则用「取消」
     align?: 'center' | 'start' | 'end', // 默认 center
     gap?: number,           // 按钮间距，默认 16
     submitButtonProps?: object,
@@ -1775,6 +1796,44 @@ import { SchemaContent, SchemaContentInner } from '@kne/form-creator';
 `actions` 由 FormCreator 顶部「添加模块」旁的设置按钮弹窗配置，写入 Schema；`SchemaRenderer` 会读取并渲染居中操作按钮（组件 props 可覆盖 Schema）。设置按钮后面可用 `extraToolbar` 追加自定义按钮。
 
 顶层模块渲染时会自动挂上 `InfoPage.partRootClassName`，嵌入外层 FormInfo Part 时标题从一级重新起算；模块内再嵌套仍为二级胶囊。
+#### 多语言文案
+
+Schema 内的展示文案既可以是字符串，也可以是按语言区分的对象：`{ 'zh-CN': '姓名', 'en-US': 'Name' }`。`SchemaRenderer` / `SchemaRendererInner` / `SchemaContent` 渲染前按当前 `locale` 解析：字符串（旧格式）不论语言原样显示；多语言对象先取当前语言，取不到按 `languages` 顺序回退（未传 `languages` 时为 `zh-CN` → `en-US`），都没有内容为空。
+
+| 支持多语言的位置 | 说明 |
+|------|------|
+| 字段 | label、tips、description、props.placeholder、props.options[].label / description、Switch 的 checkedChildren / unCheckedChildren |
+| 模块 | title、subtitle、label、addText；tableList 列 title；choice 选项 title；steps 步骤 title |
+| actions | submitText、resetText、cancelText |
+
+支持哪些语言由调用方通过 `languages` 决定，组件不内置语言列表：
+
+```jsx
+const languages = [
+  { value: 'zh-CN', label: '中文' },
+  { value: 'en-US', label: 'English' }
+];
+
+<FormCreator languages={languages} value={schema} onChange={setSchema} />
+<SchemaRenderer languages={languages} schema={schema} />
+```
+
+FormCreator 不传 `languages` 时为单语言输入（与改造前一致，存字符串）；传入后每种语言一栏输入，首项为基础语言：只填基础语言时存为字符串（与旧 Schema 兼容），填了其它语言才存为对象；选项值联动时取基础语言文案。数据标识（`name`、选项 `value`）与语言无关。
+
+| 方法 / 组件 | 参数 | 返回值 | 说明 |
+|------|------|------|------|
+| localizeSchema | (schema, locale, languages?) | object | 深度解析多语言文案，返回新对象，不修改原 Schema |
+| resolveLocaleText | (value, locale, languages?) | string | 解析单个文案；非多语言对象原样返回 |
+| isLocaleText | (value) | boolean | 是否为多语言文案对象 |
+| hasLocaleText | (value) | boolean | 文案（字符串或多语言）是否有内容 |
+| LocaleInput / LocaleTextArea | 同 react-form-antd 字段，另可传 languages | - | 多语言文案表单字段 |
+| LocaleTextControl | value, onChange, placeholder, multiline, compact, languages | - | 非表单场景的多语言输入控件 |
+| LocaleTextProvider | languages, children | - | 给内部的 LocaleInput / LocaleTextControl 统一下发 languages（FormCreator 已内置） |
+
+`SchemaRenderer` 创建表单时按当前 `locale` 传入表单级 `rules`，让内置 `TEL` / `EMAIL` / `LEN` 的错误提示随语言切换（`@kne/react-form` 内置提示为中文）；业务通过 `preset` 覆盖了同名规则时不替换，`formProps.rules` 优先级最高。`SchemaRendererInner` 嵌在外部表单中，规则由外部表单决定。
+
+`schemaToDataSchema(schema, { locale, languages })` 与 `formatFieldDisplayValue(field, value, { formatMessage, locale, languages })` 也接受 `locale` / `languages`，回退规则同上。
+
 #### 区块类型
 
 | kind | 说明 | 主要参数 |
