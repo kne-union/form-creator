@@ -1515,11 +1515,12 @@ render(<FormInfoFieldExample />);
 ```
 
 - 语言切换(全屏)
-- FormCreator locale prop 切换中/英；检查内置 Field Type 分组与选项、列表类型 Tag、Select/DatePicker 占位
-- _FormCreator(@kne/current-lib_form-creator)[import * as _FormCreator from "@kne/form-creator"],(@kne/current-lib_form-creator/dist/index.css)[import "@kne/form-creator/dist/index.css"],antd(antd)[import antd from "antd"]
+- FormCreator locale prop 切换中/英；检查内置 Field Type 分组与选项、列表类型 Tag、Select/DatePicker 占位，以及 Schema 多语言文案随语言切换
+- _FormCreator(@kne/current-lib_form-creator)[import * as _FormCreator from "@kne/form-creator"],(@kne/current-lib_form-creator/dist/index.css)[import "@kne/form-creator/dist/index.css"],antd(antd)[import antd from "antd"],remoteLoader(@kne/remote-loader)
 
 ```jsx
 const { default: FormCreator, defaultSchema, createBlock, createField } = _FormCreator;
+const { createWithRemoteLoader } = remoteLoader;
 const { useState } = React;
 const { Radio, Space, Typography, Alert } = antd;
 
@@ -1529,30 +1530,36 @@ const demoSchema = () => ({
   ...defaultSchema(),
   blocks: [
     createBlock('formInfo', {
-      title: 'Basic Info',
+      title: { 'zh-CN': '基本信息', 'en-US': 'Basic Info' },
       column: 2,
       list: [
         createField({
           type: 'Input',
           name: 'name',
-          label: 'Name',
+          label: { 'zh-CN': '姓名', 'en-US': 'Name' },
           rule: 'REQ'
+        }),
+        createField({
+          type: 'Input',
+          name: 'email',
+          label: { 'zh-CN': '邮箱', 'en-US': 'Email' },
+          rule: 'EMAIL LEN-6-30'
         }),
         createField({
           type: 'Select',
           name: 'city',
-          label: 'City',
+          label: { 'zh-CN': '城市', 'en-US': 'City' },
           props: {
             options: [
-              { label: 'Shanghai', value: 'sh' },
-              { label: 'Beijing', value: 'bj' }
+              { label: { 'zh-CN': '上海', 'en-US': 'Shanghai' }, value: 'sh' },
+              { label: { 'zh-CN': '北京', 'en-US': 'Beijing' }, value: 'bj' }
             ]
           }
         }),
         createField({
           type: 'DatePicker',
           name: 'birthday',
-          label: 'Birthday'
+          label: { 'zh-CN': '生日', 'en-US': 'Birthday' }
         })
       ]
     })
@@ -1564,11 +1571,17 @@ const demoSchema = () => ({
  * - 编辑器壳层文案（Add Section / Field Type 等）
  * - 内置 Field Type 分组与选项（Single-line Text / Dropdown）
  * - 左侧列表字段类型 Tag、Select/DatePicker 默认占位
+ * - Schema 内多语言文案（{ 'zh-CN', 'en-US' }）随 locale 切换；编辑填写项时中英两栏录入
+ * - 内置校验（EMAIL / TEL / LEN）错误提示随 locale 切换
+ * - DatePicker 面板等 antd 内置文案由外层 PureGlobal 的 preset.locale 决定
  *
  * 注意：扩展字段（Rate/Slider）若曾打开过「preset 扩展」示例，会残留中文 label；
  * 那是全局 registry 污染，不在本示例内重注册（避免热更新循环）。
  */
-const LocaleSwitchExample = () => {
+const LocaleSwitchExample = createWithRemoteLoader({
+  modules: ['components-core:Global@PureGlobal']
+})(({ remoteModules }) => {
+  const [PureGlobal] = remoteModules;
   const [locale, setLocale] = useState('en-US');
   const [schema, setSchema] = useState(demoSchema);
 
@@ -1595,10 +1608,12 @@ const LocaleSwitchExample = () => {
           { label: 'English', value: 'en-US' }
         ]}
       />
-      <FormCreator key={locale} locale={locale} value={schema} onChange={setSchema} />
+      <PureGlobal key={locale} preset={{ locale }}>
+        <FormCreator locale={locale} value={schema} onChange={setSchema} />
+      </PureGlobal>
     </Space>
   );
-};
+});
 
 render(<LocaleSwitchExample />);
 
@@ -1743,14 +1758,15 @@ import { SchemaContent, SchemaContentInner } from '@kne/form-creator';
 #### Schema 结构
 
 ```js
+// LocaleText = string | { 'zh-CN'?: string, 'en-US'?: string }，title / label 等展示文案均可用（见「多语言文案」）
 {
   actions?: {
     showSubmit?: boolean,   // 默认 true
     showReset?: boolean,    // 默认 true
     showCancel?: boolean,   // 默认 false（可选取消按钮）
-    submitText?: string,    // 空则用「提交」
-    resetText?: string,     // 空则用「重置」
-    cancelText?: string,    // 空则用「取消」
+    submitText?: LocaleText,    // 空则用「提交」
+    resetText?: LocaleText,     // 空则用「重置」
+    cancelText?: LocaleText,    // 空则用「取消」
     align?: 'center' | 'start' | 'end', // 默认 center
     gap?: number,           // 按钮间距，默认 16
     submitButtonProps?: object,
@@ -1775,6 +1791,32 @@ import { SchemaContent, SchemaContentInner } from '@kne/form-creator';
 `actions` 由 FormCreator 顶部「添加模块」旁的设置按钮弹窗配置，写入 Schema；`SchemaRenderer` 会读取并渲染居中操作按钮（组件 props 可覆盖 Schema）。设置按钮后面可用 `extraToolbar` 追加自定义按钮。
 
 顶层模块渲染时会自动挂上 `InfoPage.partRootClassName`，嵌入外层 FormInfo Part 时标题从一级重新起算；模块内再嵌套仍为二级胶囊。
+#### 多语言文案
+
+Schema 内的展示文案既可以是字符串，也可以是按语言区分的对象：`{ 'zh-CN': '姓名', 'en-US': 'Name' }`。`SchemaRenderer` / `SchemaRendererInner` / `SchemaContent` 渲染前按当前 `locale` 解析：字符串（旧格式）不论语言原样显示；多语言对象依次取当前语言、`zh-CN`、`en-US` 中第一个有内容的值。
+
+| 支持多语言的位置 | 说明 |
+|------|------|
+| 字段 | label、tips、description、props.placeholder、props.options[].label / description、Switch 的 checkedChildren / unCheckedChildren |
+| 模块 | title、subtitle、label、addText；tableList 列 title；choice 选项 title；steps 步骤 title |
+| actions | submitText、resetText、cancelText |
+
+数据标识（`name`、选项 `value`）与语言无关。FormCreator 编辑上述文案时为中英两栏输入：只填中文时存为字符串（与旧 Schema 兼容），填了英文才存为对象；选项值联动时取中文文案。
+
+| 方法 / 组件 | 参数 | 返回值 | 说明 |
+|------|------|------|------|
+| localizeSchema | (schema, locale) | object | 深度解析多语言文案，返回新对象，不修改原 Schema |
+| resolveLocaleText | (value, locale) | string | 解析单个文案；非多语言对象原样返回 |
+| isLocaleText | (value) | boolean | 是否为多语言文案对象 |
+| hasLocaleText | (value) | boolean | 文案（字符串或多语言）是否有内容 |
+| LOCALE_TEXT_LANGUAGES | - | string[] | 编辑器双语输入的语言，`['zh-CN', 'en-US']` |
+| LocaleInput / LocaleTextArea | 同 react-form-antd 字段 | - | 双语文案表单字段 |
+| LocaleTextControl | value, onChange, placeholder, multiline, compact | - | 非表单场景的双语输入控件 |
+
+`SchemaRenderer` 创建表单时按当前 `locale` 传入表单级 `rules`，让内置 `TEL` / `EMAIL` / `LEN` 的错误提示随语言切换（`@kne/react-form` 内置提示为中文）；业务通过 `preset` 覆盖了同名规则时不替换，`formProps.rules` 优先级最高。`SchemaRendererInner` 嵌在外部表单中，规则由外部表单决定。
+
+`schemaToDataSchema(schema, { locale })` 与 `formatFieldDisplayValue(field, value, { formatMessage, locale })` 也接受 `locale`，缺省取 `zh-CN` 文案。
+
 #### 区块类型
 
 | kind | 说明 | 主要参数 |

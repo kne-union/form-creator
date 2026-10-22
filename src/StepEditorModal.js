@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import FormInfo, { FormModal } from '@kne/form-info';
-import { Input, InputNumber } from '@kne/react-form-antd';
+import { InputNumber } from '@kne/react-form-antd';
 import { useIntl } from '@kne/react-intl';
 import { useIsMobile } from '@kne/responsive-utils';
 import { formValuesToStep, stepToFormValues } from './blockRegistry';
 import { createStep } from './schema';
+import { LocaleInput } from './LocaleTextInput';
 
 const StepEditorModal = ({ open, step, onCancel, onSave, renderModal }) => {
   const { formatMessage } = useIntl();
@@ -33,7 +34,7 @@ const StepEditorModal = ({ open, step, onCancel, onSave, renderModal }) => {
       <FormInfo
         column={1}
         list={[
-          <Input key="title" name="title" label={formatMessage({ id: 'stepTitle' })} rule="REQ" placeholder={formatMessage({ id: 'stepTitlePlaceholder' })} />,
+          <LocaleInput key="title" name="title" label={formatMessage({ id: 'stepTitle' })} rule="REQ" placeholder={formatMessage({ id: 'stepTitlePlaceholder' })} />,
           <InputNumber key="column" name="column" label={formatMessage({ id: 'formColumnPlaceholder' })} min={1} max={4} />
         ]}
       />

@@ -1101,7 +1101,45 @@
   }
 }
 
+.locale-text {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+
+  &.is-compact {
+    gap: 4px;
+  }
+}
+
+.locale-text-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.locale-text-prefix {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.options-locale-text {
+  flex: 2;
+  min-width: 0;
+}
+
+.locale-text-tag {
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(0, 0, 0, 0.45);
+}
+
 @include resp.mobile-container {
+  .locale-text {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .form-creator.is-mobile {
     .editor-header,
     .preview-header {

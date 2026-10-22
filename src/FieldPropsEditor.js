@@ -3,6 +3,7 @@ import FormInfo from '@kne/form-info';
 import { Input, InputNumber, Select, Checkbox } from '@kne/react-form-antd';
 import { useIntl } from '@kne/react-intl';
 import { getFieldDefinition } from './fieldRegistry';
+import { LocaleInput } from './LocaleTextInput';
 
 const BUILTIN_PROP_TYPES = ['Input', 'TextArea', 'InputNumber', 'Select', 'DatePicker', 'Switch', 'RadioGroup', 'CheckboxGroup'];
 
@@ -27,7 +28,7 @@ const buildPropsSchemaList = (schema, formatMessage) =>
     });
 
 const buildBuiltinList = (type, formatMessage) => {
-  const placeholder = <Input key="placeholder" name="placeholder" label={formatMessage({ id: 'fieldPlaceholder' })} placeholder={formatMessage({ id: 'fieldPlaceholderHint' })} />;
+  const placeholder = <LocaleInput key="placeholder" name="placeholder" label={formatMessage({ id: 'fieldPlaceholder' })} placeholder={formatMessage({ id: 'fieldPlaceholderHint' })} />;
   const allowClear = (
     <Checkbox key="allowClear" name="allowClear">
       {formatMessage({ id: 'propAllowClear' })}
@@ -106,8 +107,8 @@ const buildBuiltinList = (type, formatMessage) => {
       ];
     case 'Switch':
       return [
-        <Input key="checkedChildren" name="checkedChildren" label={formatMessage({ id: 'propSwitchOnText' })} placeholder={formatMessage({ id: 'propSwitchOnTextHint' })} />,
-        <Input key="unCheckedChildren" name="unCheckedChildren" label={formatMessage({ id: 'propSwitchOffText' })} placeholder={formatMessage({ id: 'propSwitchOffTextHint' })} />
+        <LocaleInput key="checkedChildren" name="checkedChildren" label={formatMessage({ id: 'propSwitchOnText' })} placeholder={formatMessage({ id: 'propSwitchOnTextHint' })} />,
+        <LocaleInput key="unCheckedChildren" name="unCheckedChildren" label={formatMessage({ id: 'propSwitchOffText' })} placeholder={formatMessage({ id: 'propSwitchOffTextHint' })} />
       ];
     case 'RadioGroup':
     case 'CheckboxGroup':

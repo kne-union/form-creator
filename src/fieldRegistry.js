@@ -2,6 +2,7 @@ import { Input, TextArea, Select, InputNumber, Switch, Checkbox, DatePicker, Rad
 import { SuperSelectList, SuperSelectTableList, SuperSelectTree, SuperSelectCascader, SelectFunctionField, SelectIndustryField, SelectAddressField } from './fields/extendedFields';
 import { buildRuleString, parseRuleString } from './rulePresets';
 import { createEmptyColumn } from './schema';
+import { hasLocaleText, localeTextToValue, resolveLocaleText, trimLocaleText } from './localeText';
 
 const registry = new Map();
 
@@ -380,8 +381,10 @@ export const resolveFieldValueSchema = field => {
   } else {
     schema = { ...schema };
   }
-  const title = field.label != null && String(field.label).trim() ? String(field.label).trim() : undefined;
-  const description = field.description != null && String(field.description).trim() ? String(field.description).trim() : undefined;
+  const label = resolveLocaleText(field.label);
+  const fieldDescription = resolveLocaleText(field.description);
+  const title = label != null && String(label).trim() ? String(label).trim() : undefined;
+  const description = fieldDescription != null && String(fieldDescription).trim() ? String(fieldDescription).trim() : undefined;
   if (title && schema.title == null) {
     schema.title = title;
   }
@@ -461,24 +464,24 @@ export const normalizeOptions = (options, { allowChildren = false, columns = [] 
 
   return options
     .map(item => {
-      const label = String(item?.label ?? '').trim();
+      const label = trimLocaleText(item?.label);
       let value = String(item?.value ?? '').trim();
       if (!value && label) {
-        value = label;
+        value = localeTextToValue(label);
       }
       const next = {
         label,
         value,
-        description: String(item?.description ?? '').trim()
+        description: trimLocaleText(item?.description)
       };
       columnNames.forEach(name => {
         next[name] = item?.[name] ?? '';
       });
-      if (!String(next.label).trim() && columnNames[0] && String(next[columnNames[0]] || '').trim()) {
+      if (!hasLocaleText(next.label) && columnNames[0] && String(next[columnNames[0]] || '').trim()) {
         next.label = String(next[columnNames[0]]).trim();
       }
-      if (!String(next.value).trim() && String(next.label).trim()) {
-        next.value = next.label;
+      if (!String(next.value).trim() && hasLocaleText(next.label)) {
+        next.value = localeTextToValue(next.label);
       }
       if (allowChildren && Array.isArray(item?.children) && item.children.length) {
         next.children = normalizeOptions(item.children, { allowChildren: true, columns });

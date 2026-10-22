@@ -1,6 +1,7 @@
 import { normalizeSchema, supportsItemBlocks } from './schema';
 import { resolveFieldValueSchema } from './fieldRegistry';
 import { parseRuleString } from './rulePresets';
+import { localizeSchema } from './localeText';
 
 const createObjectLayer = () => ({
   properties: {},
@@ -261,9 +262,10 @@ const mergeChoiceIntoLayer = (layer, block, depth) => {
  * - 扩展字段：registerField / preset 的 valueSchema；缺省 { type: 'string' }
  * - hidden 字段仍进入 data schema（可提交）
  * - choice：single → oneOf，multiple → anyOf
+ * - options.locale：多语言文案取该语言（缺省取基础语言）
  */
 export const schemaToDataSchema = (schema, options = {}) => {
-  const normalized = normalizeSchema(schema || {});
+  const normalized = normalizeSchema(localizeSchema(schema || {}, options.locale));
   const layer = createObjectLayer();
   walkBlocks(normalized.blocks, layer, 0);
 

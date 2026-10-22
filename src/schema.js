@@ -1,3 +1,5 @@
+import { isLocaleText } from './localeText';
+
 export const createFieldId = () => `field_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
 /** 生成可编辑的默认数据标识，如 field_xxxx / col_xxxx */
@@ -41,6 +43,8 @@ export const defaultFormActions = () => ({
 
 const FORM_ACTIONS_ALIGN = ['center', 'start', 'end'];
 
+const normalizeActionText = value => (value == null ? '' : isLocaleText(value) ? { ...value } : String(value));
+
 export const normalizeFormActions = (actions = {}) => {
   const base = defaultFormActions();
   if (!actions || typeof actions !== 'object') {
@@ -53,9 +57,9 @@ export const normalizeFormActions = (actions = {}) => {
     showSubmit: actions.showSubmit !== false,
     showReset: actions.showReset !== false,
     showCancel: !!actions.showCancel,
-    submitText: actions.submitText != null ? String(actions.submitText) : '',
-    resetText: actions.resetText != null ? String(actions.resetText) : '',
-    cancelText: actions.cancelText != null ? String(actions.cancelText) : '',
+    submitText: normalizeActionText(actions.submitText),
+    resetText: normalizeActionText(actions.resetText),
+    cancelText: normalizeActionText(actions.cancelText),
     align,
     gap,
     ...(actions.submitButtonProps && typeof actions.submitButtonProps === 'object' ? { submitButtonProps: { ...actions.submitButtonProps } } : {}),

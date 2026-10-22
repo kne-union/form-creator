@@ -2,6 +2,7 @@ import { createElement } from 'react';
 import { getFieldDefinition, resolveFieldValueSchema } from './fieldRegistry';
 import FileFieldPreview from './FileFieldPreview';
 import defaultLocale from './locale/zh-CN';
+import { localizeSchema } from './localeText';
 
 const TEMPORAL_PATTERN = {
   date: 'YYYY-MM-DD',
@@ -399,7 +400,8 @@ export const formatByValueSchema = (value, schema, ctx = {}) => {
   return String(value);
 };
 
-export const formatFieldDisplayValue = (field, value, { formatMessage } = {}) => {
+export const formatFieldDisplayValue = (rawField, value, { formatMessage, locale } = {}) => {
+  const field = localizeSchema(rawField, locale);
   const emptyText = formatMessage?.({ id: 'schemaContentEmptyValue' }) || '-';
   if (isEmptyValue(value)) {
     return emptyText;

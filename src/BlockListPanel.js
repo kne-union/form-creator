@@ -22,6 +22,7 @@ import { getBlockDefinition } from './blockRegistry';
 import { resolveFieldTypeLabel } from './fieldRegistry';
 import { MAX_BLOCK_DEPTH, supportsItemBlocks as kindSupportsItemBlocks } from './schema';
 import FieldRow from './FieldRow';
+import { resolveLocaleText } from './localeText';
 import style from './style.module.scss';
 
 const { Text } = Typography;
@@ -65,7 +66,8 @@ const BlockListPanel = ({
   onOpenFormActions,
   extraToolbar
 }) => {
-  const { formatMessage } = useIntl();
+  const { formatMessage, locale } = useIntl();
+  const text = value => resolveLocaleText(value, locale);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [addFieldMenuId, setAddFieldMenuId] = useState(null);
   const keepAddFieldMenuOpenRef = useRef(false);
@@ -258,7 +260,7 @@ const BlockListPanel = ({
                   <div className={style['step-section-header']}>
                     <Space size={8} wrap className={style['step-section-title']}>
                       <span className={style['step-index']}>{stepIndex + 1}</span>
-                      <Text strong>{step.title || formatMessage({ id: 'untitledStep' }, { index: stepIndex + 1 })}</Text>
+                      <Text strong>{text(step.title) || formatMessage({ id: 'untitledStep' }, { index: stepIndex + 1 })}</Text>
                       <Text type="secondary">
                         {(step.blocks || []).length ? formatMessage({ id: 'fieldAndItemBlockCount' }, { fields: step.list?.length || 0, nests: step.blocks.length }) : formatMessage({ id: 'fieldCount' }, { count: step.list?.length || 0 })}
                       </Text>
@@ -318,7 +320,7 @@ const BlockListPanel = ({
                   <div className={style['step-section-header']}>
                     <Space size={8} wrap className={style['step-section-title']}>
                       <span className={style['step-index']}>{optionIndex + 1}</span>
-                      <Text strong>{option.title || formatMessage({ id: 'choiceOptionFallback' }, { index: optionIndex + 1 })}</Text>
+                      <Text strong>{text(option.title) || formatMessage({ id: 'choiceOptionFallback' }, { index: optionIndex + 1 })}</Text>
                       <Text type="secondary">
                         {(option.blocks || []).length
                           ? formatMessage({ id: 'fieldAndItemBlockCount' }, { fields: option.list?.length || 0, nests: option.blocks.length })
@@ -392,7 +394,7 @@ const BlockListPanel = ({
               {formatMessage({ id: `blockKind_${block.kind}` })}
             </Tag>
             <Text strong ellipsis className={style['block-title']}>
-              {block.title || block.label || block.name || formatMessage({ id: 'untitledBlock' })}
+              {text(block.title) || text(block.label) || block.name || formatMessage({ id: 'untitledBlock' })}
             </Text>
             <span className={style['block-summary']}>{summary}</span>
           </div>

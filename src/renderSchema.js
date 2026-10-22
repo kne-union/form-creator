@@ -7,6 +7,7 @@ import { getFieldComponent, getFieldDefinition } from './fieldRegistry';
 import { createApiFromOptions } from './fields/optionsApi';
 import { MAX_BLOCK_DEPTH, normalizeSchema, collectBlockFieldNames } from './schema';
 import ChoiceBlock from './ChoiceBlock';
+import { createLocalizedRules } from './localizedRules';
 import style from './style.module.scss';
 
 const buildLabelTips = tips => {
@@ -368,6 +369,7 @@ export const renderSchemaContent = (schema, { preview = false, formProps = {}, c
     Form,
     {
       ...formProps,
+      rules: { ...createLocalizedRules(formatMessage), ...formProps.rules },
       className: formClassName
     },
     createElement('div', { className: [style['schema-body'], bodyClassName].filter(Boolean).join(' ') }, ...contentChildren, children),

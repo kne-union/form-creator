@@ -8,6 +8,7 @@ import { ADD_POSITIONS, blockToFormValues, formValuesToBlock, getBlockDefinition
 import { getFieldTypes } from './fieldRegistry';
 import { createBlock } from './schema';
 import style from './style.module.scss';
+import { LocaleInput } from './LocaleTextInput';
 
 const BlockConfigFields = ({ kind }) => {
   const { formatMessage } = useIntl();
@@ -19,8 +20,8 @@ const BlockConfigFields = ({ kind }) => {
 
   if (kind === 'formInfo' || kind === 'list' || kind === 'tableList' || kind === 'editableList' || kind === 'object') {
     list.push(
-      <Input key="title" name="title" label={formatMessage({ id: 'blockTitle' })} placeholder={formatMessage({ id: 'blockTitlePlaceholder' })} />,
-      kind === 'formInfo' ? <Input key="subtitle" name="subtitle" label={formatMessage({ id: 'blockSubtitle' })} placeholder={formatMessage({ id: 'blockSubtitlePlaceholder' })} /> : null,
+      <LocaleInput key="title" name="title" label={formatMessage({ id: 'blockTitle' })} placeholder={formatMessage({ id: 'blockTitlePlaceholder' })} />,
+      kind === 'formInfo' ? <LocaleInput key="subtitle" name="subtitle" label={formatMessage({ id: 'blockSubtitle' })} placeholder={formatMessage({ id: 'blockSubtitlePlaceholder' })} /> : null,
       kind !== 'formInfo' ? <Input key="name" name="name" label={formatMessage({ id: 'blockName' })} rule="REQ" placeholder={formatMessage({ id: 'fieldNamePlaceholder' })} /> : null,
       <InputNumber key="column" name="column" label={formatMessage({ id: 'formColumnPlaceholder' })} min={1} max={4} />,
       kind === 'formInfo' || kind === 'object' ? <InputNumber key="gap" name="gap" label={formatMessage({ id: 'blockGap' })} min={0} max={48} /> : null,
@@ -37,7 +38,7 @@ const BlockConfigFields = ({ kind }) => {
           {formatMessage({ id: 'blockImportant' })}
         </Checkbox>
       ) : null,
-      isListKind ? <Input key="addText" name="addText" label={formatMessage({ id: 'blockAddText' })} placeholder={formatMessage({ id: 'blockAddTextPlaceholder' })} /> : null,
+      isListKind ? <LocaleInput key="addText" name="addText" label={formatMessage({ id: 'blockAddText' })} placeholder={formatMessage({ id: 'blockAddTextPlaceholder' })} /> : null,
       kind === 'editableList' ? (
         <Select key="addPosition" name="addPosition" label={formatMessage({ id: 'blockAddPosition' })} options={ADD_POSITIONS.map(value => ({ label: formatMessage({ id: `blockAddPosition_${value}` }), value }))} />
       ) : null,
@@ -48,7 +49,7 @@ const BlockConfigFields = ({ kind }) => {
 
   if (kind === 'choice') {
     list.push(
-      <Input key="title" name="title" label={formatMessage({ id: 'blockTitle' })} placeholder={formatMessage({ id: 'choiceTitlePlaceholder' })} />,
+      <LocaleInput key="title" name="title" label={formatMessage({ id: 'blockTitle' })} placeholder={formatMessage({ id: 'choiceTitlePlaceholder' })} />,
       <Select
         key="mode"
         name="mode"
@@ -77,16 +78,16 @@ const BlockConfigFields = ({ kind }) => {
   if (kind === 'multiField') {
     list.push(
       <Input key="name" name="name" label={formatMessage({ id: 'blockName' })} rule="REQ" placeholder={formatMessage({ id: 'fieldNamePlaceholder' })} />,
-      <Input key="label" name="label" label={formatMessage({ id: 'fieldLabel' })} rule="REQ" placeholder={formatMessage({ id: 'fieldLabelPlaceholder' })} />,
+      <LocaleInput key="label" name="label" label={formatMessage({ id: 'fieldLabel' })} rule="REQ" placeholder={formatMessage({ id: 'fieldLabelPlaceholder' })} />,
       <Select key="fieldType" name="fieldType" label={formatMessage({ id: 'multiFieldType' })} rule="REQ" options={fieldTypeOptions} />,
-      <Input key="addText" name="addText" label={formatMessage({ id: 'blockAddText' })} placeholder={formatMessage({ id: 'blockAddTextPlaceholder' })} />
+      <LocaleInput key="addText" name="addText" label={formatMessage({ id: 'blockAddText' })} placeholder={formatMessage({ id: 'blockAddTextPlaceholder' })} />
     );
   }
 
   if (kind === 'steps') {
     list.push(
-      <Input key="title" name="title" label={formatMessage({ id: 'blockTitle' })} placeholder={formatMessage({ id: 'blockTitlePlaceholder' })} />,
-      <Input key="subtitle" name="subtitle" label={formatMessage({ id: 'blockSubtitle' })} placeholder={formatMessage({ id: 'blockSubtitlePlaceholder' })} />,
+      <LocaleInput key="title" name="title" label={formatMessage({ id: 'blockTitle' })} placeholder={formatMessage({ id: 'blockTitlePlaceholder' })} />,
+      <LocaleInput key="subtitle" name="subtitle" label={formatMessage({ id: 'blockSubtitle' })} placeholder={formatMessage({ id: 'blockSubtitlePlaceholder' })} />,
       <Checkbox key="bordered" name="bordered">
         {formatMessage({ id: 'blockBordered' })}
       </Checkbox>,

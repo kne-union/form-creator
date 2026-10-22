@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import FormInfo, { FormModal } from '@kne/form-info';
-import { Input, TextArea, Select, Checkbox, useFormContext } from '@kne/react-form-antd';
+import { Input, Select, Checkbox, useFormContext } from '@kne/react-form-antd';
 import { message, Typography } from 'antd';
 const { Text } = Typography;
 import { useIntl } from '@kne/react-intl';
@@ -12,6 +12,7 @@ import OptionsEditor from './OptionsEditor';
 import SuperSelectPropsEditor from './SuperSelectPropsEditor';
 import FieldPropsEditor, { hasFieldPropsEditor } from './FieldPropsEditor';
 import style from './style.module.scss';
+import { LocaleInput, LocaleTextArea } from './LocaleTextInput';
 
 const getDefaultSelectProps = () => ({
   single: false,
@@ -69,9 +70,9 @@ const FieldConfigFields = ({ initialType, options, onOptionsChange, columns, onC
       }}
     />,
     <Input key="name" name="name" label={formatMessage({ id: 'fieldName' })} rule="REQ" placeholder={formatMessage({ id: 'fieldNamePlaceholder' })} />,
-    <Input key="label" name="label" label={formatMessage({ id: 'fieldLabel' })} rule="REQ" placeholder={formatMessage({ id: 'fieldLabelPlaceholder' })} />,
-    <Input key="tips" name="tips" label={formatMessage({ id: 'fieldTips' })} placeholder={formatMessage({ id: 'fieldTipsPlaceholder' })} />,
-    <TextArea key="description" name="description" label={formatMessage({ id: 'fieldDescription' })} placeholder={formatMessage({ id: 'fieldDescriptionPlaceholder' })} rows={2} />
+    <LocaleInput key="label" name="label" label={formatMessage({ id: 'fieldLabel' })} rule="REQ" placeholder={formatMessage({ id: 'fieldLabelPlaceholder' })} />,
+    <LocaleInput key="tips" name="tips" label={formatMessage({ id: 'fieldTips' })} placeholder={formatMessage({ id: 'fieldTipsPlaceholder' })} />,
+    <LocaleTextArea key="description" name="description" label={formatMessage({ id: 'fieldDescription' })} placeholder={formatMessage({ id: 'fieldDescriptionPlaceholder' })} rows={2} />
   ];
 
   list.push(

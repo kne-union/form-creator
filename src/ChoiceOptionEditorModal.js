@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import FormInfo, { FormModal } from '@kne/form-info';
-import { Input } from '@kne/react-form-antd';
 import { useIntl } from '@kne/react-intl';
 import { useIsMobile } from '@kne/responsive-utils';
 import { choiceOptionToFormValues, formValuesToChoiceOption } from './blockRegistry';
 import { createChoiceOption } from './schema';
+import { LocaleInput } from './LocaleTextInput';
 
 const ChoiceOptionEditorModal = ({ open, option, onCancel, onSave, renderModal }) => {
   const { formatMessage } = useIntl();
@@ -30,7 +30,7 @@ const ChoiceOptionEditorModal = ({ open, option, onCancel, onSave, renderModal }
       okText={formatMessage({ id: 'confirm' })}
       cancelText={formatMessage({ id: 'cancel' })}
     >
-      <FormInfo column={1} list={[<Input key="title" name="title" label={formatMessage({ id: 'choiceOptionTitle' })} rule="REQ" placeholder={formatMessage({ id: 'choiceOptionTitlePlaceholder' })} />]} />
+      <FormInfo column={1} list={[<LocaleInput key="title" name="title" label={formatMessage({ id: 'choiceOptionTitle' })} rule="REQ" placeholder={formatMessage({ id: 'choiceOptionTitlePlaceholder' })} />]} />
     </FormModal>
   );
 };

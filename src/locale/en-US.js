@@ -238,7 +238,17 @@ const locale = {
   schemaContentNo: 'No',
   schemaContentItemIndex: 'Item {index}',
   schemaContentUntilToday: 'Present',
-  schemaContentPasswordMasked: '••••••'
+  schemaContentPasswordMasked: '••••••',
+  ruleErrorTEL: 'Please enter a valid mobile number',
+  ruleErrorEMAIL: 'Please enter a valid email address',
+  ruleErrorLenEqual: '%s must be exactly {end} characters',
+  ruleErrorLenMin: '%s must be at least {start} characters',
+  ruleErrorLenMax: '%s must be at most {end} characters',
+  'localeText_zh-CN': 'Chinese',
+  'localeText_en-US': 'English',
+  'localeTextShort_zh-CN': 'ZH',
+  'localeTextShort_en-US': 'EN',
+  localeTextFallback: 'Falls back to Chinese when empty'
 };
 
 export default locale;

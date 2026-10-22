@@ -236,7 +236,7 @@
     },
     {
       "title": "语言切换",
-      "description": "FormCreator locale prop 切换中/英；检查内置 Field Type 分组与选项、列表类型 Tag、Select/DatePicker 占位",
+      "description": "FormCreator locale prop 切换中/英；检查内置 Field Type 分组与选项、列表类型 Tag、Select/DatePicker 占位，以及 Schema 多语言文案随语言切换",
       "code": "./locale-switch.js",
       "isFull": true,
       "scope": [
@@ -253,6 +253,10 @@
           "name": "antd",
           "packageName": "antd",
           "importStatement": "import antd from \"antd\""
+        },
+        {
+          "name": "remoteLoader",
+          "packageName": "@kne/remote-loader"
         }
       ]
     }

@@ -3,6 +3,7 @@ import { ArrowDownOutlined, ArrowUpOutlined, DeleteOutlined, EditOutlined } from
 import { useIntl } from '@kne/react-intl';
 import { getFieldDefinition, resolveFieldTypeLabel } from './fieldRegistry';
 import style from './style.module.scss';
+import { resolveLocaleText } from './localeText';
 
 const { Text } = Typography;
 
@@ -26,7 +27,7 @@ const TYPE_TAG_COLORS = {
 };
 
 const FieldRow = ({ field, index, total, onEdit, onDelete, onMove }) => {
-  const { formatMessage } = useIntl();
+  const { formatMessage, locale } = useIntl();
   const definition = getFieldDefinition(field.type);
 
   return (
@@ -35,7 +36,7 @@ const FieldRow = ({ field, index, total, onEdit, onDelete, onMove }) => {
       <div className={style['field-row-main']}>
         <Space size={6} wrap>
           <Text strong ellipsis>
-            {field.label || formatMessage({ id: 'untitledField' })}
+            {resolveLocaleText(field.label, locale) || formatMessage({ id: 'untitledField' })}
           </Text>
           <Tag bordered={false} color={TYPE_TAG_COLORS[field.type] || 'default'}>
             {resolveFieldTypeLabel(definition || field.type, formatMessage)}

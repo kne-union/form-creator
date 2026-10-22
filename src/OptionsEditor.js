@@ -4,6 +4,8 @@ import { DeleteOutlined, PlusOutlined, ApartmentOutlined } from '@ant-design/ico
 import { useEffect } from 'react';
 import { useIntl } from '@kne/react-intl';
 import { createDataKey, createEmptyColumn, isAutoDataKey } from './schema';
+import { LocaleTextControl } from './LocaleTextInput';
+import { localeTextToValue, resolveLocaleText, trimLocaleText } from './localeText';
 import style from './style.module.scss';
 
 const { Text } = Typography;
@@ -18,7 +20,7 @@ const EMPTY_OPTION = () => ({
 
 /** value 为空或仍等于当前 label 时视为联动中，改 label 会同步 value */
 const isOptionValueLinked = (label, value) => {
-  const labelText = label == null ? '' : String(label);
+  const labelText = localeTextToValue(label);
   const valueText = value == null ? '' : String(value);
   return valueText === '' || valueText === labelText;
 };
@@ -26,18 +28,19 @@ const isOptionValueLinked = (label, value) => {
 const patchOptionLabelChange = (item, nextLabel) => {
   const patch = { label: nextLabel };
   if (isOptionValueLinked(item.label, item.value)) {
-    patch.value = nextLabel;
+    patch.value = localeTextToValue(nextLabel);
   }
   return patch;
 };
 
 const trimOptionLabelValue = item => {
-  const label = String(item?.label ?? '').trim();
+  const label = trimLocaleText(item?.label);
+  const labelValue = localeTextToValue(label);
   const rawValue = String(item?.value ?? '').trim();
-  const linked = isOptionValueLinked(item?.label, item?.value) || rawValue === '' || rawValue === label;
+  const linked = isOptionValueLinked(item?.label, item?.value) || rawValue === '' || rawValue === labelValue;
   return {
     label,
-    value: linked ? label : rawValue
+    value: linked ? labelValue : rawValue
   };
 };
 
@@ -77,10 +80,12 @@ const FlatOptionRows = ({ list, onChange, allowDescription }) => {
     <div className={style['options-list']}>
       {rows.map((item, index) => (
         <Flex key={item._key} gap={8} align="start" className={style['options-row']}>
-          <Input
+          <LocaleTextControl
+            compact
+            className={style['options-locale-text']}
             value={item.label}
             placeholder={formatMessage({ id: 'optionLabelPlaceholder' })}
-            onChange={event => updateItem(index, patchOptionLabelChange(item, event.target.value))}
+            onChange={nextLabel => updateItem(index, patchOptionLabelChange(item, nextLabel))}
             onBlur={() => updateItem(index, trimOptionLabelValue(item))}
           />
           <Input
@@ -90,11 +95,13 @@ const FlatOptionRows = ({ list, onChange, allowDescription }) => {
             onBlur={() => updateItem(index, { value: String(item.value ?? '').trim() })}
           />
           {allowDescription ? (
-            <Input
+            <LocaleTextControl
+              compact
+              className={style['options-locale-text']}
               value={item.description || ''}
               placeholder={formatMessage({ id: 'optionDescPlaceholder' })}
-              onChange={event => updateItem(index, { description: event.target.value })}
-              onBlur={() => updateItem(index, { description: String(item.description ?? '').trim() })}
+              onChange={description => updateItem(index, { description })}
+              onBlur={() => updateItem(index, { description: trimLocaleText(item.description) })}
             />
           ) : null}
           <Button
@@ -147,14 +154,21 @@ const TreeOptionNode = ({ item, index, siblings, onChangeSiblings, allowDescript
     <div className={style['tree-option-node']} data-depth={depth}>
       <div className={style['tree-option-row']}>
         <div className={style['tree-option-fields']}>
-          <Input value={item.label} placeholder={formatMessage({ id: 'optionLabelPlaceholder' })} onChange={e => updateSelf(patchOptionLabelChange(item, e.target.value))} onBlur={() => updateSelf(trimOptionLabelValue(item))} />
+          <LocaleTextControl
+            compact
+            value={item.label}
+            placeholder={formatMessage({ id: 'optionLabelPlaceholder' })}
+            onChange={nextLabel => updateSelf(patchOptionLabelChange(item, nextLabel))}
+            onBlur={() => updateSelf(trimOptionLabelValue(item))}
+          />
           <Input value={item.value} placeholder={formatMessage({ id: 'optionValuePlaceholder' })} onChange={e => updateSelf({ value: e.target.value })} onBlur={() => updateSelf({ value: String(item.value ?? '').trim() })} />
           {allowDescription ? (
-            <Input
+            <LocaleTextControl
+              compact
               value={item.description || ''}
               placeholder={formatMessage({ id: 'optionDescPlaceholder' })}
-              onChange={e => updateSelf({ description: e.target.value })}
-              onBlur={() => updateSelf({ description: String(item.description ?? '').trim() })}
+              onChange={description => updateSelf({ description })}
+              onBlur={() => updateSelf({ description: trimLocaleText(item.description) })}
             />
           ) : null}
         </div>
@@ -227,11 +241,12 @@ const ColumnsEditor = ({ value = [], onChange }) => {
           <div className={style['options-list']}>
             {list.map((item, index) => (
               <Flex key={item.name || index} gap={8} align="start" className={style['options-row']}>
-                <Input
+                <LocaleTextControl
+                  compact
+                  className={style['options-locale-text']}
                   value={item.title || ''}
                   placeholder={formatMessage({ id: 'columnTitlePlaceholder' })}
-                  onChange={e => {
-                    const title = e.target.value;
+                  onChange={title => {
                     const patch = { title };
                     if ((!item.name || isAutoDataKey(item.name, 'col')) && !item.name) {
                       patch.name = createDataKey('col');
@@ -276,7 +291,7 @@ const ColumnsEditor = ({ value = [], onChange }) => {
 };
 
 const TableRowsEditor = ({ columns = [], value = [], onChange }) => {
-  const { formatMessage } = useIntl();
+  const { formatMessage, locale } = useIntl();
   const usableColumns = columns.filter(column => column?.name && String(column.name).trim());
   const list = value.length ? value : [createEmptyTableRow(usableColumns)];
 
@@ -328,11 +343,17 @@ const TableRowsEditor = ({ columns = [], value = [], onChange }) => {
                 <Space direction="vertical" size={8} style={{ width: '100%' }}>
                   <Flex gap={8}>
                     <Input value={item.value || ''} placeholder={formatMessage({ id: 'optionValuePlaceholder' })} onChange={e => updateItem(index, { value: e.target.value })} />
-                    <Input value={item.label || ''} placeholder={formatMessage({ id: 'tableRowLabelPlaceholder' })} onChange={e => updateItem(index, { label: e.target.value })} />
+                    <LocaleTextControl compact className={style['options-locale-text']} value={item.label || ''} placeholder={formatMessage({ id: 'tableRowLabelPlaceholder' })} onChange={label => updateItem(index, { label })} />
                   </Flex>
                   <Flex gap={8} wrap="wrap">
                     {usableColumns.map(column => (
-                      <Input key={column.name} style={{ minWidth: 140, flex: 1 }} value={item[column.name] || ''} placeholder={column.title || column.name} onChange={e => updateItem(index, { [column.name]: e.target.value })} />
+                      <Input
+                        key={column.name}
+                        style={{ minWidth: 140, flex: 1 }}
+                        value={item[column.name] || ''}
+                        placeholder={resolveLocaleText(column.title, locale) || column.name}
+                        onChange={e => updateItem(index, { [column.name]: e.target.value })}
+                      />
                     ))}
                   </Flex>
                 </Space>
