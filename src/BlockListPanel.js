@@ -23,6 +23,7 @@ import { resolveFieldTypeLabel } from './fieldRegistry';
 import { MAX_BLOCK_DEPTH, supportsItemBlocks as kindSupportsItemBlocks } from './schema';
 import FieldRow from './FieldRow';
 import { resolveLocaleText } from './localeText';
+import { useLocaleTextLanguages } from './LocaleTextInput';
 import style from './style.module.scss';
 
 const { Text } = Typography;
@@ -67,7 +68,8 @@ const BlockListPanel = ({
   extraToolbar
 }) => {
   const { formatMessage, locale } = useIntl();
-  const text = value => resolveLocaleText(value, locale);
+  const languages = useLocaleTextLanguages();
+  const text = value => resolveLocaleText(value, locale, languages);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [addFieldMenuId, setAddFieldMenuId] = useState(null);
   const keepAddFieldMenuOpenRef = useRef(false);

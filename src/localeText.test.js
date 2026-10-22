@@ -25,6 +25,17 @@ describe('localeText', () => {
     expect(resolveLocaleText('姓名', 'en-US')).toBe('姓名');
   });
 
+  test('resolveLocaleText 按 languages 顺序回退', () => {
+    const languages = [
+      { value: 'en-US', label: 'English' },
+      { value: 'ja-JP', label: '日本語' }
+    ];
+    expect(resolveLocaleText({ 'zh-CN': '姓名', 'en-US': 'Name' }, 'ja-JP', languages)).toBe('Name');
+    expect(resolveLocaleText({ 'zh-CN': '姓名', 'ja-JP': '名前' }, 'ko-KR', languages)).toBe('名前');
+    expect(resolveLocaleText({ 'zh-CN': '姓名' }, 'en-US', languages)).toBe('');
+    expect(localizeSchema({ title: { 'en-US': 'Survey', 'ja-JP': 'アンケート' } }, 'ja-JP', languages)).toEqual({ title: 'アンケート' });
+  });
+
   test('localizeSchema 深度解析且不改原对象', () => {
     const schema = {
       title: { 'zh-CN': '问卷', 'en-US': 'Survey' },
@@ -58,21 +69,25 @@ describe('localeText', () => {
     expect(schema.title).toEqual({ 'zh-CN': '问卷', 'en-US': 'Survey' });
   });
 
-  test('编辑：只有中文时存字符串，有英文时存对象', () => {
-    expect(getLocaleTextValue('姓名', 'zh-CN')).toBe('姓名');
-    expect(getLocaleTextValue('姓名', 'en-US')).toBe('');
-    expect(setLocaleTextValue('姓名', 'en-US', 'Name')).toEqual({ 'zh-CN': '姓名', 'en-US': 'Name' });
-    expect(setLocaleTextValue({ 'zh-CN': '姓名', 'en-US': 'Name' }, 'en-US', '')).toBe('姓名');
-    expect(setLocaleTextValue('', 'en-US', 'Name')).toEqual({ 'en-US': 'Name' });
-    expect(setLocaleTextValue('姓名', 'zh-CN', '')).toBe('');
+  test('编辑：只有基础语言时存字符串，有其它语言时存对象', () => {
+    expect(getLocaleTextValue('姓名', 'zh-CN', 'zh-CN')).toBe('姓名');
+    expect(getLocaleTextValue('姓名', 'en-US', 'zh-CN')).toBe('');
+    expect(setLocaleTextValue('姓名', 'en-US', 'Name', 'zh-CN')).toEqual({ 'zh-CN': '姓名', 'en-US': 'Name' });
+    expect(setLocaleTextValue({ 'zh-CN': '姓名', 'en-US': 'Name' }, 'en-US', '', 'zh-CN')).toBe('姓名');
+    expect(setLocaleTextValue('', 'en-US', 'Name', 'zh-CN')).toEqual({ 'en-US': 'Name' });
+    expect(setLocaleTextValue('姓名', 'zh-CN', '', 'zh-CN')).toBe('');
+    expect(setLocaleTextValue('Name', 'ja-JP', '名前', 'en-US')).toEqual({ 'en-US': 'Name', 'ja-JP': '名前' });
+    expect(setLocaleTextValue({ 'en-US': 'Name', 'ja-JP': '名前' }, 'ja-JP', '', 'en-US')).toBe('Name');
   });
 
   test('trimLocaleText / localeTextToValue', () => {
     expect(trimLocaleText(' 男 ')).toBe('男');
     expect(trimLocaleText({ 'zh-CN': ' 男 ', 'en-US': ' Male ' })).toEqual({ 'zh-CN': '男', 'en-US': 'Male' });
-    expect(trimLocaleText({ 'zh-CN': ' 男 ', 'en-US': ' ' })).toBe('男');
+    expect(trimLocaleText({ 'zh-CN': ' 男 ', 'en-US': ' ' }, 'zh-CN')).toBe('男');
     expect(localeTextToValue({ 'zh-CN': '男', 'en-US': 'Male' })).toBe('男');
+    expect(localeTextToValue({ 'zh-CN': '男', 'en-US': 'Male' }, 'en-US')).toBe('Male');
     expect(localeTextToValue({ 'en-US': 'Male' })).toBe('Male');
+    expect(localeTextToValue({ 'ja-JP': '男性' })).toBe('男性');
     expect(localeTextToValue(' 男 ')).toBe('男');
   });
 });

@@ -4,6 +4,7 @@ import { useIntl } from '@kne/react-intl';
 import { getFieldDefinition, resolveFieldTypeLabel } from './fieldRegistry';
 import style from './style.module.scss';
 import { resolveLocaleText } from './localeText';
+import { useLocaleTextLanguages } from './LocaleTextInput';
 
 const { Text } = Typography;
 
@@ -28,6 +29,7 @@ const TYPE_TAG_COLORS = {
 
 const FieldRow = ({ field, index, total, onEdit, onDelete, onMove }) => {
   const { formatMessage, locale } = useIntl();
+  const languages = useLocaleTextLanguages();
   const definition = getFieldDefinition(field.type);
 
   return (
@@ -36,7 +38,7 @@ const FieldRow = ({ field, index, total, onEdit, onDelete, onMove }) => {
       <div className={style['field-row-main']}>
         <Space size={6} wrap>
           <Text strong ellipsis>
-            {resolveLocaleText(field.label, locale) || formatMessage({ id: 'untitledField' })}
+            {resolveLocaleText(field.label, locale, languages) || formatMessage({ id: 'untitledField' })}
           </Text>
           <Tag bordered={false} color={TYPE_TAG_COLORS[field.type] || 'default'}>
             {resolveFieldTypeLabel(definition || field.type, formatMessage)}

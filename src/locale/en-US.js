@@ -244,11 +244,7 @@ const locale = {
   ruleErrorLenEqual: '%s must be exactly {end} characters',
   ruleErrorLenMin: '%s must be at least {start} characters',
   ruleErrorLenMax: '%s must be at most {end} characters',
-  'localeText_zh-CN': 'Chinese',
-  'localeText_en-US': 'English',
-  'localeTextShort_zh-CN': 'ZH',
-  'localeTextShort_en-US': 'EN',
-  localeTextFallback: 'Falls back to Chinese when empty'
+  localeTextFallback: 'Falls back to {language} when empty'
 };
 
 export default locale;

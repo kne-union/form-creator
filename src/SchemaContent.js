@@ -176,10 +176,10 @@ const renderBlock = (block, data, ctx) => {
   }
 };
 
-const SchemaContentInnerView = ({ schema, data, className }) => {
+const SchemaContentInnerView = ({ schema, data, className, languages }) => {
   const { formatMessage, locale } = useIntl();
   const isMobile = useIsMobile();
-  const normalized = normalizeSchema(localizeSchema(schema, locale));
+  const normalized = normalizeSchema(localizeSchema(schema, locale, languages));
   const children = renderBlockList(normalized.blocks, data || {}, { formatMessage, isMobile, depth: 0 });
 
   if (!children.length) {
@@ -195,9 +195,9 @@ const SchemaContentInnerView = ({ schema, data, className }) => {
 
 export const SchemaContentInner = withLocale(SchemaContentInnerView);
 
-const SchemaContent = withLocale(({ schema, data, className, empty }) => {
+const SchemaContent = withLocale(({ schema, data, className, empty, languages }) => {
   const { formatMessage, locale } = useIntl();
-  const normalized = normalizeSchema(localizeSchema(schema, locale));
+  const normalized = normalizeSchema(localizeSchema(schema, locale, languages));
   const emptyNode = empty !== undefined ? empty : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={formatMessage({ id: 'schemaContentEmpty' })} />;
 
   if (data == null || !hasRenderableContent(normalized)) {

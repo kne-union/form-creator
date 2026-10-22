@@ -5,6 +5,11 @@ const { Radio, Space, Typography, Alert } = antd;
 
 const { Text, Paragraph } = Typography;
 
+const languages = [
+  { value: 'zh-CN', label: '中文' },
+  { value: 'en-US', label: 'English' }
+];
+
 const demoSchema = () => ({
   ...defaultSchema(),
   blocks: [
@@ -50,7 +55,7 @@ const demoSchema = () => ({
  * - 编辑器壳层文案（Add Section / Field Type 等）
  * - 内置 Field Type 分组与选项（Single-line Text / Dropdown）
  * - 左侧列表字段类型 Tag、Select/DatePicker 默认占位
- * - Schema 内多语言文案（{ 'zh-CN', 'en-US' }）随 locale 切换；编辑填写项时中英两栏录入
+ * - Schema 内多语言文案（{ 'zh-CN', 'en-US' }）随 locale 切换；languages 决定编辑时有哪几栏输入
  * - 内置校验（EMAIL / TEL / LEN）错误提示随 locale 切换
  * - DatePicker 面板等 antd 内置文案由外层 PureGlobal 的 preset.locale 决定
  *
@@ -72,8 +77,7 @@ const LocaleSwitchExample = createWithRemoteLoader({
         message="Language switch"
         description={
           <Paragraph style={{ marginBottom: 0 }}>
-            Toggle locale, then open <Text code>Edit Field</Text> and check built-in <Text strong>Field Type</Text>{' '}
-            groups/options, type tags, and Select/DatePicker placeholders.
+            Toggle locale, then open <Text code>Edit Field</Text> and check built-in <Text strong>Field Type</Text> groups/options, type tags, and Select/DatePicker placeholders.
           </Paragraph>
         }
       />
@@ -82,13 +86,10 @@ const LocaleSwitchExample = createWithRemoteLoader({
         buttonStyle="solid"
         value={locale}
         onChange={e => setLocale(e.target.value)}
-        options={[
-          { label: '中文', value: 'zh-CN' },
-          { label: 'English', value: 'en-US' }
-        ]}
+        options={languages}
       />
       <PureGlobal key={locale} preset={{ locale }}>
-        <FormCreator locale={locale} value={schema} onChange={setSchema} />
+        <FormCreator locale={locale} languages={languages} value={schema} onChange={setSchema} />
       </PureGlobal>
     </Space>
   );

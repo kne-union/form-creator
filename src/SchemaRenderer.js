@@ -123,11 +123,12 @@ export const SchemaRendererInner = withLocale(props => {
     bodyClassName,
     footerClassName,
     buttonFooter = false,
-    buttonFooterProps
+    buttonFooterProps,
+    languages
   } = props;
   const { formatMessage, locale } = useIntl();
   const isMobile = useIsMobile();
-  const normalized = normalizeSchema(localizeSchema(schema, locale));
+  const normalized = normalizeSchema(localizeSchema(schema, locale, languages));
 
   if (!hasRenderableContent(normalized)) {
     return null;
@@ -189,11 +190,12 @@ const SchemaRenderer = withLocale(props => {
     bodyClassName,
     footerClassName,
     buttonFooter = false,
-    buttonFooterProps
+    buttonFooterProps,
+    languages
   } = props;
   const { formatMessage, locale } = useIntl();
   const isMobile = useIsMobile();
-  const normalized = normalizeSchema(localizeSchema(schema, locale));
+  const normalized = normalizeSchema(localizeSchema(schema, locale, languages));
 
   if (!hasRenderableContent(normalized)) {
     return null;

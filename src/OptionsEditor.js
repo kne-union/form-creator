@@ -4,7 +4,7 @@ import { DeleteOutlined, PlusOutlined, ApartmentOutlined } from '@ant-design/ico
 import { useEffect } from 'react';
 import { useIntl } from '@kne/react-intl';
 import { createDataKey, createEmptyColumn, isAutoDataKey } from './schema';
-import { LocaleTextControl } from './LocaleTextInput';
+import { LocaleTextControl, useLocaleTextLanguages } from './LocaleTextInput';
 import { localeTextToValue, resolveLocaleText, trimLocaleText } from './localeText';
 import style from './style.module.scss';
 
@@ -19,25 +19,25 @@ const EMPTY_OPTION = () => ({
 });
 
 /** value 为空或仍等于当前 label 时视为联动中，改 label 会同步 value */
-const isOptionValueLinked = (label, value) => {
-  const labelText = localeTextToValue(label);
+const isOptionValueLinked = (label, value, baseLanguage) => {
+  const labelText = localeTextToValue(label, baseLanguage);
   const valueText = value == null ? '' : String(value);
   return valueText === '' || valueText === labelText;
 };
 
-const patchOptionLabelChange = (item, nextLabel) => {
+const patchOptionLabelChange = (item, nextLabel, baseLanguage) => {
   const patch = { label: nextLabel };
-  if (isOptionValueLinked(item.label, item.value)) {
-    patch.value = localeTextToValue(nextLabel);
+  if (isOptionValueLinked(item.label, item.value, baseLanguage)) {
+    patch.value = localeTextToValue(nextLabel, baseLanguage);
   }
   return patch;
 };
 
-const trimOptionLabelValue = item => {
-  const label = trimLocaleText(item?.label);
-  const labelValue = localeTextToValue(label);
+const trimOptionLabelValue = (item, baseLanguage) => {
+  const label = trimLocaleText(item?.label, baseLanguage);
+  const labelValue = localeTextToValue(label, baseLanguage);
   const rawValue = String(item?.value ?? '').trim();
-  const linked = isOptionValueLinked(item?.label, item?.value) || rawValue === '' || rawValue === labelValue;
+  const linked = isOptionValueLinked(item?.label, item?.value, baseLanguage) || rawValue === '' || rawValue === labelValue;
   return {
     label,
     value: linked ? labelValue : rawValue
@@ -68,6 +68,7 @@ const hasMissingOptionKey = (list = []) => list.some(item => !item?._key || (Arr
 /** 扁平选项（非树） */
 const FlatOptionRows = ({ list, onChange, allowDescription }) => {
   const { formatMessage } = useIntl();
+  const baseLanguage = useLocaleTextLanguages()[0]?.value;
   const rows = list.length ? ensureOptionKeys(list) : [EMPTY_OPTION()];
 
   const commit = next => onChange(next);
@@ -85,8 +86,8 @@ const FlatOptionRows = ({ list, onChange, allowDescription }) => {
             className={style['options-locale-text']}
             value={item.label}
             placeholder={formatMessage({ id: 'optionLabelPlaceholder' })}
-            onChange={nextLabel => updateItem(index, patchOptionLabelChange(item, nextLabel))}
-            onBlur={() => updateItem(index, trimOptionLabelValue(item))}
+            onChange={nextLabel => updateItem(index, patchOptionLabelChange(item, nextLabel, baseLanguage))}
+            onBlur={() => updateItem(index, trimOptionLabelValue(item, baseLanguage))}
           />
           <Input
             value={item.value}
@@ -101,7 +102,7 @@ const FlatOptionRows = ({ list, onChange, allowDescription }) => {
               value={item.description || ''}
               placeholder={formatMessage({ id: 'optionDescPlaceholder' })}
               onChange={description => updateItem(index, { description })}
-              onBlur={() => updateItem(index, { description: trimLocaleText(item.description) })}
+              onBlur={() => updateItem(index, { description: trimLocaleText(item.description, baseLanguage) })}
             />
           ) : null}
           <Button
@@ -127,6 +128,7 @@ const FlatOptionRows = ({ list, onChange, allowDescription }) => {
 /** 树形 / 级联选项 */
 const TreeOptionNode = ({ item, index, siblings, onChangeSiblings, allowDescription, depth, maxDepth = 4 }) => {
   const { formatMessage } = useIntl();
+  const baseLanguage = useLocaleTextLanguages()[0]?.value;
   const children = Array.isArray(item.children) ? item.children : [];
   const canAddChild = depth < maxDepth;
 
@@ -158,8 +160,8 @@ const TreeOptionNode = ({ item, index, siblings, onChangeSiblings, allowDescript
             compact
             value={item.label}
             placeholder={formatMessage({ id: 'optionLabelPlaceholder' })}
-            onChange={nextLabel => updateSelf(patchOptionLabelChange(item, nextLabel))}
-            onBlur={() => updateSelf(trimOptionLabelValue(item))}
+            onChange={nextLabel => updateSelf(patchOptionLabelChange(item, nextLabel, baseLanguage))}
+            onBlur={() => updateSelf(trimOptionLabelValue(item, baseLanguage))}
           />
           <Input value={item.value} placeholder={formatMessage({ id: 'optionValuePlaceholder' })} onChange={e => updateSelf({ value: e.target.value })} onBlur={() => updateSelf({ value: String(item.value ?? '').trim() })} />
           {allowDescription ? (
@@ -168,7 +170,7 @@ const TreeOptionNode = ({ item, index, siblings, onChangeSiblings, allowDescript
               value={item.description || ''}
               placeholder={formatMessage({ id: 'optionDescPlaceholder' })}
               onChange={description => updateSelf({ description })}
-              onBlur={() => updateSelf({ description: trimLocaleText(item.description) })}
+              onBlur={() => updateSelf({ description: trimLocaleText(item.description, baseLanguage) })}
             />
           ) : null}
         </div>
@@ -292,6 +294,7 @@ const ColumnsEditor = ({ value = [], onChange }) => {
 
 const TableRowsEditor = ({ columns = [], value = [], onChange }) => {
   const { formatMessage, locale } = useIntl();
+  const languages = useLocaleTextLanguages();
   const usableColumns = columns.filter(column => column?.name && String(column.name).trim());
   const list = value.length ? value : [createEmptyTableRow(usableColumns)];
 
@@ -351,7 +354,7 @@ const TableRowsEditor = ({ columns = [], value = [], onChange }) => {
                         key={column.name}
                         style={{ minWidth: 140, flex: 1 }}
                         value={item[column.name] || ''}
-                        placeholder={resolveLocaleText(column.title, locale) || column.name}
+                        placeholder={resolveLocaleText(column.title, locale, languages) || column.name}
                         onChange={e => updateItem(index, { [column.name]: e.target.value })}
                       />
                     ))}

@@ -400,8 +400,8 @@ export const formatByValueSchema = (value, schema, ctx = {}) => {
   return String(value);
 };
 
-export const formatFieldDisplayValue = (rawField, value, { formatMessage, locale } = {}) => {
-  const field = localizeSchema(rawField, locale);
+export const formatFieldDisplayValue = (rawField, value, { formatMessage, locale, languages } = {}) => {
+  const field = localizeSchema(rawField, locale, languages);
   const emptyText = formatMessage?.({ id: 'schemaContentEmptyValue' }) || '-';
   if (isEmptyValue(value)) {
     return emptyText;
