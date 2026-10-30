@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { createElement, useMemo, useRef, useState } from 'react';
 import { Button, Dropdown, Empty, Flex, Space, Tag, Typography } from 'antd';
 import {
   ArrowDownOutlined,
@@ -20,8 +20,9 @@ import {
 import { useIntl } from '@kne/react-intl';
 import { getBlockDefinition } from './blockRegistry';
 import { resolveFieldTypeLabel } from './fieldRegistry';
-import { MAX_BLOCK_DEPTH, supportsItemBlocks as kindSupportsItemBlocks } from './schema';
-import FieldRow from './FieldRow';
+import { MAX_BLOCK_DEPTH, blockHasLockedField, isFieldLocked, supportsItemBlocks as kindSupportsItemBlocks } from './schema';
+import FieldRow, { getFieldTypeIcon } from './FieldRow';
+import { collectConditionFields } from './fieldCondition';
 import { resolveLocaleText } from './localeText';
 import { useLocaleTextLanguages } from './LocaleTextInput';
 import style from './style.module.scss';
@@ -42,6 +43,8 @@ const ROOT_ADD_OPTIONS = [
   { key: 'multiField', icon: <AppstoreOutlined /> },
   { key: 'steps', icon: <OrderedListOutlined /> }
 ];
+
+const BLOCK_KIND_ICONS = Object.fromEntries(ROOT_ADD_OPTIONS.map(({ key, icon }) => [key, icon]));
 
 /** 可挂子模块的容器；表格列表 / 同类多值本身不支持子模块 */
 const NESTED_ADD_OPTIONS = ROOT_ADD_OPTIONS.filter(opt => opt.key !== 'steps');
@@ -73,6 +76,13 @@ const BlockListPanel = ({
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [addFieldMenuId, setAddFieldMenuId] = useState(null);
   const keepAddFieldMenuOpenRef = useRef(false);
+  const conditionContext = useMemo(() => {
+    const triggerFields = collectConditionFields({ blocks }).filter(item => !item.inList);
+    return {
+      triggerNames: new Set(triggerFields.map(item => item.path)),
+      fieldLookup: new Map(triggerFields.map(item => [item.path, item.field]))
+    };
+  }, [blocks]);
 
   const renderAddBlockMenu = (options, { onSelect, className } = {}) => (
     <div className={className || style['add-block-dropdown']}>
@@ -221,6 +231,9 @@ const BlockListPanel = ({
             field={field}
             index={fieldIndex}
             total={fields.length}
+            prevLocked={isFieldLocked(fields[fieldIndex - 1])}
+            nextLocked={isFieldLocked(fields[fieldIndex + 1])}
+            conditionContext={conditionContext}
             onEdit={fieldItem => onEditField(blockId, fieldItem, { stepId, optionId })}
             onDelete={fieldId => onDeleteField(blockId, fieldId, { stepId, optionId })}
             onMove={(fieldId, direction) => onMoveField(blockId, fieldId, direction, { stepId, optionId })}
@@ -236,7 +249,7 @@ const BlockListPanel = ({
     }
     return (
       <div className={style['item-blocks-section']}>
-        <div className={style['nested-block-list']}>{childBlocks.map((child, childIndex) => renderBlockSection(child, childIndex, childBlocks.length, depth + 1))}</div>
+        <div className={style['nested-block-list']}>{childBlocks.map((child, childIndex) => renderBlockSection(child, childIndex, childBlocks, depth + 1))}</div>
       </div>
     );
   };
@@ -269,10 +282,20 @@ const BlockListPanel = ({
                     </Space>
                     <Space size={4} wrap className={style['step-section-actions']}>
                       <ActionGroup>
-                        <IconBtn title={formatMessage({ id: 'moveUp' })} icon={<ArrowUpOutlined />} disabled={stepIndex === 0} onClick={() => onMoveStep(block.id, step.id, 'up')} />
-                        <IconBtn title={formatMessage({ id: 'moveDown' })} icon={<ArrowDownOutlined />} disabled={stepIndex === (block.items?.length || 0) - 1} onClick={() => onMoveStep(block.id, step.id, 'down')} />
+                        <IconBtn
+                          title={formatMessage({ id: 'moveUp' })}
+                          icon={<ArrowUpOutlined />}
+                          disabled={stepIndex === 0 || blockHasLockedField(step) || blockHasLockedField(block.items[stepIndex - 1])}
+                          onClick={() => onMoveStep(block.id, step.id, 'up')}
+                        />
+                        <IconBtn
+                          title={formatMessage({ id: 'moveDown' })}
+                          icon={<ArrowDownOutlined />}
+                          disabled={stepIndex === (block.items?.length || 0) - 1 || blockHasLockedField(step) || blockHasLockedField(block.items[stepIndex + 1])}
+                          onClick={() => onMoveStep(block.id, step.id, 'down')}
+                        />
                         <IconBtn title={formatMessage({ id: 'editStep' })} icon={<EditOutlined />} onClick={() => onEditStep(block.id, step)} />
-                        <IconBtn title={formatMessage({ id: 'deleteStep' })} danger icon={<DeleteOutlined />} onClick={() => onDeleteStep(block.id, step.id)} />
+                        {blockHasLockedField(step) ? null : <IconBtn title={formatMessage({ id: 'deleteStep' })} danger icon={<DeleteOutlined />} onClick={() => onDeleteStep(block.id, step.id)} />}
                       </ActionGroup>
                       {renderAddFieldButton({
                         menuKey: `${block.id}:${step.id}`,
@@ -331,10 +354,20 @@ const BlockListPanel = ({
                     </Space>
                     <Space size={4} wrap className={style['step-section-actions']}>
                       <ActionGroup>
-                        <IconBtn title={formatMessage({ id: 'moveUp' })} icon={<ArrowUpOutlined />} disabled={optionIndex === 0} onClick={() => onMoveChoiceOption(block.id, option.id, 'up')} />
-                        <IconBtn title={formatMessage({ id: 'moveDown' })} icon={<ArrowDownOutlined />} disabled={optionIndex === (block.options?.length || 0) - 1} onClick={() => onMoveChoiceOption(block.id, option.id, 'down')} />
+                        <IconBtn
+                          title={formatMessage({ id: 'moveUp' })}
+                          icon={<ArrowUpOutlined />}
+                          disabled={optionIndex === 0 || blockHasLockedField(option) || blockHasLockedField(block.options[optionIndex - 1])}
+                          onClick={() => onMoveChoiceOption(block.id, option.id, 'up')}
+                        />
+                        <IconBtn
+                          title={formatMessage({ id: 'moveDown' })}
+                          icon={<ArrowDownOutlined />}
+                          disabled={optionIndex === (block.options?.length || 0) - 1 || blockHasLockedField(option) || blockHasLockedField(block.options[optionIndex + 1])}
+                          onClick={() => onMoveChoiceOption(block.id, option.id, 'down')}
+                        />
                         <IconBtn title={formatMessage({ id: 'editChoiceOption' })} icon={<EditOutlined />} onClick={() => onEditChoiceOption(block.id, option)} />
-                        <IconBtn title={formatMessage({ id: 'deleteChoiceOption' })} danger icon={<DeleteOutlined />} onClick={() => onDeleteChoiceOption(block.id, option.id)} />
+                        {blockHasLockedField(option) ? null : <IconBtn title={formatMessage({ id: 'deleteChoiceOption' })} danger icon={<DeleteOutlined />} onClick={() => onDeleteChoiceOption(block.id, option.id)} />}
                       </ActionGroup>
                       {renderAddFieldButton({
                         menuKey: `${block.id}:opt:${option.id}`,
@@ -370,7 +403,9 @@ const BlockListPanel = ({
     );
   };
 
-  const renderBlockSection = (block, blockIndex, total, depth = 0) => {
+  const renderBlockSection = (block, blockIndex, siblings, depth = 0) => {
+    const total = siblings.length;
+    const locked = blockHasLockedField(block);
     const definition = getBlockDefinition(block.kind);
     const canAddField = block.kind !== 'steps' && block.kind !== 'multiField' && block.kind !== 'choice';
     const supportsItemBlocks = kindSupportsItemBlocks(block.kind);
@@ -381,7 +416,17 @@ const BlockListPanel = ({
       block.kind === 'steps'
         ? formatMessage({ id: 'stepCount' }, { count: block.items?.length || 0 })
         : block.kind === 'multiField'
-          ? formatMessage({ id: 'multiFieldSummary' }, { type: resolveFieldTypeLabel(block.fieldType, formatMessage) })
+          ? formatMessage(
+              { id: 'multiFieldSummary' },
+              {
+                type: (
+                  <span className={style['block-summary-type']}>
+                    {createElement(getFieldTypeIcon(block.fieldType || 'Input'))}
+                    {resolveFieldTypeLabel(block.fieldType, formatMessage)}
+                  </span>
+                )
+              }
+            )
           : block.kind === 'choice'
             ? formatMessage({ id: 'choiceOptionCount' }, { count: block.options?.length || 0 })
             : supportsChildModules && nestCount > 0
@@ -392,7 +437,7 @@ const BlockListPanel = ({
       <section key={block.id} className={`${style['block-section']} ${style[`block-kind-${block.kind}`] || ''} ${depth > 0 ? style['block-section-nested'] : ''}`.trim()}>
         <header className={style['block-section-header']}>
           <div className={style['block-header-left']}>
-            <Tag bordered={false} color={definition?.color || 'default'}>
+            <Tag bordered={false} color={definition?.color || 'default'} icon={BLOCK_KIND_ICONS[block.kind]}>
               {formatMessage({ id: `blockKind_${block.kind}` })}
             </Tag>
             <Text strong ellipsis className={style['block-title']}>
@@ -402,10 +447,10 @@ const BlockListPanel = ({
           </div>
           <Space size={4} wrap className={style['block-header-actions']}>
             <ActionGroup>
-              <IconBtn title={formatMessage({ id: 'moveUp' })} icon={<ArrowUpOutlined />} disabled={blockIndex === 0} onClick={() => onMoveBlock(block.id, 'up')} />
-              <IconBtn title={formatMessage({ id: 'moveDown' })} icon={<ArrowDownOutlined />} disabled={blockIndex === total - 1} onClick={() => onMoveBlock(block.id, 'down')} />
+              <IconBtn title={formatMessage({ id: 'moveUp' })} icon={<ArrowUpOutlined />} disabled={blockIndex === 0 || locked || blockHasLockedField(siblings[blockIndex - 1])} onClick={() => onMoveBlock(block.id, 'up')} />
+              <IconBtn title={formatMessage({ id: 'moveDown' })} icon={<ArrowDownOutlined />} disabled={blockIndex === total - 1 || locked || blockHasLockedField(siblings[blockIndex + 1])} onClick={() => onMoveBlock(block.id, 'down')} />
               <IconBtn title={formatMessage({ id: 'editBlock' })} icon={<SettingOutlined />} onClick={() => onEditBlock(block)} />
-              <IconBtn title={formatMessage({ id: 'deleteBlock' })} danger icon={<DeleteOutlined />} onClick={() => onDeleteBlock(block.id)} />
+              {locked ? null : <IconBtn title={formatMessage({ id: 'deleteBlock' })} danger icon={<DeleteOutlined />} onClick={() => onDeleteBlock(block.id)} />}
             </ActionGroup>
             {canAddField
               ? renderAddFieldButton({
@@ -448,7 +493,7 @@ const BlockListPanel = ({
       {!blocks.length ? (
         <Empty className={style['field-empty']} image={Empty.PRESENTED_IMAGE_SIMPLE} description={formatMessage({ id: 'emptyBlockList' })} />
       ) : (
-        <div className={style['block-list']}>{blocks.map((block, blockIndex) => renderBlockSection(block, blockIndex, blocks.length, 0))}</div>
+        <div className={style['block-list']}>{blocks.map((block, blockIndex) => renderBlockSection(block, blockIndex, blocks, 0))}</div>
       )}
     </div>
   );

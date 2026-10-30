@@ -13,6 +13,7 @@ import SuperSelectPropsEditor from './SuperSelectPropsEditor';
 import FieldPropsEditor, { hasFieldPropsEditor } from './FieldPropsEditor';
 import style from './style.module.scss';
 import { LocaleInput, LocaleTextArea } from './LocaleTextInput';
+import VisibleWhenEditor, { validateVisibleWhenDraft } from './VisibleWhenEditor';
 
 const getDefaultSelectProps = () => ({
   single: false,
@@ -28,7 +29,7 @@ const getDefaultSelectProps = () => ({
 
 const omitColumns = ({ columns, ...rest } = {}) => rest;
 
-const FieldConfigFields = ({ initialType, options, onOptionsChange, columns, onColumnsChange }) => {
+const FieldConfigFields = ({ initialType, options, onOptionsChange, columns, onColumnsChange, visibleWhen, onVisibleWhenChange, conditionProps }) => {
   const { formatMessage } = useIntl();
   const { openApi } = useFormContext();
   const [fieldType, setFieldType] = useState(initialType);
@@ -102,11 +103,12 @@ const FieldConfigFields = ({ initialType, options, onOptionsChange, columns, onC
           onColumnsChange={onColumnsChange}
         />
       ) : null}
+      {conditionProps ? <VisibleWhenEditor {...conditionProps} value={visibleWhen} onChange={onVisibleWhenChange} /> : null}
     </div>
   );
 };
 
-const FieldEditorModal = ({ open, field, fieldList, onCancel, onSave, renderModal }) => {
+const FieldEditorModal = ({ open, field, fieldList, conditionProps, onCancel, onSave, renderModal }) => {
   const { formatMessage } = useIntl();
   const isMobile = useIsMobile();
   const isEdit = !!field?.id;
@@ -130,6 +132,7 @@ const FieldEditorModal = ({ open, field, fieldList, onCancel, onSave, renderModa
   }, [editorValues]);
   const [options, setOptions] = useState([{ label: '', value: '' }]);
   const [columns, setColumns] = useState(() => [createEmptyColumn()]);
+  const [visibleWhen, setVisibleWhen] = useState(undefined);
 
   useEffect(() => {
     if (!open) {
@@ -137,11 +140,17 @@ const FieldEditorModal = ({ open, field, fieldList, onCancel, onSave, renderModa
     }
     setOptions(editorValues.options?.length ? editorValues.options : [{ label: '', value: '' }]);
     setColumns(editorValues.selectProps?.columns?.length ? editorValues.selectProps.columns : [createEmptyColumn()]);
+    setVisibleWhen(editorValues.visibleWhen);
   }, [open, editorValues]);
 
   const handleSubmit = async values => {
     if (!isFieldNameUnique(fieldList, values.name, field?.id)) {
       message.error(formatMessage({ id: 'fieldNameDuplicate' }));
+      return false;
+    }
+    const conditionError = conditionProps && !conditionProps.scope?.inList ? validateVisibleWhenDraft(visibleWhen) : null;
+    if (conditionError) {
+      message.error(formatMessage({ id: conditionError }));
       return false;
     }
     const definition = getFieldDefinition(values.type);
@@ -162,14 +171,15 @@ const FieldEditorModal = ({ open, field, fieldList, onCancel, onSave, renderModa
           ...values,
           columns: normalizedColumns
         },
-        fieldProps: values
+        fieldProps: values,
+        visibleWhen
       },
       field || createField()
     );
     if (!nextField.id) {
       nextField.id = createField().id;
     }
-    onSave(nextField);
+    return onSave(nextField);
   };
 
   const modalKey = open ? (field?.id ? `edit-${field.id}` : `add-${formData.name}`) : 'closed';
@@ -191,7 +201,16 @@ const FieldEditorModal = ({ open, field, fieldList, onCancel, onSave, renderModa
       okText={formatMessage({ id: 'confirm' })}
       cancelText={formatMessage({ id: 'cancel' })}
     >
-      <FieldConfigFields initialType={formData.type} options={options} onOptionsChange={setOptions} columns={columns} onColumnsChange={setColumns} />
+      <FieldConfigFields
+        initialType={formData.type}
+        options={options}
+        onOptionsChange={setOptions}
+        columns={columns}
+        onColumnsChange={setColumns}
+        visibleWhen={visibleWhen}
+        onVisibleWhenChange={setVisibleWhen}
+        conditionProps={conditionProps ? { ...conditionProps, fieldId: field?.id } : null}
+      />
     </FormModal>
   );
 };

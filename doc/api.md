@@ -160,7 +160,7 @@ import { SchemaContent, SchemaContentInner } from '@kne/form-creator';
     title?, subtitle?, column?, gap?, bordered?, important?,
     name?, label?, addText?, addPosition?, maxLength?, minLength?, fieldType?, autoStep?,
     mode?, selectorName?, selectorInData?, discriminator?,
-    list?: [{ id, type, name, label, tips?, description?, rule?, block?, hidden?, props? }],
+    list?: [{ id, type, name, label, tips?, description?, rule?, block?, hidden?, locked?, visibleWhen?, props? }],
     itemBlocks?: Block[], // list / editableList：列表项内子模块
     blocks?: Block[], // formInfo / object：子模块
     options?: [{ id, title, list?, blocks?: Block[] }], // choice
@@ -170,6 +170,43 @@ import { SchemaContent, SchemaContentInner } from '@kne/form-creator';
 ```
 
 `actions` 由 FormCreator 顶部「添加模块」旁的设置按钮弹窗配置，写入 Schema；`SchemaRenderer` 会读取并渲染居中操作按钮（组件 props 可覆盖 Schema）。设置按钮后面可用 `extraToolbar` 追加自定义按钮。
+
+字段 `locked: true` 为固定填写项：编辑器中不可编辑、删除或移动，其他字段也不能与其交换位置；包含锁定字段的模块、步骤、选项不可删除、不可移动。渲染与提交不受影响。工具方法 `isFieldLocked(field)`、`blockHasLockedField(block)` 可用于业务侧判断。
+
+### 条件显示（visibleWhen）
+
+字段可配置 `visibleWhen`，表单中其他字段的值满足条件时才显示该字段（编辑弹窗「条件显示」中配置）：
+
+```js
+{
+  name: 'rejectReason',
+  label: '不通过原因',
+  rule: 'REQ',
+  visibleWhen: {
+    logic: 'and', // 'and' 全部满足 | 'or' 满足任一，缺省 and
+    conditions: [{ field: 'recommendation', operator: 'eq', value: 'reject' }]
+  }
+}
+```
+
+| operator | 含义 | value |
+|----------|------|-------|
+| `eq` / `neq` | 等于 / 不等于 | 单值 |
+| `in` | 属于其一 | 数组 |
+| `includesAny` | 多选值包含任一 | 数组 |
+| `empty` / `notEmpty` | 为空 / 不为空（`undefined`、`null`、`''`、`[]` 视为空） | 无 |
+| `gt` / `gte` / `lt` / `lte` | 数值比较，非数字视为不满足 | 数字 |
+| `regex` | 正则匹配；值为数组时任一项匹配即满足 | 正则源码（不含 `/`），可加 `flags`（仅 `i` `m` `s` `u`） |
+
+规则：
+
+- `field` 为提交数据中的路径，object 模块内字段带前缀，如 `contact.phone`
+- 不满足条件的字段不渲染、不参与校验，已填的值会被清空；`SchemaContent` 按数据同样隐藏
+- 列表类模块（list / tableList / editableList / multiField）内的字段既不能配置条件，也不能作为触发字段
+- 条件引用的字段不存在、位于列表类模块内或正则无效时，该条件被忽略（编辑器显示「条件失效」）；全部条件失效时字段照常显示
+- 编辑器会拦截循环依赖；触发字段改名时自动同步引用
+- `schemaToDataSchema` 中条件字段不进入 `required`，并在 `description` 中附加条件说明
+- 工具方法：`evaluateVisibleWhen(visibleWhen, formData, knownNames?)`、`evaluateCondition(condition, formData)`、`collectConditionFields(schema)`、`findConditionCycle(schema)`、`renameConditionReferences(schema, oldPath, newPath)`
 
 顶层模块渲染时会自动挂上 `InfoPage.partRootClassName`，嵌入外层 FormInfo Part 时标题从一级重新起算；模块内再嵌套仍为二级胶囊。
 ### 多语言文案
@@ -264,6 +301,7 @@ const dataSchema = schemaToDataSchema(schema);
 说明：
 
 - **hidden 字段仍进入** data schema（可提交）
+- 配置了 `visibleWhen` 的字段不进入 `required`，`description` 追加条件说明（按 `options.locale` 输出中文或英文）
 - 字段值类型来自 registry 的 `valueSchema`；`rule` 含 `REQ` 时写入父 object 的 `required`（choice 支内同样生效）
 - 扩展字段在 `preset` / `registerField` 中声明 `valueSchema`（对象或 `(field) => schema`）；未声明则回退 `{ type: 'string' }`
 

@@ -2,6 +2,9 @@ import { normalizeSchema, supportsItemBlocks } from './schema';
 import { resolveFieldValueSchema } from './fieldRegistry';
 import { parseRuleString } from './rulePresets';
 import { localizeSchema } from './localeText';
+import { collectConditionFields, formatVisibleWhen, hasVisibleWhen } from './fieldCondition';
+import zhCN from './locale/zh-CN';
+import enUS from './locale/en-US';
 
 const createObjectLayer = () => ({
   properties: {},
@@ -21,7 +24,31 @@ const resolveChoiceSelectorName = block => {
   return `__choice_${block.id}`;
 };
 
-const mergeFieldIntoLayer = (layer, field, { allowRequired = true } = {}) => {
+/** 条件说明文案：按 options.locale 取包内语言包，英文以外回退中文 */
+const createConditionContext = (normalized, locale) => {
+  const messages = String(locale || '').startsWith('en') ? enUS : zhCN;
+  const formatMessage = ({ id }, values = {}) => String(messages[id] ?? id).replace(/\{(\w+)\}/g, (match, key) => (values[key] != null ? values[key] : match));
+  const conditionFields = collectConditionFields(normalized).filter(item => !item.inList);
+  return {
+    formatMessage,
+    knownNames: new Set(conditionFields.map(item => item.path)),
+    fieldLookup: new Map(conditionFields.map(item => [item.path, item.field]))
+  };
+};
+
+const describeVisibleWhen = (field, ctx) => {
+  const visibleWhen = {
+    ...field.visibleWhen,
+    conditions: field.visibleWhen.conditions.filter(condition => ctx.knownNames.has(condition?.field))
+  };
+  if (!visibleWhen.conditions.length) {
+    return '';
+  }
+  const condition = formatVisibleWhen(visibleWhen, { formatMessage: ctx.formatMessage, fieldLookup: ctx.fieldLookup });
+  return ctx.formatMessage({ id: 'conditionDescription' }, { condition });
+};
+
+const mergeFieldIntoLayer = (layer, field, { allowRequired = true, ctx } = {}) => {
   if (!field?.name) {
     return;
   }
@@ -29,8 +56,14 @@ const mergeFieldIntoLayer = (layer, field, { allowRequired = true } = {}) => {
   if (!name) {
     return;
   }
-  layer.properties[name] = resolveFieldValueSchema(field);
-  if (allowRequired && isReq(field.rule) && !layer.required.includes(name)) {
+  const valueSchema = resolveFieldValueSchema(field);
+  const conditionText = ctx?.formatMessage && hasVisibleWhen(field) ? describeVisibleWhen(field, ctx) : '';
+  if (conditionText) {
+    valueSchema.description = valueSchema.description ? `${valueSchema.description}\n${conditionText}` : conditionText;
+  }
+  layer.properties[name] = valueSchema;
+  // 条件显示字段可能不出现在提交数据中，不进 required
+  if (allowRequired && !conditionText && isReq(field.rule) && !layer.required.includes(name)) {
     layer.required.push(name);
   }
 };
@@ -73,32 +106,32 @@ const finalizeObjectSchema = (layer, { title, description } = {}) => {
   return schema;
 };
 
-const walkBlocks = (blocks, layer, depth = 0) => {
+const walkBlocks = (blocks, layer, depth = 0, ctx = {}) => {
   (blocks || []).forEach(block => {
     if (!block) {
       return;
     }
-    walkBlock(block, layer, depth);
+    walkBlock(block, layer, depth, ctx);
   });
 };
 
-const walkBlock = (block, layer, depth = 0) => {
+const walkBlock = (block, layer, depth = 0, ctx = {}) => {
   switch (block.kind) {
     case 'formInfo': {
-      mergeFieldsIntoLayer(layer, block.list);
-      walkBlocks(block.blocks, layer, depth + 1);
+      mergeFieldsIntoLayer(layer, block.list, { ctx });
+      walkBlocks(block.blocks, layer, depth + 1, ctx);
       return;
     }
     case 'object': {
       const name = block.name != null && String(block.name).trim() ? String(block.name).trim() : '';
       if (!name) {
-        mergeFieldsIntoLayer(layer, block.list);
-        walkBlocks(block.blocks, layer, depth + 1);
+        mergeFieldsIntoLayer(layer, block.list, { ctx });
+        walkBlocks(block.blocks, layer, depth + 1, ctx);
         return;
       }
       const nested = createObjectLayer();
-      mergeFieldsIntoLayer(nested, block.list);
-      walkBlocks(block.blocks, nested, depth + 1);
+      mergeFieldsIntoLayer(nested, block.list, { ctx });
+      walkBlocks(block.blocks, nested, depth + 1, ctx);
       layer.properties[name] = finalizeObjectSchema(nested, {
         title: block.title || undefined,
         description: block.subtitle || undefined
@@ -158,13 +191,13 @@ const walkBlock = (block, layer, depth = 0) => {
     }
     case 'steps': {
       (block.items || []).forEach(step => {
-        mergeFieldsIntoLayer(layer, step?.list);
-        walkBlocks(step?.blocks, layer, depth + 1);
+        mergeFieldsIntoLayer(layer, step?.list, { ctx });
+        walkBlocks(step?.blocks, layer, depth + 1, ctx);
       });
       return;
     }
     case 'choice': {
-      mergeChoiceIntoLayer(layer, block, depth);
+      mergeChoiceIntoLayer(layer, block, depth, ctx);
       return;
     }
     default:
@@ -177,7 +210,7 @@ const walkBlock = (block, layer, depth = 0) => {
  * 每支为 object：单选支含 selector const；多选支为该 option 字段，selector 数组放在当前层。
  * 支内 REQ 可进 required；hidden 字段仍进入 schema。
  */
-const mergeChoiceIntoLayer = (layer, block, depth) => {
+const mergeChoiceIntoLayer = (layer, block, depth, ctx) => {
   const mode = block.mode === 'multiple' ? 'multiple' : 'single';
   const selectorInData = block.selectorInData !== false;
   const selectorName = resolveChoiceSelectorName(block);
@@ -196,8 +229,8 @@ const mergeChoiceIntoLayer = (layer, block, depth) => {
       branch.required.push(selectorName);
     }
 
-    mergeFieldsIntoLayer(branch, option.list, { allowRequired: true });
-    walkBlocks(option.blocks, branch, depth + 1);
+    mergeFieldsIntoLayer(branch, option.list, { allowRequired: true, ctx });
+    walkBlocks(option.blocks, branch, depth + 1, ctx);
 
     return finalizeObjectSchema(branch, { title: optionTitle });
   });
@@ -267,7 +300,7 @@ const mergeChoiceIntoLayer = (layer, block, depth) => {
 export const schemaToDataSchema = (schema, options = {}) => {
   const normalized = normalizeSchema(localizeSchema(schema || {}, options.locale, options.languages));
   const layer = createObjectLayer();
-  walkBlocks(normalized.blocks, layer, 0);
+  walkBlocks(normalized.blocks, layer, 0, createConditionContext(normalized, options.locale));
 
   const root = finalizeObjectSchema(layer, {
     title: normalized.title || undefined,

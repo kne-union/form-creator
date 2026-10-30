@@ -311,6 +311,12 @@
   white-space: nowrap;
 }
 
+.block-summary-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .block-header-actions {
   flex-shrink: 0;
 }
@@ -495,6 +501,15 @@
 .field-row-main {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.field-row-label {
+  max-width: 100%;
+  word-break: break-word;
 }
 
 .inline-empty {
@@ -712,6 +727,32 @@
   gap: 24px;
   width: 100%;
   min-width: 0;
+}
+
+/* label 在上的 inner 布局不需要按最长 label 对齐；react-form-helper 会给每个 label 写行内 min-width，长 label 会铺到相邻列 */
+:global(.react-form--inner),
+:global(.react-form--inner--small),
+:global(.react-form--inner--large) {
+  .schema-body :global(.react-form__field-label) {
+    min-width: 0 !important;
+  }
+
+  /* 错误提示默认 absolute 在 22px 下边距内单行展示，长 label 拼出的提示会折行压到下一个字段；改为文档流，单行时高度与原来一致 */
+  .schema-body :global(.react-form__field.is-error) {
+    margin-bottom: 8px;
+  }
+
+  .schema-body :global(.react-form__field-error) {
+    position: static;
+    padding-top: 1px;
+  }
+}
+
+/* antd 竖排步骤标题 flex: 0 0 auto 不收缩，超长标题会被裁切 */
+.schema-body :global(.ant-steps-vertical .ant-steps-item-title) {
+  flex-shrink: 1;
+  min-width: 0;
+  word-break: break-word;
 }
 
 /* 表单底部操作区：与内容分隔，固定落在表单最下方 */
@@ -1063,6 +1104,82 @@
 
 .options-row {
   width: 100%;
+}
+
+.visible-when-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 2px;
+}
+
+.visible-when-hint {
+  font-size: 12px;
+}
+
+.visible-when-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.visible-when-row {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+.visible-when-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.visible-when-field {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.visible-when-operator {
+  flex: 0 0 140px;
+}
+
+.visible-when-value {
+  width: 100%;
+}
+
+.visible-when-regex {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.visible-when-flags {
+  flex: 0 0 160px;
+}
+
+.visible-when-regex-tester {
+  width: 100%;
+
+  :global(.ant-input-affix-wrapper),
+  :global(.ant-input) {
+    flex: 1;
+  }
+
+  > span:last-child {
+    flex-shrink: 0;
+  }
+}
+
+@include resp.mobile-container {
+  .visible-when-operator,
+  .visible-when-flags {
+    flex: 1 1 100%;
+  }
 }
 
 .options-tip {

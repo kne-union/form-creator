@@ -1,15 +1,17 @@
 import { useMemo, useState } from 'react';
-import { Empty } from 'antd';
+import { Empty, message } from 'antd';
 import { useIntl } from '@kne/react-intl';
 import { useIsMobile, RESPONSIVE_BOUNDARY_CLASS } from '@kne/responsive-utils';
 import withLocale from './withLocale';
 import {
+  blockHasLockedField,
   collectSchemaFields,
   createBlock,
   createChoiceOption,
   createStep,
   defaultSchema,
   findBlock,
+  isFieldLocked,
   mapBlocks,
   moveBlockInTree,
   moveItem,
@@ -27,6 +29,7 @@ import FieldEditorModal from './FieldEditorModal';
 import FormActionsEditor from './FormActionsEditor';
 import SchemaRenderer from './SchemaRenderer';
 import { LocaleTextProvider } from './LocaleTextInput';
+import { collectConditionFields, findConditionCycle, getBlockConditionScope, getFieldConditionPath, renameConditionReferences } from './fieldCondition';
 import style from './style.module.scss';
 
 const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = true, className, formProps, renderModal, extraToolbar, languages }) => {
@@ -124,6 +127,9 @@ const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = t
   };
 
   const handleDeleteBlock = blockId => {
+    if (blockHasLockedField(findBlock(schema, blockId))) {
+      return;
+    }
     updateSchema(updateBlocks(schema, blocks => removeBlockInTree(blocks, blockId)));
   };
 
@@ -160,7 +166,7 @@ const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = t
     updateSchema(
       mapBlocks(schema, blockId, block => ({
         ...block,
-        items: (block.items || []).filter(item => item.id !== stepId)
+        items: (block.items || []).filter(item => item.id !== stepId || blockHasLockedField(item))
       }))
     );
   };
@@ -169,7 +175,7 @@ const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = t
     updateSchema(
       mapBlocks(schema, blockId, block => ({
         ...block,
-        items: moveItem(block.items || [], stepId, direction)
+        items: moveItem(block.items || [], stepId, direction, blockHasLockedField)
       }))
     );
   };
@@ -203,7 +209,7 @@ const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = t
     updateSchema(
       mapBlocks(schema, blockId, block => ({
         ...block,
-        options: (block.options || []).filter(item => item.id !== optionId)
+        options: (block.options || []).filter(item => item.id !== optionId || blockHasLockedField(item))
       }))
     );
   };
@@ -212,7 +218,7 @@ const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = t
     updateSchema(
       mapBlocks(schema, blockId, block => ({
         ...block,
-        options: moveItem(block.options || [], optionId, direction)
+        options: moveItem(block.options || [], optionId, direction, blockHasLockedField)
       }))
     );
   };
@@ -231,6 +237,9 @@ const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = t
   };
 
   const handleEditField = (blockId, field, scope) => {
+    if (isFieldLocked(field)) {
+      return;
+    }
     setFieldContext({ blockId, ...normalizeFieldScope(scope) });
     setEditingField(field);
     setFieldEditorOpen(true);
@@ -238,45 +247,53 @@ const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = t
 
   const handleSaveField = field => {
     const { blockId, stepId, optionId } = fieldContext || {};
-    updateSchema(
-      mapBlocks(schema, blockId, block => {
-        if (block.kind === 'steps') {
-          return {
-            ...block,
-            items: (block.items || []).map(step => {
-              if (step.id !== stepId) {
-                return step;
-              }
-              const exists = (step.list || []).some(item => item.id === field.id);
-              return {
-                ...step,
-                list: exists ? step.list.map(item => (item.id === field.id ? field : item)) : [...(step.list || []), field]
-              };
-            })
-          };
-        }
-        if (block.kind === 'choice') {
-          return {
-            ...block,
-            options: (block.options || []).map(option => {
-              if (option.id !== optionId) {
-                return option;
-              }
-              const exists = (option.list || []).some(item => item.id === field.id);
-              return {
-                ...option,
-                list: exists ? option.list.map(item => (item.id === field.id ? field : item)) : [...(option.list || []), field]
-              };
-            })
-          };
-        }
-        const exists = (block.list || []).some(item => item.id === field.id);
+    let nextSchema = mapBlocks(schema, blockId, block => {
+      if (block.kind === 'steps') {
         return {
           ...block,
-          list: exists ? block.list.map(item => (item.id === field.id ? field : item)) : [...(block.list || []), field]
+          items: (block.items || []).map(step => {
+            if (step.id !== stepId) {
+              return step;
+            }
+            const exists = (step.list || []).some(item => item.id === field.id);
+            return {
+              ...step,
+              list: exists ? step.list.map(item => (item.id === field.id ? field : item)) : [...(step.list || []), field]
+            };
+          })
         };
-      })
-    );
+      }
+      if (block.kind === 'choice') {
+        return {
+          ...block,
+          options: (block.options || []).map(option => {
+            if (option.id !== optionId) {
+              return option;
+            }
+            const exists = (option.list || []).some(item => item.id === field.id);
+            return {
+              ...option,
+              list: exists ? option.list.map(item => (item.id === field.id ? field : item)) : [...(option.list || []), field]
+            };
+          })
+        };
+      }
+      const exists = (block.list || []).some(item => item.id === field.id);
+      return {
+        ...block,
+        list: exists ? block.list.map(item => (item.id === field.id ? field : item)) : [...(block.list || []), field]
+      };
+    });
+    if (editingField?.name && editingField.name !== field.name) {
+      const scope = getBlockConditionScope(schema, blockId);
+      nextSchema = renameConditionReferences(nextSchema, getFieldConditionPath(scope, editingField.name), getFieldConditionPath(scope, field.name));
+    }
+    const cycle = findConditionCycle(nextSchema);
+    if (cycle) {
+      message.error(formatMessage({ id: 'visibleWhenCycle' }, { path: cycle.join(' → ') }));
+      return false;
+    }
+    updateSchema(nextSchema);
     setFieldEditorOpen(false);
     setFieldContext(null);
     setEditingField(null);
@@ -289,18 +306,18 @@ const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = t
         if (block.kind === 'steps') {
           return {
             ...block,
-            items: (block.items || []).map(step => (step.id === stepId ? { ...step, list: (step.list || []).filter(item => item.id !== fieldId) } : step))
+            items: (block.items || []).map(step => (step.id === stepId ? { ...step, list: (step.list || []).filter(item => item.id !== fieldId || isFieldLocked(item)) } : step))
           };
         }
         if (block.kind === 'choice') {
           return {
             ...block,
-            options: (block.options || []).map(option => (option.id === optionId ? { ...option, list: (option.list || []).filter(item => item.id !== fieldId) } : option))
+            options: (block.options || []).map(option => (option.id === optionId ? { ...option, list: (option.list || []).filter(item => item.id !== fieldId || isFieldLocked(item)) } : option))
           };
         }
         return {
           ...block,
-          list: (block.list || []).filter(item => item.id !== fieldId)
+          list: (block.list || []).filter(item => item.id !== fieldId || isFieldLocked(item))
         };
       })
     );
@@ -331,6 +348,17 @@ const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = t
   };
 
   const currentFieldScope = fieldContext ? collectSchemaFields(schema, { blockId: fieldContext.blockId, stepId: fieldContext.stepId, optionId: fieldContext.optionId }) : [];
+  const conditionProps = useMemo(
+    () =>
+      fieldContext
+        ? {
+            schema,
+            scope: getBlockConditionScope(schema, fieldContext.blockId),
+            triggerFields: collectConditionFields(schema).filter(item => !item.inList)
+          }
+        : null,
+    [schema, fieldContext]
+  );
   const toolbarExtra = typeof extraToolbar === 'function' ? extraToolbar({ schema }) : extraToolbar;
 
   return (
@@ -395,6 +423,7 @@ const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = t
           open={fieldEditorOpen}
           field={editingField}
           fieldList={currentFieldScope}
+          conditionProps={conditionProps}
           renderModal={renderModal}
           onCancel={() => {
             setFieldEditorOpen(false);
