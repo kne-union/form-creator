@@ -3,6 +3,7 @@ import { SuperSelectList, SuperSelectTableList, SuperSelectTree, SuperSelectCasc
 import { buildRuleString, parseRuleString } from './rulePresets';
 import { createEmptyColumn } from './schema';
 import { hasLocaleText, localeTextToValue, resolveLocaleText, trimLocaleText } from './localeText';
+import { normalizeVisibleWhen } from './fieldCondition';
 
 const registry = new Map();
 
@@ -745,6 +746,7 @@ export const fieldToFormValues = field => {
     description: field.description || '',
     block: !!field.block,
     hidden: !!field.hidden,
+    visibleWhen: field.visibleWhen,
     placeholder,
     options: options.length ? options : [{ label: '', value: '' }],
     ruleConfig,
@@ -783,6 +785,7 @@ export const formValuesToField = (values, existingField = {}) => {
   }
 
   const rule = buildRuleString(values.ruleConfig);
+  const visibleWhen = normalizeVisibleWhen(values.visibleWhen);
 
   return {
     id: existingField.id,
@@ -794,6 +797,7 @@ export const formValuesToField = (values, existingField = {}) => {
     rule,
     block: values.block ?? definition.defaults?.block ?? false,
     hidden: !!values.hidden,
+    ...(visibleWhen ? { visibleWhen } : {}),
     props
   };
 };

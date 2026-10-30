@@ -7,6 +7,8 @@ import { getFieldComponent, getFieldDefinition } from './fieldRegistry';
 import { createApiFromOptions } from './fields/optionsApi';
 import { MAX_BLOCK_DEPTH, normalizeSchema, collectBlockFieldNames } from './schema';
 import ChoiceBlock from './ChoiceBlock';
+import ConditionalFormInfo from './ConditionalFormInfo';
+import { collectTriggerNames, hasVisibleWhen } from './fieldCondition';
 import { createLocalizedRules } from './localizedRules';
 import style from './style.module.scss';
 
@@ -35,8 +37,8 @@ const buildIndexedLabelRender = index => {
   };
 };
 
-const renderFieldElements = (fields = [], preview = false, { namePrefix, locale, showIndex = false } = {}) =>
-  fields
+const renderFieldEntries = (fields = [], preview = false, { namePrefix, locale, showIndex = false } = {}) =>
+  (fields || [])
     .filter(field => !field.hidden)
     .map((field, index) => {
       const Component = getFieldComponent(field.type, field);
@@ -74,7 +76,7 @@ const renderFieldElements = (fields = [], preview = false, { namePrefix, locale,
       const localeProps = locale ? { locale } : {};
       const label = buildFieldLabel(field);
 
-      return createElement(Component, {
+      const element = createElement(Component, {
         key: field.id,
         name: fieldName,
         label: showIndex ? label || '\u200b' : label,
@@ -86,8 +88,19 @@ const renderFieldElements = (fields = [], preview = false, { namePrefix, locale,
         labelTips: buildLabelTips(field.tips),
         description
       });
+      return { element, path: fieldName, visibleWhen: hasVisibleWhen(field) ? field.visibleWhen : null };
     })
     .filter(Boolean);
+
+const renderFieldElements = (fields, preview, opts) => renderFieldEntries(fields, preview, opts).map(entry => entry.element);
+
+/** 字段含 visibleWhen 时换成 ConditionalFormInfo，否则保持普通 FormInfo */
+const createFieldsFormInfo = (formInfoProps, entries, nested = [], knownNames) => {
+  if (entries.some(entry => entry.visibleWhen)) {
+    return createElement(ConditionalFormInfo, { ...formInfoProps, entries, nested, knownNames });
+  }
+  return createElement(FormInfo, { ...formInfoProps, list: [...entries.map(entry => entry.element), ...nested] });
+};
 
 const withBlockLayout = (element, forceBlock) => {
   if (!element || !forceBlock) {
@@ -122,7 +135,7 @@ const nestedListItemPartProps = {
 const isFormInfoLikeBlock = kind => kind === 'formInfo' || kind === 'object';
 
 export const renderBlockElement = (block, preview = false, ctx = {}) => {
-  const { isMobile = false, formatMessage, depth = 0, asListItem = false, locale } = ctx;
+  const { isMobile = false, formatMessage, depth = 0, asListItem = false, locale, knownNames } = ctx;
   if (!block || depth > MAX_BLOCK_DEPTH) {
     return null;
   }
@@ -147,38 +160,46 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
   switch (block.kind) {
     case 'formInfo': {
       const showIndex = !!block.showIndex;
-      const fields = renderFieldElements(block.list, preview, { ...fieldRenderOpts, showIndex });
+      const entries = renderFieldEntries(block.list, preview, { ...fieldRenderOpts, showIndex });
       const nested = renderChildBlocks(block.blocks || [], nextCtx).map(node => withBlockLayout(node, true));
       return withBlockLayout(
-        createElement(FormInfo, {
-          key: block.id,
-          title: block.title || undefined,
-          subtitle: block.subtitle || undefined,
-          column: block.column,
-          gap: block.gap,
-          bordered,
-          list: [...fields, ...nested],
-          ...(listItemPartProps || {}),
-          className: resolvePartRootClassName(depth, showIndex ? style['form-info-show-index'] : null)
-        }),
+        createFieldsFormInfo(
+          {
+            key: block.id,
+            title: block.title || undefined,
+            subtitle: block.subtitle || undefined,
+            column: block.column,
+            gap: block.gap,
+            bordered,
+            ...(listItemPartProps || {}),
+            className: resolvePartRootClassName(depth, showIndex ? style['form-info-show-index'] : null)
+          },
+          entries,
+          nested,
+          knownNames
+        ),
         asListItem
       );
     }
     case 'object': {
-      const fields = renderFieldElements(block.list, preview, { ...fieldRenderOpts, namePrefix: block.name || '' });
+      const entries = renderFieldEntries(block.list, preview, { ...fieldRenderOpts, namePrefix: block.name || '' });
       const nested = renderChildBlocks(block.blocks || [], nextCtx).map(node => withBlockLayout(node, true));
       return withBlockLayout(
-        createElement(FormInfo, {
-          key: block.id,
-          title: block.title || undefined,
-          subtitle: block.subtitle || undefined,
-          column: block.column,
-          gap: block.gap,
-          bordered,
-          list: [...fields, ...nested],
-          ...(listItemPartProps || {}),
-          className: resolvePartRootClassName(depth)
-        }),
+        createFieldsFormInfo(
+          {
+            key: block.id,
+            title: block.title || undefined,
+            subtitle: block.subtitle || undefined,
+            column: block.column,
+            gap: block.gap,
+            bordered,
+            ...(listItemPartProps || {}),
+            className: resolvePartRootClassName(depth)
+          },
+          entries,
+          nested,
+          knownNames
+        ),
         asListItem
       );
     }
@@ -269,29 +290,18 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
           prevIcon: createElement(ArrowLeftOutlined),
           nextIcon: createElement(ArrowRightOutlined),
           items: (block.items || []).map(step => {
-            const fields = renderFieldElements(step.list, preview, fieldRenderOpts);
+            const entries = renderFieldEntries(step.list, preview, fieldRenderOpts);
             const nested = renderChildBlocks(step.blocks || [], nextCtx);
             const fieldNames = [...(step.list || []).filter(field => field && !field.hidden && field.name).map(field => field.name), ...collectBlockFieldNames(step.blocks || [])];
-            if (nested.length) {
+            const hasConditional = entries.some(entry => entry.visibleWhen);
+            if (nested.length || hasConditional) {
               return {
                 key: step.id,
                 title: step.title,
                 column: step.column,
                 gap: block.gap,
                 fieldNames,
-                children: createElement(
-                  Fragment,
-                  { key: `${step.id}-body` },
-                  fields.length
-                    ? createElement(FormInfo, {
-                        key: `${step.id}-fields`,
-                        column: step.column,
-                        gap: block.gap,
-                        list: fields
-                      })
-                    : null,
-                  ...nested
-                )
+                children: createElement(Fragment, { key: `${step.id}-body` }, entries.length ? createFieldsFormInfo({ key: `${step.id}-fields`, column: step.column, gap: block.gap }, entries, [], knownNames) : null, ...nested)
               };
             }
             return {
@@ -299,7 +309,7 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
               title: step.title,
               column: step.column,
               gap: block.gap,
-              list: fields,
+              list: entries.map(entry => entry.element),
               fieldNames
             };
           })
@@ -319,14 +329,7 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
           renderOptionContent: option => {
             const nodes = [];
             if ((option.list || []).length) {
-              nodes.push(
-                createElement(FormInfo, {
-                  key: `${option.id}-fields`,
-                  column: block.column || 2,
-                  gap: block.gap,
-                  list: renderFieldElements(option.list, preview)
-                })
-              );
+              nodes.push(createFieldsFormInfo({ key: `${option.id}-fields`, column: block.column || 2, gap: block.gap }, renderFieldEntries(option.list, preview), [], knownNames));
             }
             nodes.push(...renderChildBlocks(option.blocks || [], nextCtx));
             return nodes.filter(Boolean);
@@ -342,7 +345,8 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
 export const renderSchemaInner = (schema, { preview = false, className, bodyClassName, isMobile = false, formatMessage, locale, children, actionNode } = {}) => {
   const normalized = normalizeSchema(schema);
   const blocks = normalized.blocks || [];
-  const contentChildren = blocks.map(block => renderBlockElement(block, preview, { isMobile, formatMessage, locale })).filter(Boolean);
+  const knownNames = collectTriggerNames(normalized);
+  const contentChildren = blocks.map(block => renderBlockElement(block, preview, { isMobile, formatMessage, locale, knownNames })).filter(Boolean);
 
   if (!contentChildren.length && !children && !actionNode) {
     return null;
@@ -357,7 +361,8 @@ export const renderSchemaInner = (schema, { preview = false, className, bodyClas
 export const renderSchemaContent = (schema, { preview = false, formProps = {}, className, bodyClassName, isMobile = false, formatMessage, locale, children, actionNode } = {}) => {
   const normalized = normalizeSchema(schema);
   const blocks = normalized.blocks || [];
-  const contentChildren = blocks.map(block => renderBlockElement(block, preview, { isMobile, formatMessage, locale })).filter(Boolean);
+  const knownNames = collectTriggerNames(normalized);
+  const contentChildren = blocks.map(block => renderBlockElement(block, preview, { isMobile, formatMessage, locale, knownNames })).filter(Boolean);
 
   if (!contentChildren.length && !children) {
     return null;

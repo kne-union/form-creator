@@ -7,6 +7,7 @@ import withLocale from './withLocale';
 import { formatFieldDisplayValue } from './formatDisplayValue';
 import { MAX_BLOCK_DEPTH, hasRenderableContent, normalizeSchema, supportsItemBlocks } from './schema';
 import { localizeSchema } from './localeText';
+import { collectTriggerNames, evaluateVisibleWhen } from './fieldCondition';
 import style from './style.module.scss';
 
 const getByPath = (data, path) => {
@@ -34,9 +35,9 @@ const formatFieldValue = (field, value, formatMessage) => formatFieldDisplayValu
  * 问卷题干往往很长：不用 InfoPage Content 的横向 label 列宽对齐（minWidth），
  * 改为 label 在上、值在下，避免窄栏（如弹窗双栏预览）被撑乱。
  */
-const renderFieldsContent = (fields, data, formatMessage, column, { showIndex = false } = {}) => {
+const renderFieldsContent = (fields, data, formatMessage, column, { showIndex = false, isFieldVisible } = {}) => {
   const list = (fields || [])
-    .filter(field => field && !field.hidden && field.name)
+    .filter(field => field && !field.hidden && field.name && (!isFieldVisible || isFieldVisible(field)))
     .map((field, index) => {
       const baseLabel = field.label || field.name;
       const label = showIndex ? `${index + 1}. ${baseLabel}` : baseLabel;
@@ -68,7 +69,7 @@ const renderFieldsContent = (fields, data, formatMessage, column, { showIndex = 
 const renderBlockList = (blocks, data, ctx) => (blocks || []).map(block => renderBlock(block, data, ctx)).filter(Boolean);
 
 const renderBlock = (block, data, ctx) => {
-  const { formatMessage, isMobile, depth = 0 } = ctx;
+  const { formatMessage, isMobile, depth = 0, isFieldVisible } = ctx;
   if (!block || depth > MAX_BLOCK_DEPTH) {
     return null;
   }
@@ -87,7 +88,7 @@ const renderBlock = (block, data, ctx) => {
     case 'formInfo': {
       return (
         <InfoPage.Part {...partProps}>
-          {renderFieldsContent(block.list, data, formatMessage, block.column, { showIndex: !!block.showIndex })}
+          {renderFieldsContent(block.list, data, formatMessage, block.column, { showIndex: !!block.showIndex, isFieldVisible })}
           {renderBlockList(block.blocks, data, nextCtx)}
         </InfoPage.Part>
       );
@@ -97,7 +98,7 @@ const renderBlock = (block, data, ctx) => {
       const nestedData = name ? getByPath(data, name) || {} : data;
       return (
         <InfoPage.Part {...partProps}>
-          {renderFieldsContent(block.list, nestedData, formatMessage, block.column)}
+          {renderFieldsContent(block.list, nestedData, formatMessage, block.column, { isFieldVisible })}
           {renderBlockList(block.blocks, nestedData, nextCtx)}
         </InfoPage.Part>
       );
@@ -146,7 +147,7 @@ const renderBlock = (block, data, ctx) => {
         <Fragment key={block.id}>
           {(block.items || []).map(step => (
             <InfoPage.Part key={step.id} title={step.title || undefined} bordered={bordered}>
-              {renderFieldsContent(step.list, data, formatMessage, step.column || 2)}
+              {renderFieldsContent(step.list, data, formatMessage, step.column || 2, { isFieldVisible })}
               {renderBlockList(step.blocks, data, nextCtx)}
             </InfoPage.Part>
           ))}
@@ -164,7 +165,7 @@ const renderBlock = (block, data, ctx) => {
         <InfoPage.Part {...partProps}>
           {visibleOptions.map(option => (
             <InfoPage.Part key={option.id} title={option.title || undefined} bordered={false}>
-              {renderFieldsContent(option.list, data, formatMessage, block.column)}
+              {renderFieldsContent(option.list, data, formatMessage, block.column, { isFieldVisible })}
               {renderBlockList(option.blocks, data, nextCtx)}
             </InfoPage.Part>
           ))}
@@ -180,7 +181,11 @@ const SchemaContentInnerView = ({ schema, data, className, languages }) => {
   const { formatMessage, locale } = useIntl();
   const isMobile = useIsMobile();
   const normalized = normalizeSchema(localizeSchema(schema, locale, languages));
-  const children = renderBlockList(normalized.blocks, data || {}, { formatMessage, isMobile, depth: 0 });
+  const rootData = data || {};
+  const knownNames = collectTriggerNames(normalized);
+  // 条件按提交数据根路径判断（object 内字段同样用完整路径）
+  const isFieldVisible = field => evaluateVisibleWhen(field.visibleWhen, rootData, knownNames);
+  const children = renderBlockList(normalized.blocks, rootData, { formatMessage, isMobile, depth: 0, isFieldVisible });
 
   if (!children.length) {
     return null;

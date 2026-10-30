@@ -17,6 +17,8 @@ export {
   normalizeSchema,
   normalizeBlock,
   moveItem,
+  isFieldLocked,
+  blockHasLockedField,
   isFieldNameUnique,
   collectSchemaFields,
   collectBlockFieldNames,
@@ -48,6 +50,7 @@ export { formatFieldDisplayValue, formatByValueSchema } from './formatDisplayVal
 export { RULE_PRESET_ITEMS, RULE_LEN_PRESET, getRulePresetItems, parseRuleString, buildRuleString } from './rulePresets';
 export { preset } from './preset';
 export { schemaToDataSchema } from './schemaToDataSchema';
+export { CONDITION_OPERATORS, evaluateCondition, evaluateVisibleWhen, hasVisibleWhen, collectConditionFields, findConditionCycle, renameConditionReferences } from './fieldCondition';
 export { isLocaleText, resolveLocaleText, localizeSchema, hasLocaleText } from './localeText';
 export { LocaleInput, LocaleTextArea, LocaleTextControl, LocaleTextProvider } from './LocaleTextInput';
 export { default as SchemaContent, SchemaContentInner } from './SchemaContent';

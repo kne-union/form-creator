@@ -259,6 +259,71 @@
           "packageName": "@kne/remote-loader"
         }
       ]
+    },
+    {
+      "title": "固定填写项",
+      "description": "字段设置 locked: true 后不可编辑、删除或移动，所在模块位置固定；适合业务依赖的固定字段",
+      "code": "./locked-field.js",
+      "scope": [
+        {
+          "name": "_FormCreator",
+          "packageName": "@kne/current-lib_form-creator",
+          "importStatement": "import * as _FormCreator from \"@kne/form-creator\""
+        },
+        {
+          "packageName": "@kne/current-lib_form-creator/dist/index.css",
+          "importStatement": "import \"@kne/form-creator/dist/index.css\""
+        },
+        {
+          "name": "antd",
+          "packageName": "antd",
+          "importStatement": "import antd from \"antd\""
+        }
+      ]
+    },
+    {
+      "title": "超长文案",
+      "description": "模块标题、字段 label、选项、步骤标题均为超长文本并叠加固定/隐藏/整行标签，检查编辑器列表与预览的换行和省略",
+      "code": "./long-label.js",
+      "isFull": true,
+      "scope": [
+        {
+          "name": "_FormCreator",
+          "packageName": "@kne/current-lib_form-creator",
+          "importStatement": "import * as _FormCreator from \"@kne/form-creator\""
+        },
+        {
+          "packageName": "@kne/current-lib_form-creator/dist/index.css",
+          "importStatement": "import \"@kne/form-creator/dist/index.css\""
+        },
+        {
+          "name": "antd",
+          "packageName": "antd",
+          "importStatement": "import antd from \"antd\""
+        }
+      ]
+    },
+    {
+      "title": "条件显示",
+      "description": "字段配置 visibleWhen：按其他字段的值（等于、属于其一、多选包含、数值比较、正则匹配，支持且/或组合）决定是否显示，隐藏时不校验并清空值",
+      "code": "./conditional-field.js",
+      "isFull": true,
+      "scope": [
+        {
+          "name": "_FormCreator",
+          "packageName": "@kne/current-lib_form-creator",
+          "importStatement": "import * as _FormCreator from \"@kne/form-creator\""
+        },
+        {
+          "packageName": "@kne/current-lib_form-creator/dist/index.css",
+          "importStatement": "import \"@kne/form-creator/dist/index.css\""
+        },
+        {
+          "name": "antd",
+          "packageName": "antd",
+          "importStatement": "import antd from \"antd\""
+        }
+      ]
     }
   ]
 }

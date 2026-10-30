@@ -371,13 +371,33 @@ export const normalizeSchema = (schema = {}) => {
   };
 };
 
-export const moveItem = (list, id, direction) => {
+export const isFieldLocked = field => !!field?.locked;
+
+export const blockHasLockedField = block => {
+  if (!block) {
+    return false;
+  }
+  if ((block.list || []).some(isFieldLocked)) {
+    return true;
+  }
+  const groups = [...(block.items || []), ...(block.options || [])];
+  if (groups.some(group => (group.list || []).some(isFieldLocked) || (group.blocks || []).some(blockHasLockedField))) {
+    return true;
+  }
+  return [...(block.blocks || []), ...(block.itemBlocks || [])].some(blockHasLockedField);
+};
+
+// 锁定项（locked 字段 / 含锁定字段的模块）位置固定：自身不能移动，其他项也不能与其交换位置
+export const moveItem = (list, id, direction, isFixed = isFieldLocked) => {
   const index = list.findIndex(item => item.id === id);
   if (index < 0) {
     return list;
   }
   const targetIndex = direction === 'up' ? index - 1 : index + 1;
   if (targetIndex < 0 || targetIndex >= list.length) {
+    return list;
+  }
+  if (isFixed(list[index]) || isFixed(list[targetIndex])) {
     return list;
   }
   const next = [...list];
@@ -675,7 +695,7 @@ export const removeBlockInTree = (blocks, blockId) => {
 
 export const moveBlockInTree = (blocks, blockId, direction) => {
   if ((blocks || []).some(block => block?.id === blockId)) {
-    return moveItem(blocks, blockId, direction);
+    return moveItem(blocks, blockId, direction, blockHasLockedField);
   }
   let changed = false;
   const next = (blocks || []).map(block => {
