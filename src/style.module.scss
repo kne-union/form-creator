@@ -1102,8 +1102,55 @@
   margin: 12px 0;
 }
 
+/* 选项行与列头共用同一套列宽规则，保证列头文字与下方输入框严格对齐 */
+.options-row,
+.options-header {
+  /* 行内控件统一以 0 为基准按份分配：antd Input 默认 width: 100%，会把 flex-basis 为 0 的选项名称挤到不可见 */
+  > :global(.ant-input),
+  > :global(.ant-input-affix-wrapper),
+  > .options-locale-text,
+  > .options-header-label,
+  > .options-header-value,
+  > .options-header-description {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  /* 选项名称 / 描述（含多语言双输入）占 2 份，值占 1 份 */
+  > .options-locale-text,
+  > .options-header-label,
+  > .options-header-description {
+    flex-grow: 2;
+  }
+
+  > :global(.ant-input-number) {
+    flex: 0 0 120px;
+  }
+
+  > .icon-square-btn-sm,
+  > .options-header-action {
+    flex: 0 0 28px;
+  }
+}
+
 .options-row {
   width: 100%;
+}
+
+.options-header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+  line-height: 1.4;
+
+  > * {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 .visible-when-editor {
@@ -1242,7 +1289,7 @@
 }
 
 .options-locale-text {
-  flex: 2;
+  flex: 2 1 0;
   min-width: 0;
 }
 

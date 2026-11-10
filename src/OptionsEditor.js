@@ -79,6 +79,12 @@ const FlatOptionRows = ({ list, onChange, allowDescription }) => {
 
   return (
     <div className={style['options-list']}>
+      <div className={style['options-header']}>
+        <span className={style['options-header-label']}>{formatMessage({ id: 'optionLabelColumn' })}</span>
+        <span className={style['options-header-value']}>{formatMessage({ id: 'optionValueColumn' })}</span>
+        {allowDescription ? <span className={style['options-header-description']}>{formatMessage({ id: 'optionDescColumn' })}</span> : null}
+        <span className={style['options-header-action']} aria-hidden="true" />
+      </div>
       {rows.map((item, index) => (
         <Flex key={item._key} gap={8} align="start" className={style['options-row']}>
           <LocaleTextControl
@@ -344,7 +350,7 @@ const TableRowsEditor = ({ columns = [], value = [], onChange }) => {
                 }
               >
                 <Space direction="vertical" size={8} style={{ width: '100%' }}>
-                  <Flex gap={8}>
+                  <Flex gap={8} className={style['options-row']}>
                     <Input value={item.value || ''} placeholder={formatMessage({ id: 'optionValuePlaceholder' })} onChange={e => updateItem(index, { value: e.target.value })} />
                     <LocaleTextControl compact className={style['options-locale-text']} value={item.label || ''} placeholder={formatMessage({ id: 'tableRowLabelPlaceholder' })} onChange={label => updateItem(index, { label })} />
                   </Flex>
