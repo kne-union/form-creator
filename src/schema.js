@@ -91,7 +91,7 @@ export const createChoiceOption = (overrides = {}) => ({
 });
 
 export const createBlock = (kind, overrides = {}) => {
-  const needsName = ['list', 'tableList', 'editableList', 'multiField', 'object'].includes(kind);
+  const needsName = ['list', 'tableList', 'editableList', 'multiField', 'matrixScale', 'object'].includes(kind);
   const base = {
     id: createFieldId(),
     kind,
@@ -107,7 +107,12 @@ export const createBlock = (kind, overrides = {}) => {
     addText: '',
     maxLength: undefined,
     minLength: undefined,
-    fieldType: 'Input',
+    fieldType: kind === 'matrixScale' ? 'RadioGroup' : 'Input',
+    layout: 'options',
+    rowTitle: '',
+    rule: '',
+    rows: [],
+    columns: [],
     autoStep: true,
     mode: 'single',
     selectorName: '',
@@ -140,6 +145,27 @@ export const createBlock = (kind, overrides = {}) => {
       blocks: undefined,
       options: undefined,
       items: undefined,
+      rows: undefined,
+      columns: undefined,
+      layout: undefined,
+      rowTitle: undefined,
+      rule: undefined,
+      ...overrides
+    };
+  }
+
+  if (kind === 'matrixScale') {
+    return {
+      ...base,
+      list: undefined,
+      itemBlocks: undefined,
+      blocks: undefined,
+      items: undefined,
+      fieldType: 'RadioGroup',
+      layout: 'options',
+      rows: [{ label: '', name: createDataKey('row') }],
+      options: [{ label: '', value: '' }],
+      columns: undefined,
       ...overrides
     };
   }
@@ -282,6 +308,55 @@ export const normalizeBlock = (block, depth = 0) => {
     normalized.itemBlocks = undefined;
     normalized.blocks = undefined;
     normalized.options = undefined;
+    normalized.rows = undefined;
+    normalized.columns = undefined;
+    normalized.layout = undefined;
+    normalized.rowTitle = undefined;
+    normalized.rule = undefined;
+    return normalized;
+  }
+
+  if (kind === 'matrixScale') {
+    const layout = block.layout === 'columns' || block.layout === 'field' ? block.layout : 'options';
+    normalized.list = undefined;
+    normalized.items = undefined;
+    normalized.itemBlocks = undefined;
+    normalized.blocks = undefined;
+    normalized.layout = layout;
+    normalized.fieldType = block.fieldType || 'RadioGroup';
+    normalized.rowTitle = block.rowTitle != null ? block.rowTitle : '';
+    normalized.rule = block.rule != null ? block.rule : '';
+    normalized.rows = Array.isArray(block.rows)
+      ? block.rows
+          .map(row => ({
+            label: row?.label ?? '',
+            name: String(row?.name || '').trim() || createDataKey('row')
+          }))
+          .filter(row => String(row.label || '').trim() || String(row.name || '').trim())
+      : [];
+    if (!normalized.rows.length) {
+      normalized.rows = [{ label: '', name: createDataKey('row') }];
+    }
+    if (layout === 'options') {
+      normalized.options = Array.isArray(block.options) ? block.options : [];
+      normalized.columns = undefined;
+    } else if (layout === 'columns') {
+      normalized.columns = Array.isArray(block.columns)
+        ? block.columns
+            .map(column => ({
+              label: column?.label ?? column?.title ?? '',
+              name: String(column?.name || '').trim() || createDataKey('col')
+            }))
+            .filter(column => String(column.label || '').trim() || String(column.name || '').trim())
+        : [];
+      if (!normalized.columns.length) {
+        normalized.columns = [{ label: '', name: createDataKey('col') }];
+      }
+      normalized.options = undefined;
+    } else {
+      normalized.options = undefined;
+      normalized.columns = undefined;
+    }
     return normalized;
   }
 
@@ -432,7 +507,7 @@ const collectFieldsFromBlocks = (blocks = [], acc = []) => {
       });
       return;
     }
-    if (block.kind !== 'multiField' && Array.isArray(block.list)) {
+    if (block.kind !== 'multiField' && block.kind !== 'matrixScale' && Array.isArray(block.list)) {
       acc.push(...block.list);
     }
     if (Array.isArray(block.itemBlocks)) {
@@ -477,7 +552,7 @@ export const collectSchemaFields = (schema, { blockId, stepId, optionId } = {}) 
     });
     return fields;
   }
-  if (block.kind !== 'multiField') {
+  if (block.kind !== 'multiField' && block.kind !== 'matrixScale') {
     fields.push(...(block.list || []));
   }
   return fields;
@@ -523,7 +598,7 @@ export const collectBlockFieldNames = (blocks = [], { objectNamePrefix = '' } = 
         });
         return;
       }
-      if (block.kind !== 'multiField') {
+      if (block.kind !== 'multiField' && block.kind !== 'matrixScale') {
         (block.list || []).forEach(field => {
           if (field?.name) {
             names.push(prefix ? `${prefix}.${field.name}` : field.name);
@@ -715,7 +790,7 @@ const blockHasContent = block => {
   if (block.kind === 'steps') {
     return (block.items || []).some(step => (step.list || []).length > 0 || (step.blocks || []).some(blockHasContent) || step.title);
   }
-  if (block.kind === 'multiField') {
+  if (block.kind === 'multiField' || block.kind === 'matrixScale') {
     return !!block.name;
   }
   if (block.kind === 'choice') {

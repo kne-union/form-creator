@@ -1,4 +1,4 @@
-import { Input, TextArea, Select, InputNumber, Switch, Checkbox, DatePicker, RadioGroup, CheckboxGroup } from '@kne/react-form-antd';
+import { Input, TextArea, Select, InputNumber, Switch, Checkbox, DatePicker, RadioGroup, CheckboxGroup, RadioGroupOther, CheckboxGroupOther } from '@kne/react-form-antd';
 import { SuperSelectList, SuperSelectTableList, SuperSelectTree, SuperSelectCascader, SelectFunctionField, SelectIndustryField, SelectAddressField } from './fields/extendedFields';
 import { buildRuleString, parseRuleString } from './rulePresets';
 import { createEmptyColumn } from './schema';
@@ -21,7 +21,7 @@ const FIELD_GROUPS = [
   },
   {
     labelId: 'FieldGroupSelect',
-    types: ['Select', 'RadioGroup', 'CheckboxGroup']
+    types: ['Select', 'RadioGroup', 'CheckboxGroup', 'RadioGroupOther', 'CheckboxGroupOther']
   },
   {
     labelId: 'FieldGroupAdvancedSelect',
@@ -145,6 +145,80 @@ defineField('CheckboxGroup', {
     }
     return { type: 'array', items };
   }
+});
+
+const resolveOtherOptionValue = field => {
+  const raw = field?.props?.otherOption?.value;
+  return raw != null && String(raw).trim() ? String(raw).trim() : 'other';
+};
+
+const choiceOtherEnums = field => {
+  const enums = optionEnumValues(field) || [];
+  const otherValue = resolveOtherOptionValue(field);
+  return enums.includes(otherValue) ? enums : [...enums, otherValue];
+};
+
+const choiceOtherValueSchema = (field, multiple) => {
+  const enums = choiceOtherEnums(field);
+  const selected = multiple ? { type: 'array', items: { type: 'string', enum: enums } } : { type: 'string', enum: enums };
+  return {
+    type: 'object',
+    properties: {
+      value: selected,
+      other: { type: 'string' }
+    }
+  };
+};
+
+const formatChoiceOtherDisplay = (value, field, { formatMessage } = {}) => {
+  if (value == null || typeof value !== 'object') {
+    return '';
+  }
+  const options = field?.props?.options;
+  const otherValue = resolveOtherOptionValue(field);
+  const otherFallback = resolveLocaleText(field?.props?.otherOption?.label) || formatMessage?.({ id: 'FieldTypeOtherOption' }) || '其他';
+  const mapOne = item => {
+    if (item === otherValue) {
+      return otherFallback;
+    }
+    if (!Array.isArray(options) || !options.length) {
+      return item == null ? '' : String(item);
+    }
+    const match = options.find(opt => opt && opt.value === item);
+    if (match?.label != null) {
+      return resolveLocaleText(match.label) || String(match.label);
+    }
+    return item == null ? '' : String(item);
+  };
+  const selected = Array.isArray(value.value) ? value.value.map(mapOne).filter(Boolean).join('、') : mapOne(value.value);
+  const otherText = value.other != null && String(value.other).trim() ? String(value.other).trim() : '';
+  if (selected && otherText) {
+    return `${selected}（${otherFallback}: ${otherText}）`;
+  }
+  if (otherText) {
+    return `${otherFallback}: ${otherText}`;
+  }
+  return selected;
+};
+
+defineField('RadioGroupOther', {
+  labelId: 'FieldTypeRadioGroupOther',
+  component: RadioGroupOther,
+  defaultProps: { options: [], inline: true },
+  hasOptions: true,
+  hasFieldProps: true,
+  valueSchema: field => choiceOtherValueSchema(field, false),
+  formatDisplayValue: formatChoiceOtherDisplay
+});
+
+defineField('CheckboxGroupOther', {
+  labelId: 'FieldTypeCheckboxGroupOther',
+  component: CheckboxGroupOther,
+  defaultProps: { options: [], inline: true },
+  hasOptions: true,
+  hasFieldProps: true,
+  valueSchema: field => choiceOtherValueSchema(field, true),
+  formatDisplayValue: formatChoiceOtherDisplay
 });
 
 defineField('SuperSelectList', {
@@ -643,8 +717,15 @@ export const pickFieldProps = (field, definition) => {
       };
     case 'RadioGroup':
     case 'CheckboxGroup':
+    case 'RadioGroupOther':
+    case 'CheckboxGroupOther':
       return {
-        inline: props.inline !== false
+        inline: props.inline !== false,
+        modern: !!props.modern,
+        block: !!props.block,
+        indexType: props.indexType === 'number' || props.indexType === 'check' ? props.indexType : 'letter',
+        otherLabel: props.otherOption?.label || '',
+        otherPlaceholder: props.otherProps?.placeholder || ''
       };
     default:
       if (definition?.propsSchema?.length) {
@@ -718,8 +799,50 @@ const applyFieldProps = (props, values, definition) => {
       break;
     case 'RadioGroup':
     case 'CheckboxGroup':
+    case 'RadioGroupOther':
+    case 'CheckboxGroupOther':
       // 始终落盘布尔值，避免 Checkbox 未勾选时字段缺失被当成默认横向
       props.inline = values.inline !== false;
+      props.modern = !!values.modern;
+      props.block = !!values.block;
+      if (values.modern && (values.indexType === 'number' || values.indexType === 'check')) {
+        props.indexType = values.indexType;
+      } else {
+        delete props.indexType;
+      }
+      if (!props.modern) {
+        delete props.indexType;
+      }
+      if (type === 'RadioGroupOther' || type === 'CheckboxGroupOther') {
+        if (hasLocaleText(values.otherLabel)) {
+          props.otherOption = {
+            ...(props.otherOption && typeof props.otherOption === 'object' ? props.otherOption : {}),
+            label: trimLocaleText(values.otherLabel),
+            value: props.otherOption?.value || 'other'
+          };
+        } else {
+          delete props.otherOption;
+        }
+        if (hasLocaleText(values.otherPlaceholder)) {
+          props.otherProps = {
+            ...(props.otherProps && typeof props.otherProps === 'object' ? props.otherProps : {}),
+            placeholder: trimLocaleText(values.otherPlaceholder)
+          };
+        } else if (props.otherProps && typeof props.otherProps === 'object') {
+          const nextOtherProps = { ...props.otherProps };
+          delete nextOtherProps.placeholder;
+          if (Object.keys(nextOtherProps).length) {
+            props.otherProps = nextOtherProps;
+          } else {
+            delete props.otherProps;
+          }
+        } else {
+          delete props.otherProps;
+        }
+      } else {
+        delete props.otherOption;
+        delete props.otherProps;
+      }
       break;
     default:
       if (definition?.propsSchema?.length) {

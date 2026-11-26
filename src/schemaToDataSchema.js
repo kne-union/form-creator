@@ -189,6 +189,65 @@ const walkBlock = (block, layer, depth = 0, ctx = {}) => {
       layer.properties[name] = arraySchema;
       return;
     }
+    case 'matrixScale': {
+      const name = block.name != null && String(block.name).trim() ? String(block.name).trim() : '';
+      if (!name) {
+        return;
+      }
+      const layout = block.layout === 'columns' || block.layout === 'field' ? block.layout : 'options';
+      const fieldType = block.fieldType || 'RadioGroup';
+      const required = typeof block.rule === 'string' && block.rule.split(' ').includes('REQ');
+      const properties = {};
+      const requiredKeys = [];
+      (block.rows || []).forEach(row => {
+        const rowName = row?.name != null && String(row.name).trim() ? String(row.name).trim() : '';
+        if (!rowName) {
+          return;
+        }
+        if (layout === 'columns') {
+          const columnProperties = {};
+          (block.columns || []).forEach(column => {
+            const columnName = column?.name != null && String(column.name).trim() ? String(column.name).trim() : '';
+            if (!columnName) {
+              return;
+            }
+            columnProperties[columnName] = resolveFieldValueSchema({
+              type: fieldType,
+              label: column.label,
+              rule: block.rule,
+              props: {}
+            });
+          });
+          properties[rowName] = {
+            type: 'object',
+            title: row.label || undefined,
+            properties: columnProperties
+          };
+        } else {
+          properties[rowName] = resolveFieldValueSchema({
+            type: fieldType,
+            label: row.label,
+            rule: block.rule,
+            props: layout === 'options' ? { options: block.options || [] } : {}
+          });
+        }
+        if (required) {
+          requiredKeys.push(rowName);
+        }
+      });
+      const objectSchema = {
+        type: 'object',
+        properties
+      };
+      if (block.title) {
+        objectSchema.title = block.title;
+      }
+      if (requiredKeys.length) {
+        objectSchema.required = requiredKeys;
+      }
+      layer.properties[name] = objectSchema;
+      return;
+    }
     case 'steps': {
       (block.items || []).forEach(step => {
         mergeFieldsIntoLayer(layer, step?.list, { ctx });

@@ -12,7 +12,7 @@ npm i --save @kne/form-creator
 
 ### 概述
 
-配置式表单搭建组件：通过字段列表 UI 产出 Schema，并用 `@kne/form-info` 实时预览与运行时渲染。
+配置式表单搭建组件：通过字段列表 UI 产出 Schema，并用 `@kne/form-info` 实时预览与运行时渲染；支持矩阵量表（MatrixScale）、带「其他」的单选/复选组（RadioGroupOther / CheckboxGroupOther）及 modern / block / indexType 选项样式。
 
 
 ### 示例
@@ -104,6 +104,42 @@ const BaseExample = () => {
                         block: true,
                         description: '选填',
                         props: {rows: 3, placeholder: '补充说明'}
+                    }),
+                    createField({
+                        type: 'RadioGroupOther',
+                        name: 'channel',
+                        label: '了解渠道',
+                        rule: 'REQ',
+                        block: true,
+                        props: {
+                            modern: true,
+                            block: true,
+                            indexType: 'letter',
+                            options: [
+                                {label: '招聘网站', value: 'website'},
+                                {label: '内部推荐', value: 'referral'},
+                                {label: '校园宣讲', value: 'campus'}
+                            ],
+                            otherProps: {placeholder: '请说明其他渠道'}
+                        }
+                    }),
+                    createField({
+                        type: 'CheckboxGroupOther',
+                        name: 'benefits',
+                        label: '期望福利',
+                        block: true,
+                        props: {
+                            modern: true,
+                            block: true,
+                            indexType: 'check',
+                            options: [
+                                {label: '五险一金', value: 'insurance'},
+                                {label: '带薪年假', value: 'vacation'},
+                                {label: '餐补', value: 'meal'}
+                            ],
+                            otherOption: {label: '其他福利', value: 'other'},
+                            otherProps: {placeholder: '请描述其他福利'}
+                        }
                     })
                 ]
             }),
@@ -400,6 +436,42 @@ const BaseExample = () => {
                 fieldType: 'Input',
                 maxLength: 3,
                 minLength: 1
+            }),
+            createBlock('matrixScale', {
+                title: '一天中各项活动的时间占比',
+                name: 'timeShare',
+                rowTitle: '活动',
+                layout: 'options',
+                fieldType: 'RadioGroup',
+                rule: 'REQ',
+                rows: [
+                    { label: '工作/学习', name: 'work' },
+                    { label: '通勤', name: 'commute' },
+                    { label: '休闲娱乐', name: 'leisure' }
+                ],
+                options: [
+                    { label: '几乎没有（0%）', value: 'none' },
+                    { label: '少量（1%-20%）', value: 'little' },
+                    { label: '约一半（41%-60%）', value: 'half' },
+                    { label: '大部分（81%-100%）', value: 'most' }
+                ]
+            }),
+            createBlock('matrixScale', {
+                title: '近一周每天的时长（小时）',
+                name: 'weekHours',
+                rowTitle: '项目',
+                layout: 'columns',
+                fieldType: 'InputNumber',
+                rule: 'REQ',
+                rows: [
+                    { label: '工作', name: 'work' },
+                    { label: '运动', name: 'exercise' }
+                ],
+                columns: [
+                    { label: '周一', name: 'mon' },
+                    { label: '周二', name: 'tue' },
+                    { label: '周三', name: 'wed' }
+                ]
             }),
             createBlock('steps', {
                 title: '入职补充信息',
@@ -2066,14 +2138,15 @@ import { SchemaContent, SchemaContentInner } from '@kne/form-creator';
   },
   blocks: [{
     id: string,
-    kind: 'formInfo' | 'list' | 'tableList' | 'editableList' | 'multiField' | 'object' | 'choice' | 'steps',
+    kind: 'formInfo' | 'list' | 'tableList' | 'editableList' | 'multiField' | 'matrixScale' | 'object' | 'choice' | 'steps',
     title?, subtitle?, column?, gap?, bordered?, important?,
     name?, label?, addText?, addPosition?, maxLength?, minLength?, fieldType?, autoStep?,
+    layout?, rowTitle?, rule?, rows?, columns?, // matrixScale
     mode?, selectorName?, selectorInData?, discriminator?,
     list?: [{ id, type, name, label, tips?, description?, rule?, block?, hidden?, locked?, visibleWhen?, props? }],
     itemBlocks?: Block[], // list / editableList：列表项内子模块
     blocks?: Block[], // formInfo / object：子模块
-    options?: [{ id, title, list?, blocks?: Block[] }], // choice
+    options?: [{ id, title, list?, blocks?: Block[] }] | [{ label, value }], // choice 选项 或 matrixScale 量表选项
     items?: [{ id, title, column, list: [...], blocks?: Block[] }] // steps 专用
   }]
 }
@@ -2112,7 +2185,7 @@ import { SchemaContent, SchemaContentInner } from '@kne/form-creator';
 
 - `field` 为提交数据中的路径，object 模块内字段带前缀，如 `contact.phone`
 - 不满足条件的字段不渲染、不参与校验，已填的值会被清空；`SchemaContent` 按数据同样隐藏
-- 列表类模块（list / tableList / editableList / multiField）内的字段既不能配置条件，也不能作为触发字段
+- 列表类模块（list / tableList / editableList / multiField / matrixScale）内的字段既不能配置条件，也不能作为触发字段
 - 条件引用的字段不存在、位于列表类模块内或正则无效时，该条件被忽略（编辑器显示「条件失效」）；全部条件失效时字段照常显示
 - 编辑器会拦截循环依赖；触发字段改名时自动同步引用
 - `schemaToDataSchema` 中条件字段不进入 `required`，并在 `description` 中附加条件说明
@@ -2126,7 +2199,7 @@ Schema 内的展示文案既可以是字符串，也可以是按语言区分的�
 | 支持多语言的位置 | 说明 |
 |------|------|
 | 字段 | label、tips、description、props.placeholder、props.options[].label / description、Switch 的 checkedChildren / unCheckedChildren |
-| 模块 | title、subtitle、label、addText；tableList 列 title；choice 选项 title；steps 步骤 title |
+| 模块 | title、subtitle、label、addText；tableList 列 title；choice 选项 title；steps 步骤 title；matrixScale 的 rowTitle、rows[].label、options[].label、columns[].label |
 | actions | submitText、resetText、cancelText |
 
 支持哪些语言由调用方通过 `languages` 决定，组件不内置语言列表：
@@ -2168,6 +2241,7 @@ FormCreator 不传 `languages` 时为单语言输入（与改造前一致，存�
 | object | 对象分组 | name, title, column, gap, bordered, list（字段名渲染为 `name.field`）, **blocks** |
 | choice | 选项分支 | title, **mode**(`single`\|`multiple`), **minLength** / **maxLength**（仅多选：最少/最多选几项）, selectorName, selectorInData, options[{ title, list, **blocks** }] |
 | multiField | 同类型多值 | name, label, fieldType, addText（不支持子模块） |
+| matrixScale | 矩阵量表（`@kne/form-info` MatrixScale）：每行共用同一 `fieldType` | name, title, **rowTitle**, **layout**（`options` 选项矩阵 \| `columns` 单元格矩阵 \| `field` 每行一个字段）, fieldType（默认 RadioGroup）, rule（如 `REQ`）, **rows**`[{ label, name }]`, **options**（layout=options）, **columns**`[{ label, name }]`（layout=columns）；不支持子模块 |
 | steps | 步骤表单 | title, subtitle, bordered, autoStep, items[{ title, column, list, **blocks** }] |
 
 `choice`：顶部同一条选项 UI；`single` 只挂载当前选项内容，`multiple` 平铺所有选中项。多选时可配置 `minLength` / `maxLength` 限制最少、最多选择几个（提交时校验；达到上限后未选项禁用）。JSON Schema 的 oneOf/anyOf 可分别映射为 `mode: 'single'/'multiple'`。`allOf` 无需独立 kind，展开为多个 sibling blocks 即可。
@@ -2177,7 +2251,20 @@ FormCreator 不传 `languages` 时为单语言输入（与改造前一致，存�
 #### 字段类型
 
 基础：Input、TextArea、InputNumber、Switch、Checkbox、DatePicker  
-选择：Select、RadioGroup、CheckboxGroup、SuperSelect、SuperSelectPlus
+选择：Select、RadioGroup、CheckboxGroup、RadioGroupOther、CheckboxGroupOther、SuperSelect、SuperSelectPlus
+
+`RadioGroup` / `CheckboxGroup` / `RadioGroupOther` / `CheckboxGroupOther` 的 `props` 额外支持（透传 `@kne/react-form-antd@>=4.1.14`）：
+
+| 属性 | 类型 | 说明 |
+|------|------|------|
+| inline | boolean | 编辑器侧「横向排列」；渲染时若未开 `block` 且 `inline=false`，沿用纵向兜底 |
+| modern | boolean | 新版序号色块样式 |
+| block | boolean | 块级纵向占满选项 |
+| indexType | `'letter'\|'number'\|'check'` | 仅 `modern` 时生效；默认字母 |
+| otherOption | `{ label?, value? }` | 仅 Other：自定义「其他」选项文案/值（默认 value=`other`） |
+| otherProps | object | 仅 Other：选中「其他」后 TextArea 的 props（如 `placeholder`） |
+
+Other 字段提交值为 `{ value, other? }`（单选 `value` 为字符串，多选为数组）。
 
 #### 工具方法
 
@@ -2204,6 +2291,7 @@ const dataSchema = schemaToDataSchema(schema);
 | object | `properties[name]` = nested object（字段名为相对 name） |
 | list / tableList / editableList | `properties[name]` = array of object |
 | multiField | `properties[name]` = array，元素为 `fieldType` 的 valueSchema |
+| matrixScale | `properties[name]` = object：options/field 时每行一个属性；columns 时每行嵌套 object（列为格子） |
 | steps | 各 step 字段/子块并入当前层 |
 | choice（single） | `oneOf`：每支含 selector `const` + 该 option 字段 |
 | choice（multiple） | 当前层 selector 为数组 + `anyOf` 各 option 字段支 |

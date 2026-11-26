@@ -15,7 +15,8 @@ import {
   SettingOutlined,
   ClusterOutlined,
   PartitionOutlined,
-  ProfileOutlined
+  ProfileOutlined,
+  BorderOuterOutlined
 } from '@ant-design/icons';
 import { useIntl } from '@kne/react-intl';
 import { getBlockDefinition } from './blockRegistry';
@@ -25,6 +26,7 @@ import FieldRow, { getFieldTypeIcon } from './FieldRow';
 import { collectConditionFields } from './fieldCondition';
 import { resolveLocaleText } from './localeText';
 import { useLocaleTextLanguages } from './LocaleTextInput';
+import MatrixScaleEditor from './MatrixScaleEditor';
 import style from './style.module.scss';
 
 const { Text } = Typography;
@@ -41,6 +43,7 @@ const ROOT_ADD_OPTIONS = [
   { key: 'object', icon: <ClusterOutlined /> },
   { key: 'choice', icon: <PartitionOutlined /> },
   { key: 'multiField', icon: <AppstoreOutlined /> },
+  { key: 'matrixScale', icon: <BorderOuterOutlined /> },
   { key: 'steps', icon: <OrderedListOutlined /> }
 ];
 
@@ -68,6 +71,7 @@ const BlockListPanel = ({
   onDeleteChoiceOption,
   onMoveChoiceOption,
   onOpenFormActions,
+  onPatchBlock,
   extraToolbar
 }) => {
   const { formatMessage, locale } = useIntl();
@@ -327,6 +331,10 @@ const BlockListPanel = ({
       );
     }
 
+    if (block.kind === 'matrixScale') {
+      return <MatrixScaleEditor block={block} onChange={next => onPatchBlock?.(next)} />;
+    }
+
     if (block.kind === 'choice') {
       return (
         <div className={style['block-body']}>
@@ -407,11 +415,12 @@ const BlockListPanel = ({
     const total = siblings.length;
     const locked = blockHasLockedField(block);
     const definition = getBlockDefinition(block.kind);
-    const canAddField = block.kind !== 'steps' && block.kind !== 'multiField' && block.kind !== 'choice';
+    const canAddField = block.kind !== 'steps' && block.kind !== 'multiField' && block.kind !== 'matrixScale' && block.kind !== 'choice';
     const supportsItemBlocks = kindSupportsItemBlocks(block.kind);
     const supportsBlocks = block.kind === 'formInfo' || block.kind === 'object';
     const supportsChildModules = supportsItemBlocks || supportsBlocks;
     const nestCount = supportsItemBlocks ? block.itemBlocks?.length || 0 : block.blocks?.length || 0;
+    const matrixLayout = block.layout === 'columns' || block.layout === 'field' ? block.layout : 'options';
     const summary =
       block.kind === 'steps'
         ? formatMessage({ id: 'stepCount' }, { count: block.items?.length || 0 })
@@ -427,11 +436,25 @@ const BlockListPanel = ({
                 )
               }
             )
-          : block.kind === 'choice'
-            ? formatMessage({ id: 'choiceOptionCount' }, { count: block.options?.length || 0 })
-            : supportsChildModules && nestCount > 0
-              ? formatMessage({ id: 'fieldAndItemBlockCount' }, { fields: block.list?.length || 0, nests: nestCount })
-              : formatMessage({ id: 'fieldCount' }, { count: block.list?.length || 0 });
+          : block.kind === 'matrixScale'
+            ? formatMessage(
+                { id: 'matrixScaleSummary' },
+                {
+                  type: (
+                    <span className={style['block-summary-type']}>
+                      {createElement(getFieldTypeIcon(block.fieldType || 'RadioGroup'))}
+                      {resolveFieldTypeLabel(block.fieldType || 'RadioGroup', formatMessage)}
+                    </span>
+                  ),
+                  layout: formatMessage({ id: `matrixScaleLayout_${matrixLayout}` }),
+                  rows: block.rows?.length || 0
+                }
+              )
+            : block.kind === 'choice'
+              ? formatMessage({ id: 'choiceOptionCount' }, { count: block.options?.length || 0 })
+              : supportsChildModules && nestCount > 0
+                ? formatMessage({ id: 'fieldAndItemBlockCount' }, { fields: block.list?.length || 0, nests: nestCount })
+                : formatMessage({ id: 'fieldCount' }, { count: block.list?.length || 0 });
 
     return (
       <section key={block.id} className={`${style['block-section']} ${style[`block-kind-${block.kind}`] || ''} ${depth > 0 ? style['block-section-nested'] : ''}`.trim()}>

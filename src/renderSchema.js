@@ -1,7 +1,7 @@
 import { createElement, Fragment } from 'react';
 import { Tooltip } from 'antd';
 import { ArrowLeftOutlined, ArrowRightOutlined, QuestionCircleOutlined } from '@ant-design/icons';
-import FormInfo, { Form, List, TableList, EditableList, MultiField, Steps } from '@kne/form-info';
+import FormInfo, { Form, List, TableList, EditableList, MultiField, MatrixScale, Steps } from '@kne/form-info';
 import InfoPage from '@kne/info-page';
 import { getFieldComponent, getFieldDefinition } from './fieldRegistry';
 import { createApiFromOptions } from './fields/optionsApi';
@@ -58,12 +58,13 @@ const renderFieldEntries = (fields = [], preview = false, { namePrefix, locale, 
 
       delete props.range;
 
-      // Radio/Checkbox 选项布局：inline=false 纵向；Radio 用 antd vertical，Checkbox 用样式兜底
-      if (field.type === 'RadioGroup' || field.type === 'CheckboxGroup') {
+      // 选择组：form-creator 的 inline 仅编辑器用；渲染时删掉。block/modern 交给 react-form-antd；
+      // 未开 block 且 inline=false 时沿用旧纵向兜底
+      if (field.type === 'RadioGroup' || field.type === 'CheckboxGroup' || field.type === 'RadioGroupOther' || field.type === 'CheckboxGroupOther') {
         const optionsInline = props.inline !== false;
         delete props.inline;
-        if (!optionsInline) {
-          if (field.type === 'RadioGroup') {
+        if (!props.block && !optionsInline) {
+          if (field.type === 'RadioGroup' || field.type === 'RadioGroupOther') {
             props.vertical = true;
           }
           props.className = [props.className, style['option-group-stack']].filter(Boolean).join(' ');
@@ -275,6 +276,31 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
           field: FieldComponent,
           block: block.block || undefined,
           ...(block.addText ? { addText: block.addText } : {})
+        }),
+        asListItem
+      );
+    }
+    case 'matrixScale': {
+      const FieldComponent = getFieldComponent(block.fieldType || 'RadioGroup');
+      if (!FieldComponent) {
+        return null;
+      }
+      const layout = block.layout === 'columns' || block.layout === 'field' ? block.layout : 'options';
+      return withBlockLayout(
+        createElement(MatrixScale, {
+          key: block.id,
+          name: block.name,
+          title: block.title || undefined,
+          rowTitle: block.rowTitle || undefined,
+          bordered,
+          field: FieldComponent,
+          rule: block.rule || undefined,
+          rows: block.rows || [],
+          ...(layout === 'options' ? { options: block.options || [] } : null),
+          ...(layout === 'columns' ? { columns: block.columns || [] } : null),
+          ...(listItemPartProps || {}),
+          className: resolvePartRootClassName(depth),
+          ...(locale ? { locale } : {})
         }),
         asListItem
       );

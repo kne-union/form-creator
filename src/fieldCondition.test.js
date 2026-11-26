@@ -20,7 +20,10 @@ const data = {
   remark: '',
   email: 'Zhang@Leapin.AI',
   owners: [{ label: '张三', value: 'u1' }],
-  contact: { phone: '13800000000' }
+  contact: { phone: '13800000000' },
+  channel: { value: 'other', other: '朋友推荐' },
+  benefits: { value: ['insurance', 'other'], other: '弹性工时' },
+  emptyOther: { value: '', other: '' }
 };
 
 const check = (operator, field, value, extra = {}) => evaluateCondition({ field, operator, value, ...extra }, data);
@@ -41,6 +44,16 @@ describe('evaluateCondition', () => {
     expect(check('includesAny', 'skills', ['go', 'java'])).toBe(true);
     expect(check('includesAny', 'skills', ['go'])).toBe(false);
     expect(check('includesAny', 'owners', ['u1'])).toBe(true);
+  });
+
+  test('RadioGroupOther / CheckboxGroupOther 解包 { value, other }', () => {
+    expect(check('eq', 'channel', 'other')).toBe(true);
+    expect(check('eq', 'channel', 'website')).toBe(false);
+    expect(check('in', 'channel', ['website', 'other'])).toBe(true);
+    expect(check('includesAny', 'benefits', ['vacation', 'other'])).toBe(true);
+    expect(check('includesAny', 'benefits', ['vacation'])).toBe(false);
+    expect(check('empty', 'emptyOther')).toBe(true);
+    expect(check('notEmpty', 'channel')).toBe(true);
   });
 
   test('为空 / 不为空', () => {

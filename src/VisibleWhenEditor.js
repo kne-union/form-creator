@@ -103,6 +103,15 @@ const ConditionValueInput = ({ condition, trigger, onChange }) => {
   if (kind === 'options' || kind === 'multiOptions') {
     const multiple = MULTI_VALUE_OPERATORS.includes(condition.operator);
     const options = (trigger?.props?.options || []).filter(item => item?.value != null && item.value !== '').map(item => ({ value: item.value, label: resolveLocaleText(item.label, locale) || String(item.value) }));
+    if (trigger?.type === 'RadioGroupOther' || trigger?.type === 'CheckboxGroupOther') {
+      const otherValue = trigger?.props?.otherOption?.value != null && String(trigger.props.otherOption.value).trim() ? String(trigger.props.otherOption.value).trim() : 'other';
+      if (!options.some(item => String(item.value) === otherValue)) {
+        options.push({
+          value: otherValue,
+          label: resolveLocaleText(trigger?.props?.otherOption?.label, locale) || formatMessage({ id: 'FieldTypeOtherOption' })
+        });
+      }
+    }
     const value = multiple ? (Array.isArray(condition.value) ? condition.value : condition.value != null ? [condition.value] : []) : Array.isArray(condition.value) ? condition.value[0] : condition.value;
     return (
       <Select
