@@ -5,7 +5,9 @@ import { useIntl } from '@kne/react-intl';
 import { getFieldDefinition } from './fieldRegistry';
 import { LocaleInput } from './LocaleTextInput';
 
-const BUILTIN_PROP_TYPES = ['Input', 'TextArea', 'InputNumber', 'Select', 'DatePicker', 'Switch', 'RadioGroup', 'CheckboxGroup'];
+const BUILTIN_PROP_TYPES = ['Input', 'TextArea', 'InputNumber', 'Select', 'DatePicker', 'Switch', 'RadioGroup', 'CheckboxGroup', 'RadioGroupOther', 'CheckboxGroupOther'];
+
+const CHOICE_OTHER_TYPES = ['RadioGroupOther', 'CheckboxGroupOther'];
 
 const buildPropsSchemaList = (schema, formatMessage) =>
   (schema || [])
@@ -112,11 +114,38 @@ const buildBuiltinList = (type, formatMessage) => {
       ];
     case 'RadioGroup':
     case 'CheckboxGroup':
-      return [
+    case 'RadioGroupOther':
+    case 'CheckboxGroupOther': {
+      const list = [
         <Checkbox key="inline" name="inline">
           {formatMessage({ id: 'propOptionsInline' })}
-        </Checkbox>
+        </Checkbox>,
+        <Checkbox key="modern" name="modern">
+          {formatMessage({ id: 'propChoiceModern' })}
+        </Checkbox>,
+        <Checkbox key="block" name="block">
+          {formatMessage({ id: 'propChoiceBlock' })}
+        </Checkbox>,
+        <Select
+          key="indexType"
+          name="indexType"
+          label={formatMessage({ id: 'propChoiceIndexType' })}
+          options={[
+            { label: formatMessage({ id: 'propChoiceIndexTypeLetter' }), value: 'letter' },
+            { label: formatMessage({ id: 'propChoiceIndexTypeNumber' }), value: 'number' },
+            { label: formatMessage({ id: 'propChoiceIndexTypeCheck' }), value: 'check' }
+          ]}
+          display={({ openApi }) => !!openApi?.data?.modern}
+        />
       ];
+      if (CHOICE_OTHER_TYPES.includes(type)) {
+        list.push(
+          <LocaleInput key="otherLabel" name="otherLabel" label={formatMessage({ id: 'propChoiceOtherLabel' })} placeholder={formatMessage({ id: 'propChoiceOtherLabelHint' })} />,
+          <LocaleInput key="otherPlaceholder" name="otherPlaceholder" label={formatMessage({ id: 'propChoiceOtherPlaceholder' })} placeholder={formatMessage({ id: 'propChoiceOtherPlaceholderHint' })} />
+        );
+      }
+      return list;
+    }
     default:
       return [];
   }

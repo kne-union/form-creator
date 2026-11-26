@@ -1,3 +1,5 @@
+import { createDataKey } from './schema';
+
 export const BLOCK_KINDS = {
   formInfo: {
     labelId: 'blockKind_formInfo',
@@ -32,6 +34,12 @@ export const BLOCK_KINDS = {
     requiresName: true,
     descriptionId: 'blockKindDesc_multiField'
   },
+  matrixScale: {
+    labelId: 'blockKind_matrixScale',
+    color: 'volcano',
+    requiresName: true,
+    descriptionId: 'blockKindDesc_matrixScale'
+  },
   object: {
     labelId: 'blockKind_object',
     color: 'orange',
@@ -56,6 +64,9 @@ export const BLOCK_KINDS = {
 /** editableList 添加按钮位置，与 @kne/form-info EditableList addPosition 一致 */
 export const ADD_POSITIONS = ['bottom', 'top', 'both'];
 
+/** matrixScale 布局：options 选项组矩阵 / columns 单元格矩阵 / field 每行一个字段 */
+export const MATRIX_LAYOUTS = ['options', 'columns', 'field'];
+
 export const getBlockKindOptions = formatMessage =>
   Object.entries(BLOCK_KINDS).map(([value, config]) => ({
     label: typeof formatMessage === 'function' ? formatMessage({ id: config.labelId }) : config.labelId,
@@ -79,7 +90,10 @@ export const blockToFormValues = block => ({
   maxLength: block.maxLength ?? null,
   minLength: block.minLength ?? null,
   addPosition: ADD_POSITIONS.includes(block.addPosition) ? block.addPosition : 'bottom',
-  fieldType: block.fieldType || 'Input',
+  fieldType: block.fieldType || (block.kind === 'matrixScale' ? 'RadioGroup' : 'Input'),
+  layout: MATRIX_LAYOUTS.includes(block.layout) ? block.layout : 'options',
+  rowTitle: block.rowTitle || '',
+  required: typeof block.rule === 'string' && block.rule.split(' ').includes('REQ'),
   autoStep: block.autoStep !== false,
   mode: block.mode === 'multiple' ? 'multiple' : 'single',
   selectorName: block.selectorName || '',
@@ -105,12 +119,36 @@ export const formValuesToBlock = (values, existingBlock = {}) => {
     maxLength: values.maxLength ?? undefined,
     minLength: values.minLength ?? undefined,
     addPosition: kind === 'editableList' && ADD_POSITIONS.includes(values.addPosition) && values.addPosition !== 'bottom' ? values.addPosition : undefined,
-    fieldType: values.fieldType || 'Input',
+    fieldType: values.fieldType || (kind === 'matrixScale' ? 'RadioGroup' : 'Input'),
     autoStep: values.autoStep !== false,
     mode,
     selectorName: values.selectorName || '',
     selectorInData: values.selectorInData !== false
   };
+
+  if (kind === 'matrixScale') {
+    const layout = MATRIX_LAYOUTS.includes(values.layout) ? values.layout : 'options';
+    next.layout = layout;
+    next.rowTitle = values.rowTitle || undefined;
+    next.rule = values.required ? 'REQ' : undefined;
+    if (layout === 'options') {
+      next.columns = undefined;
+      if (!Array.isArray(next.options) || !next.options.length) {
+        next.options = [{ label: '', value: '' }];
+      }
+    } else if (layout === 'columns') {
+      next.options = undefined;
+      if (!Array.isArray(next.columns) || !next.columns.length) {
+        next.columns = [{ label: '', name: createDataKey('col') }];
+      }
+    } else {
+      next.options = undefined;
+      next.columns = undefined;
+    }
+    if (!Array.isArray(next.rows) || !next.rows.length) {
+      next.rows = [{ label: '', name: createDataKey('row') }];
+    }
+  }
 
   if (kind === 'choice' && mode !== 'multiple') {
     next.minLength = undefined;

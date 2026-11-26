@@ -65,6 +65,42 @@ const BaseExample = () => {
                         block: true,
                         description: '选填',
                         props: {rows: 3, placeholder: '补充说明'}
+                    }),
+                    createField({
+                        type: 'RadioGroupOther',
+                        name: 'channel',
+                        label: '了解渠道',
+                        rule: 'REQ',
+                        block: true,
+                        props: {
+                            modern: true,
+                            block: true,
+                            indexType: 'letter',
+                            options: [
+                                {label: '招聘网站', value: 'website'},
+                                {label: '内部推荐', value: 'referral'},
+                                {label: '校园宣讲', value: 'campus'}
+                            ],
+                            otherProps: {placeholder: '请说明其他渠道'}
+                        }
+                    }),
+                    createField({
+                        type: 'CheckboxGroupOther',
+                        name: 'benefits',
+                        label: '期望福利',
+                        block: true,
+                        props: {
+                            modern: true,
+                            block: true,
+                            indexType: 'check',
+                            options: [
+                                {label: '五险一金', value: 'insurance'},
+                                {label: '带薪年假', value: 'vacation'},
+                                {label: '餐补', value: 'meal'}
+                            ],
+                            otherOption: {label: '其他福利', value: 'other'},
+                            otherProps: {placeholder: '请描述其他福利'}
+                        }
                     })
                 ]
             }),
@@ -361,6 +397,42 @@ const BaseExample = () => {
                 fieldType: 'Input',
                 maxLength: 3,
                 minLength: 1
+            }),
+            createBlock('matrixScale', {
+                title: '一天中各项活动的时间占比',
+                name: 'timeShare',
+                rowTitle: '活动',
+                layout: 'options',
+                fieldType: 'RadioGroup',
+                rule: 'REQ',
+                rows: [
+                    { label: '工作/学习', name: 'work' },
+                    { label: '通勤', name: 'commute' },
+                    { label: '休闲娱乐', name: 'leisure' }
+                ],
+                options: [
+                    { label: '几乎没有（0%）', value: 'none' },
+                    { label: '少量（1%-20%）', value: 'little' },
+                    { label: '约一半（41%-60%）', value: 'half' },
+                    { label: '大部分（81%-100%）', value: 'most' }
+                ]
+            }),
+            createBlock('matrixScale', {
+                title: '近一周每天的时长（小时）',
+                name: 'weekHours',
+                rowTitle: '项目',
+                layout: 'columns',
+                fieldType: 'InputNumber',
+                rule: 'REQ',
+                rows: [
+                    { label: '工作', name: 'work' },
+                    { label: '运动', name: 'exercise' }
+                ],
+                columns: [
+                    { label: '周一', name: 'mon' },
+                    { label: '周二', name: 'tue' },
+                    { label: '周三', name: 'wed' }
+                ]
             }),
             createBlock('steps', {
                 title: '入职补充信息',

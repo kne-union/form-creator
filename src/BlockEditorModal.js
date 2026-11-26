@@ -4,7 +4,7 @@ import { Input, Select, InputNumber, Checkbox } from '@kne/react-form-antd';
 import { message } from 'antd';
 import { useIntl } from '@kne/react-intl';
 import { useIsMobile } from '@kne/responsive-utils';
-import { ADD_POSITIONS, blockToFormValues, formValuesToBlock, getBlockDefinition, getBlockKindOptions } from './blockRegistry';
+import { ADD_POSITIONS, MATRIX_LAYOUTS, blockToFormValues, formValuesToBlock, getBlockDefinition, getBlockKindOptions } from './blockRegistry';
 import { getFieldTypes } from './fieldRegistry';
 import { createBlock } from './schema';
 import style from './style.module.scss';
@@ -81,6 +81,22 @@ const BlockConfigFields = ({ kind }) => {
       <LocaleInput key="label" name="label" label={formatMessage({ id: 'fieldLabel' })} rule="REQ" placeholder={formatMessage({ id: 'fieldLabelPlaceholder' })} />,
       <Select key="fieldType" name="fieldType" label={formatMessage({ id: 'multiFieldType' })} rule="REQ" options={fieldTypeOptions} />,
       <LocaleInput key="addText" name="addText" label={formatMessage({ id: 'blockAddText' })} placeholder={formatMessage({ id: 'blockAddTextPlaceholder' })} />
+    );
+  }
+
+  if (kind === 'matrixScale') {
+    list.push(
+      <LocaleInput key="title" name="title" label={formatMessage({ id: 'blockTitle' })} placeholder={formatMessage({ id: 'blockTitlePlaceholder' })} />,
+      <Input key="name" name="name" label={formatMessage({ id: 'blockName' })} rule="REQ" placeholder={formatMessage({ id: 'fieldNamePlaceholder' })} />,
+      <LocaleInput key="rowTitle" name="rowTitle" label={formatMessage({ id: 'matrixScaleRowTitle' })} placeholder={formatMessage({ id: 'matrixScaleRowTitlePlaceholder' })} />,
+      <Select key="layout" name="layout" label={formatMessage({ id: 'matrixScaleLayout' })} rule="REQ" options={MATRIX_LAYOUTS.map(value => ({ label: formatMessage({ id: `matrixScaleLayout_${value}` }), value }))} />,
+      <Select key="fieldType" name="fieldType" label={formatMessage({ id: 'multiFieldType' })} rule="REQ" options={fieldTypeOptions} />,
+      <Checkbox key="bordered" name="bordered">
+        {formatMessage({ id: 'blockBordered' })}
+      </Checkbox>,
+      <Checkbox key="required" name="required">
+        {formatMessage({ id: 'matrixScaleRequired' })}
+      </Checkbox>
     );
   }
 

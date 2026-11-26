@@ -5,7 +5,7 @@ export const NO_VALUE_OPERATORS = ['empty', 'notEmpty'];
 export const ALLOWED_REGEX_FLAGS = ['i', 'm', 's', 'u'];
 
 // 列表类模块内的字段会重复出现，单个 name 定位不到具体条目，不参与条件
-const LIST_BLOCK_KINDS = ['list', 'tableList', 'editableList', 'multiField'];
+const LIST_BLOCK_KINDS = ['list', 'tableList', 'editableList', 'multiField', 'matrixScale'];
 
 export const getByPath = (data, path) => {
   if (data == null || path == null || path === '') {
@@ -16,7 +16,18 @@ export const getByPath = (data, path) => {
     .reduce((current, key) => (current == null ? undefined : current[key]), data);
 };
 
-export const isEmptyValue = value => value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0);
+/** RadioGroupOther / CheckboxGroupOther 提交值为 { value, other? }，比较前先取 value */
+export const unwrapChoiceOtherValue = value => {
+  if (value && typeof value === 'object' && !Array.isArray(value) && Object.prototype.hasOwnProperty.call(value, 'other') && Object.prototype.hasOwnProperty.call(value, 'value')) {
+    return value.value;
+  }
+  return value;
+};
+
+export const isEmptyValue = value => {
+  const next = unwrapChoiceOtherValue(value);
+  return next === undefined || next === null || next === '' || (Array.isArray(next) && next.length === 0);
+};
 
 // SuperSelect 等字段的值是 { label, value } 对象，比较时统一取 value
 const toComparable = item => {
@@ -71,7 +82,7 @@ export const evaluateCondition = (condition, formData) => {
   if (!condition?.field || !CONDITION_OPERATORS.includes(condition.operator)) {
     return null;
   }
-  const actual = getByPath(formData, condition.field);
+  const actual = unwrapChoiceOtherValue(getByPath(formData, condition.field));
   const expected = condition.value;
   switch (condition.operator) {
     case 'empty':
@@ -333,7 +344,7 @@ export const renameConditionReferences = (schema, oldPath, newPath) => {
  */
 export const getConditionValueKind = (field, definition) => {
   const props = field?.props || {};
-  if (field?.type === 'CheckboxGroup' || definition?.isSuperSelect || (field?.type === 'Select' && (props.mode === 'multiple' || props.mode === 'tags'))) {
+  if (field?.type === 'CheckboxGroup' || field?.type === 'CheckboxGroupOther' || definition?.isSuperSelect || (field?.type === 'Select' && (props.mode === 'multiple' || props.mode === 'tags'))) {
     return 'multiOptions';
   }
   if (definition?.hasOptions) {
@@ -404,6 +415,12 @@ export const formatVisibleWhen = (visibleWhen, { formatMessage, fieldLookup = ne
       const option = (trigger?.props?.options || []).find(item => sameValue(item?.value, value));
       if (option) {
         return resolveText(option.label);
+      }
+      if (trigger?.type === 'RadioGroupOther' || trigger?.type === 'CheckboxGroupOther') {
+        const otherValue = trigger?.props?.otherOption?.value != null && String(trigger.props.otherOption.value).trim() ? String(trigger.props.otherOption.value).trim() : 'other';
+        if (sameValue(otherValue, value)) {
+          return resolveText(trigger?.props?.otherOption?.label) || formatMessage({ id: 'FieldTypeOtherOption' });
+        }
       }
       if (typeof value === 'boolean') {
         return formatMessage({ id: value ? 'conditionValueTrue' : 'conditionValueFalse' });

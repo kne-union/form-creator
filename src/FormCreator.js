@@ -137,6 +137,13 @@ const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = t
     updateSchema(updateBlocks(schema, blocks => moveBlockInTree(blocks, blockId, direction)));
   };
 
+  const handlePatchBlock = block => {
+    if (!block?.id) {
+      return;
+    }
+    updateSchema(mapBlocks(schema, block.id, () => block));
+  };
+
   const handleAddStep = blockId => {
     setStepContext({ blockId, step: createStep() });
     setStepEditorOpen(true);
@@ -371,6 +378,7 @@ const FormCreator = withLocale(({ value, defaultValue, onChange, showPreview = t
             onEditBlock={handleEditBlock}
             onDeleteBlock={handleDeleteBlock}
             onMoveBlock={handleMoveBlock}
+            onPatchBlock={handlePatchBlock}
             onAddField={handleAddField}
             onEditField={handleEditField}
             onDeleteField={handleDeleteField}
