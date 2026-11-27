@@ -5,6 +5,8 @@ import { useIsMobile } from '@kne/responsive-utils';
 import { choiceOptionToFormValues, formValuesToChoiceOption } from './blockRegistry';
 import { createChoiceOption } from './schema';
 import { LocaleInput } from './LocaleTextInput';
+import { getPropertyModalProps } from './editorLayout';
+import style from './style.module.scss';
 
 const ChoiceOptionEditorModal = ({ open, option, onCancel, onSave, renderModal }) => {
   const { formatMessage } = useIntl();
@@ -19,7 +21,7 @@ const ChoiceOptionEditorModal = ({ open, option, onCancel, onSave, renderModal }
       title={formatMessage({ id: option?.id ? 'editChoiceOption' : 'addChoiceOption' })}
       open={open}
       onCancel={onCancel}
-      width={isMobile ? 'calc(100vw - 32px)' : 560}
+      {...getPropertyModalProps(isMobile, 560)}
       {...(renderModal ? { renderModal } : {})}
       formProps={{
         data: formData,
@@ -30,7 +32,9 @@ const ChoiceOptionEditorModal = ({ open, option, onCancel, onSave, renderModal }
       okText={formatMessage({ id: 'confirm' })}
       cancelText={formatMessage({ id: 'cancel' })}
     >
-      <FormInfo column={1} list={[<LocaleInput key="title" name="title" label={formatMessage({ id: 'choiceOptionTitle' })} rule="REQ" placeholder={formatMessage({ id: 'choiceOptionTitlePlaceholder' })} />]} />
+      <div className={`${style['field-editor-form']} ${style['is-plain']}`}>
+        <FormInfo column={1} list={[<LocaleInput key="title" name="title" label={formatMessage({ id: 'choiceOptionTitle' })} rule="REQ" placeholder={formatMessage({ id: 'choiceOptionTitlePlaceholder' })} />]} />
+      </div>
     </FormModal>
   );
 };

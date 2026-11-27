@@ -67,6 +67,9 @@ export const ADD_POSITIONS = ['bottom', 'top', 'both'];
 /** matrixScale 布局：options 选项组矩阵 / columns 单元格矩阵 / field 每行一个字段 */
 export const MATRIX_LAYOUTS = ['options', 'columns', 'field'];
 
+/** steps 导航样式：default 为 antd 完整步骤条；focus 突出当前步骤标题，其余收成序号 */
+export const STEPS_STYLES = ['default', 'focus'];
+
 export const getBlockKindOptions = formatMessage =>
   Object.entries(BLOCK_KINDS).map(([value, config]) => ({
     label: typeof formatMessage === 'function' ? formatMessage({ id: config.labelId }) : config.labelId,
@@ -95,6 +98,7 @@ export const blockToFormValues = block => ({
   rowTitle: block.rowTitle || '',
   required: typeof block.rule === 'string' && block.rule.split(' ').includes('REQ'),
   autoStep: block.autoStep !== false,
+  stepsStyle: STEPS_STYLES.includes(block.stepsStyle) ? block.stepsStyle : 'default',
   mode: block.mode === 'multiple' ? 'multiple' : 'single',
   selectorName: block.selectorName || '',
   selectorInData: block.selectorInData !== false
@@ -121,6 +125,7 @@ export const formValuesToBlock = (values, existingBlock = {}) => {
     addPosition: kind === 'editableList' && ADD_POSITIONS.includes(values.addPosition) && values.addPosition !== 'bottom' ? values.addPosition : undefined,
     fieldType: values.fieldType || (kind === 'matrixScale' ? 'RadioGroup' : 'Input'),
     autoStep: values.autoStep !== false,
+    stepsStyle: kind === 'steps' && STEPS_STYLES.includes(values.stepsStyle) && values.stepsStyle !== 'default' ? values.stepsStyle : undefined,
     mode,
     selectorName: values.selectorName || '',
     selectorInData: values.selectorInData !== false

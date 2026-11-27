@@ -161,6 +161,7 @@ import { SchemaContent, SchemaContentInner } from '@kne/form-creator';
     name?, label?, addText?, addPosition?, maxLength?, minLength?, fieldType?, autoStep?,
     layout?, rowTitle?, rule?, rows?, columns?, // matrixScale
     mode?, selectorName?, selectorInData?, discriminator?,
+    stepsStyle?: 'default' | 'focus', // steps 导航样式，默认 default
     list?: [{ id, type, name, label, tips?, description?, rule?, block?, hidden?, locked?, visibleWhen?, props? }],
     itemBlocks?: Block[], // list / editableList：列表项内子模块
     blocks?: Block[], // formInfo / object：子模块
@@ -260,7 +261,7 @@ FormCreator 不传 `languages` 时为单语言输入（与改造前一致，存�
 | choice | 选项分支 | title, **mode**(`single`\|`multiple`), **minLength** / **maxLength**（仅多选：最少/最多选几项）, selectorName, selectorInData, options[{ title, list, **blocks** }] |
 | multiField | 同类型多值 | name, label, fieldType, addText（不支持子模块） |
 | matrixScale | 矩阵量表（`@kne/form-info` MatrixScale）：每行共用同一 `fieldType` | name, title, **rowTitle**, **layout**（`options` 选项矩阵 \| `columns` 单元格矩阵 \| `field` 每行一个字段）, fieldType（默认 RadioGroup）, rule（如 `REQ`）, **rows**`[{ label, name }]`, **options**（layout=options）, **columns**`[{ label, name }]`（layout=columns）；不支持子模块 |
-| steps | 步骤表单 | title, subtitle, bordered, autoStep, items[{ title, column, list, **blocks** }] |
+| steps | 步骤表单 | title, subtitle, bordered, autoStep, stepsStyle（`default` 完整步骤条 / `focus` 突出当前步骤标题与分段进度）, items[{ title, column, list, **blocks** }] |
 
 `choice`：顶部同一条选项 UI；`single` 只挂载当前选项内容，`multiple` 平铺所有选中项。多选时可配置 `minLength` / `maxLength` 限制最少、最多选择几个（提交时校验；达到上限后未选项禁用）。JSON Schema 的 oneOf/anyOf 可分别映射为 `mode: 'single'/'multiple'`。`allOf` 无需独立 kind，展开为多个 sibling blocks 即可。
 

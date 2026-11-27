@@ -326,9 +326,12 @@ export const normalizeBlock = (block, depth = 0) => {
     normalized.fieldType = block.fieldType || 'RadioGroup';
     normalized.rowTitle = block.rowTitle != null ? block.rowTitle : '';
     normalized.rule = block.rule != null ? block.rule : '';
+    // 保留编辑器侧的 _key：MatrixScaleEditor 用它做行 key；normalize 若剥掉会触发 ensureKeys→onChange 死循环（React #185）
+    const keepKey = item => (item?._key ? { _key: item._key } : {});
     normalized.rows = Array.isArray(block.rows)
       ? block.rows
           .map(row => ({
+            ...keepKey(row),
             label: row?.label ?? '',
             name: String(row?.name || '').trim() || createDataKey('row')
           }))
@@ -338,12 +341,20 @@ export const normalizeBlock = (block, depth = 0) => {
       normalized.rows = [{ label: '', name: createDataKey('row') }];
     }
     if (layout === 'options') {
-      normalized.options = Array.isArray(block.options) ? block.options : [];
+      normalized.options = Array.isArray(block.options)
+        ? block.options.map(option => ({
+            ...option,
+            ...keepKey(option),
+            label: option?.label ?? '',
+            value: option?.value ?? ''
+          }))
+        : [];
       normalized.columns = undefined;
     } else if (layout === 'columns') {
       normalized.columns = Array.isArray(block.columns)
         ? block.columns
             .map(column => ({
+              ...keepKey(column),
               label: column?.label ?? column?.title ?? '',
               name: String(column?.name || '').trim() || createDataKey('col')
             }))
@@ -463,16 +474,23 @@ export const blockHasLockedField = block => {
 };
 
 // 锁定项（locked 字段 / 含锁定字段的模块）位置固定：自身不能移动，其他项也不能与其交换位置
+/** 从 index 移到 targetIndex 时，区间内（含两端）任一固定项都会被挪位，因此不允许 */
+export const canMoveItemTo = (list, index, targetIndex, isFixed = isFieldLocked) => {
+  if (index < 0 || targetIndex < 0 || targetIndex >= list.length || index === targetIndex) {
+    return false;
+  }
+  const [start, end] = index < targetIndex ? [index, targetIndex] : [targetIndex, index];
+  return !list.slice(start, end + 1).some(item => isFixed(item));
+};
+
+/** direction：'up' | 'down' 移动一位；数字为目标下标（拖拽排序） */
 export const moveItem = (list, id, direction, isFixed = isFieldLocked) => {
   const index = list.findIndex(item => item.id === id);
   if (index < 0) {
     return list;
   }
-  const targetIndex = direction === 'up' ? index - 1 : index + 1;
-  if (targetIndex < 0 || targetIndex >= list.length) {
-    return list;
-  }
-  if (isFixed(list[index]) || isFixed(list[targetIndex])) {
+  const targetIndex = typeof direction === 'number' ? direction : direction === 'up' ? index - 1 : index + 1;
+  if (!canMoveItemTo(list, index, targetIndex, isFixed)) {
     return list;
   }
   const next = [...list];

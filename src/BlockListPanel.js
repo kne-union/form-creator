@@ -16,7 +16,9 @@ import {
   ClusterOutlined,
   PartitionOutlined,
   ProfileOutlined,
-  BorderOuterOutlined
+  BorderOuterOutlined,
+  HolderOutlined,
+  RightOutlined
 } from '@ant-design/icons';
 import { useIntl } from '@kne/react-intl';
 import { getBlockDefinition } from './blockRegistry';
@@ -27,13 +29,12 @@ import { collectConditionFields } from './fieldCondition';
 import { resolveLocaleText } from './localeText';
 import { useLocaleTextLanguages } from './LocaleTextInput';
 import MatrixScaleEditor from './MatrixScaleEditor';
+import SortableList, { getSortHandleProps } from './SortableList';
+import RowActions, { orderActions } from './RowActions';
+import { useIsMobile } from '@kne/responsive-utils';
 import style from './style.module.scss';
 
 const { Text } = Typography;
-
-const ActionGroup = ({ children }) => <div className={style['action-group']}>{children}</div>;
-
-const IconBtn = ({ title, danger, ...props }) => <Button type="text" size="small" title={title} danger={danger} className={style['action-btn']} {...props} />;
 
 const ROOT_ADD_OPTIONS = [
   { key: 'formInfo', icon: <FormOutlined /> },
@@ -51,6 +52,9 @@ const BLOCK_KIND_ICONS = Object.fromEntries(ROOT_ADD_OPTIONS.map(({ key, icon })
 
 /** 可挂子模块的容器；表格列表 / 同类多值本身不支持子模块 */
 const NESTED_ADD_OPTIONS = ROOT_ADD_OPTIONS.filter(opt => opt.key !== 'steps');
+
+/** 模块列表的拖柄 scope 须稳定：ReactSortable 只在挂载时读取 handle，scope 随列表内容变化会导致拖柄失效 */
+const getBlockScope = parentKey => `blocks:${parentKey}`;
 
 const BlockListPanel = ({
   blocks,
@@ -75,11 +79,24 @@ const BlockListPanel = ({
   extraToolbar
 }) => {
   const { formatMessage, locale } = useIntl();
+  const isMobile = useIsMobile();
   const languages = useLocaleTextLanguages();
   const text = value => resolveLocaleText(value, locale, languages);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [addFieldMenuId, setAddFieldMenuId] = useState(null);
   const keepAddFieldMenuOpenRef = useRef(false);
+  const [collapsedIds, setCollapsedIds] = useState(() => new Set());
+  const toggleCollapsed = id =>
+    setCollapsedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  const renderDragHandle = (scope, standalone) => (
+    <span className={standalone ? style['drag-handle'] : `${style['drag-handle']} ${style['drag-handle-action']}`} title={formatMessage({ id: 'dragSort' })} {...getSortHandleProps(scope)}>
+      <HolderOutlined />
+    </span>
+  );
   const conditionContext = useMemo(() => {
     const triggerFields = collectConditionFields({ blocks }).filter(item => !item.inList);
     return {
@@ -119,12 +136,13 @@ const BlockListPanel = ({
   const renderAddFieldButton = ({ menuKey, depth, onAddFieldClick, onAddChildBlock }) => {
     const canAddChild = typeof onAddChildBlock === 'function' && depth < MAX_BLOCK_DEPTH;
     const menuOpen = addFieldMenuId === menuKey;
-    const btnClass = `${style['add-inline-btn']} ${style['hover-reveal']} ${menuOpen ? style['hover-reveal-active'] : ''}`.trim();
+    const btnClass = `${style['add-inline-btn']} ${style['hover-reveal']} ${menuOpen ? style['hover-reveal-active'] : ''} ${isMobile ? style['add-inline-btn-icon'] : ''}`.trim();
+    const addFieldText = formatMessage({ id: 'addField' });
 
     if (!canAddChild) {
       return (
-        <Button type="text" size="small" icon={<PlusOutlined />} className={btnClass} onClick={onAddFieldClick}>
-          {formatMessage({ id: 'addField' })}
+        <Button type="text" size="small" icon={<PlusOutlined />} className={btnClass} title={addFieldText} onClick={onAddFieldClick}>
+          {isMobile ? null : addFieldText}
         </Button>
       );
     }
@@ -210,9 +228,10 @@ const BlockListPanel = ({
               keepAddFieldMenuOpenRef.current = true;
             }
           }}
+          title={addFieldText}
           onClick={() => setAddFieldMenuId(menuKey)}
         >
-          {formatMessage({ id: 'addField' })}
+          {isMobile ? null : addFieldText}
         </Button>
       </Dropdown>
     );
@@ -227,11 +246,16 @@ const BlockListPanel = ({
       );
     }
 
+    const scope = `fields:${blockId}:${stepId || ''}:${optionId || ''}`;
+    const canDrag = fields.length > 1;
+
     return (
-      <div className={style['field-list']}>
+      <SortableList className={style['field-list']} scope={scope} list={fields} isFixed={isFieldLocked} onMove={(fieldId, to) => onMoveField(blockId, fieldId, to, { stepId, optionId })}>
         {fields.map((field, fieldIndex) => (
           <FieldRow
             key={field.id}
+            isMobile={isMobile}
+            dragHandleProps={canDrag && !isFieldLocked(field) ? getSortHandleProps(scope) : null}
             field={field}
             index={fieldIndex}
             total={fields.length}
@@ -243,22 +267,24 @@ const BlockListPanel = ({
             onMove={(fieldId, direction) => onMoveField(blockId, fieldId, direction, { stepId, optionId })}
           />
         ))}
-      </div>
+      </SortableList>
     );
   };
 
-  const renderNestedBlocks = (childBlocks, depth) => {
+  const renderNestedBlocks = (childBlocks, depth, parentKey) => {
     if (!(childBlocks || []).length) {
       return null;
     }
     return (
       <div className={style['item-blocks-section']}>
-        <div className={style['nested-block-list']}>{childBlocks.map((child, childIndex) => renderBlockSection(child, childIndex, childBlocks, depth + 1))}</div>
+        <SortableList className={style['nested-block-list']} scope={getBlockScope(parentKey)} list={childBlocks} isFixed={blockHasLockedField} onMove={onMoveBlock}>
+          {childBlocks.map((child, childIndex) => renderBlockSection(child, childIndex, childBlocks, depth + 1, parentKey))}
+        </SortableList>
       </div>
     );
   };
 
-  const renderItemBlocks = (parentBlock, depth) => renderNestedBlocks(parentBlock.itemBlocks, depth);
+  const renderItemBlocks = (parentBlock, depth) => renderNestedBlocks(parentBlock.itemBlocks, depth, `item:${parentBlock.id}`);
 
   const renderBlockChildren = (block, depth) => {
     if (block.kind === 'steps') {
@@ -273,34 +299,44 @@ const BlockListPanel = ({
             </Button>
           </div>
           {(block.items || []).length ? (
-            <div className={style['step-list']}>
+            <SortableList className={style['step-list']} scope={`steps:${block.id}`} list={block.items} isFixed={blockHasLockedField} onMove={(stepId, to) => onMoveStep(block.id, stepId, to)}>
               {(block.items || []).map((step, stepIndex) => (
                 <div key={step.id} className={style['step-section']}>
                   <div className={style['step-section-header']}>
-                    <Space size={8} wrap className={style['step-section-title']}>
+                    <div className={style['step-section-title']}>
+                      {isMobile && block.items.length > 1 && !blockHasLockedField(step) ? renderDragHandle(`steps:${block.id}`, true) : null}
                       <span className={style['step-index']}>{stepIndex + 1}</span>
-                      <Text strong>{text(step.title) || formatMessage({ id: 'untitledStep' }, { index: stepIndex + 1 })}</Text>
-                      <Text type="secondary">
-                        {(step.blocks || []).length ? formatMessage({ id: 'fieldAndItemBlockCount' }, { fields: step.list?.length || 0, nests: step.blocks.length }) : formatMessage({ id: 'fieldCount' }, { count: step.list?.length || 0 })}
-                      </Text>
-                    </Space>
-                    <Space size={4} wrap className={style['step-section-actions']}>
-                      <ActionGroup>
-                        <IconBtn
-                          title={formatMessage({ id: 'moveUp' })}
-                          icon={<ArrowUpOutlined />}
-                          disabled={stepIndex === 0 || blockHasLockedField(step) || blockHasLockedField(block.items[stepIndex - 1])}
-                          onClick={() => onMoveStep(block.id, step.id, 'up')}
-                        />
-                        <IconBtn
-                          title={formatMessage({ id: 'moveDown' })}
-                          icon={<ArrowDownOutlined />}
-                          disabled={stepIndex === (block.items?.length || 0) - 1 || blockHasLockedField(step) || blockHasLockedField(block.items[stepIndex + 1])}
-                          onClick={() => onMoveStep(block.id, step.id, 'down')}
-                        />
-                        <IconBtn title={formatMessage({ id: 'editStep' })} icon={<EditOutlined />} onClick={() => onEditStep(block.id, step)} />
-                        {blockHasLockedField(step) ? null : <IconBtn title={formatMessage({ id: 'deleteStep' })} danger icon={<DeleteOutlined />} onClick={() => onDeleteStep(block.id, step.id)} />}
-                      </ActionGroup>
+                      <div className={style['step-section-text']}>
+                        <Text strong>{text(step.title) || formatMessage({ id: 'untitledStep' }, { index: stepIndex + 1 })}</Text>
+                        <Text type="secondary" className={style['step-section-count']}>
+                          {(step.blocks || []).length ? formatMessage({ id: 'fieldAndItemBlockCount' }, { fields: step.list?.length || 0, nests: step.blocks.length }) : formatMessage({ id: 'fieldCount' }, { count: step.list?.length || 0 })}
+                        </Text>
+                      </div>
+                    </div>
+                    <Space size={4} className={style['step-section-actions']}>
+                      <RowActions
+                        isMobile={isMobile}
+                        moreTitle={formatMessage({ id: 'moreActions' })}
+                        prefix={!isMobile && block.items.length > 1 && !blockHasLockedField(step) ? renderDragHandle(`steps:${block.id}`) : null}
+                        actions={orderActions(isMobile, [
+                          {
+                            key: 'up',
+                            label: formatMessage({ id: 'moveUp' }),
+                            icon: <ArrowUpOutlined />,
+                            disabled: stepIndex === 0 || blockHasLockedField(step) || blockHasLockedField(block.items[stepIndex - 1]),
+                            onClick: () => onMoveStep(block.id, step.id, 'up')
+                          },
+                          {
+                            key: 'down',
+                            label: formatMessage({ id: 'moveDown' }),
+                            icon: <ArrowDownOutlined />,
+                            disabled: stepIndex === (block.items?.length || 0) - 1 || blockHasLockedField(step) || blockHasLockedField(block.items[stepIndex + 1]),
+                            onClick: () => onMoveStep(block.id, step.id, 'down')
+                          },
+                          { key: 'edit', label: formatMessage({ id: 'editStep' }), icon: <EditOutlined />, onClick: () => onEditStep(block.id, step) },
+                          blockHasLockedField(step) ? null : { key: 'delete', label: formatMessage({ id: 'deleteStep' }), icon: <DeleteOutlined />, danger: true, onClick: () => onDeleteStep(block.id, step.id) }
+                        ])}
+                      />
                       {renderAddFieldButton({
                         menuKey: `${block.id}:${step.id}`,
                         depth,
@@ -310,10 +346,10 @@ const BlockListPanel = ({
                     </Space>
                   </div>
                   {renderFieldList(step.list, block.id, { stepId: step.id })}
-                  {renderNestedBlocks(step.blocks, depth)}
+                  {renderNestedBlocks(step.blocks, depth, `step:${step.id}`)}
                 </div>
               ))}
-            </div>
+            </SortableList>
           ) : (
             <Text type="secondary" className={style['inline-empty']}>
               {formatMessage({ id: 'emptyStepList' })}
@@ -347,36 +383,46 @@ const BlockListPanel = ({
             </Button>
           </div>
           {(block.options || []).length ? (
-            <div className={style['step-list']}>
+            <SortableList className={style['step-list']} scope={`options:${block.id}`} list={block.options} isFixed={blockHasLockedField} onMove={(optionId, to) => onMoveChoiceOption(block.id, optionId, to)}>
               {(block.options || []).map((option, optionIndex) => (
                 <div key={option.id} className={style['step-section']}>
                   <div className={style['step-section-header']}>
-                    <Space size={8} wrap className={style['step-section-title']}>
+                    <div className={style['step-section-title']}>
+                      {isMobile && block.options.length > 1 && !blockHasLockedField(option) ? renderDragHandle(`options:${block.id}`, true) : null}
                       <span className={style['step-index']}>{optionIndex + 1}</span>
-                      <Text strong>{text(option.title) || formatMessage({ id: 'choiceOptionFallback' }, { index: optionIndex + 1 })}</Text>
-                      <Text type="secondary">
-                        {(option.blocks || []).length
-                          ? formatMessage({ id: 'fieldAndItemBlockCount' }, { fields: option.list?.length || 0, nests: option.blocks.length })
-                          : formatMessage({ id: 'fieldCount' }, { count: option.list?.length || 0 })}
-                      </Text>
-                    </Space>
-                    <Space size={4} wrap className={style['step-section-actions']}>
-                      <ActionGroup>
-                        <IconBtn
-                          title={formatMessage({ id: 'moveUp' })}
-                          icon={<ArrowUpOutlined />}
-                          disabled={optionIndex === 0 || blockHasLockedField(option) || blockHasLockedField(block.options[optionIndex - 1])}
-                          onClick={() => onMoveChoiceOption(block.id, option.id, 'up')}
-                        />
-                        <IconBtn
-                          title={formatMessage({ id: 'moveDown' })}
-                          icon={<ArrowDownOutlined />}
-                          disabled={optionIndex === (block.options?.length || 0) - 1 || blockHasLockedField(option) || blockHasLockedField(block.options[optionIndex + 1])}
-                          onClick={() => onMoveChoiceOption(block.id, option.id, 'down')}
-                        />
-                        <IconBtn title={formatMessage({ id: 'editChoiceOption' })} icon={<EditOutlined />} onClick={() => onEditChoiceOption(block.id, option)} />
-                        {blockHasLockedField(option) ? null : <IconBtn title={formatMessage({ id: 'deleteChoiceOption' })} danger icon={<DeleteOutlined />} onClick={() => onDeleteChoiceOption(block.id, option.id)} />}
-                      </ActionGroup>
+                      <div className={style['step-section-text']}>
+                        <Text strong>{text(option.title) || formatMessage({ id: 'choiceOptionFallback' }, { index: optionIndex + 1 })}</Text>
+                        <Text type="secondary" className={style['step-section-count']}>
+                          {(option.blocks || []).length
+                            ? formatMessage({ id: 'fieldAndItemBlockCount' }, { fields: option.list?.length || 0, nests: option.blocks.length })
+                            : formatMessage({ id: 'fieldCount' }, { count: option.list?.length || 0 })}
+                        </Text>
+                      </div>
+                    </div>
+                    <Space size={4} className={style['step-section-actions']}>
+                      <RowActions
+                        isMobile={isMobile}
+                        moreTitle={formatMessage({ id: 'moreActions' })}
+                        prefix={!isMobile && block.options.length > 1 && !blockHasLockedField(option) ? renderDragHandle(`options:${block.id}`) : null}
+                        actions={orderActions(isMobile, [
+                          {
+                            key: 'up',
+                            label: formatMessage({ id: 'moveUp' }),
+                            icon: <ArrowUpOutlined />,
+                            disabled: optionIndex === 0 || blockHasLockedField(option) || blockHasLockedField(block.options[optionIndex - 1]),
+                            onClick: () => onMoveChoiceOption(block.id, option.id, 'up')
+                          },
+                          {
+                            key: 'down',
+                            label: formatMessage({ id: 'moveDown' }),
+                            icon: <ArrowDownOutlined />,
+                            disabled: optionIndex === (block.options?.length || 0) - 1 || blockHasLockedField(option) || blockHasLockedField(block.options[optionIndex + 1]),
+                            onClick: () => onMoveChoiceOption(block.id, option.id, 'down')
+                          },
+                          { key: 'edit', label: formatMessage({ id: 'editChoiceOption' }), icon: <EditOutlined />, onClick: () => onEditChoiceOption(block.id, option) },
+                          blockHasLockedField(option) ? null : { key: 'delete', label: formatMessage({ id: 'deleteChoiceOption' }), icon: <DeleteOutlined />, danger: true, onClick: () => onDeleteChoiceOption(block.id, option.id) }
+                        ])}
+                      />
                       {renderAddFieldButton({
                         menuKey: `${block.id}:opt:${option.id}`,
                         depth,
@@ -386,10 +432,10 @@ const BlockListPanel = ({
                     </Space>
                   </div>
                   {renderFieldList(option.list, block.id, { optionId: option.id })}
-                  {renderNestedBlocks(option.blocks, depth)}
+                  {renderNestedBlocks(option.blocks, depth, `option:${option.id}`)}
                 </div>
               ))}
-            </div>
+            </SortableList>
           ) : (
             <Text type="secondary" className={style['inline-empty']}>
               {formatMessage({ id: 'emptyChoiceOptionList' })}
@@ -406,12 +452,12 @@ const BlockListPanel = ({
       <div className={style['block-body']}>
         {renderFieldList(block.list, block.id)}
         {supportsItemBlocks ? renderItemBlocks(block, depth) : null}
-        {supportsBlocks ? renderNestedBlocks(block.blocks, depth) : null}
+        {supportsBlocks ? renderNestedBlocks(block.blocks, depth, `block:${block.id}`) : null}
       </div>
     );
   };
 
-  const renderBlockSection = (block, blockIndex, siblings, depth = 0) => {
+  const renderBlockSection = (block, blockIndex, siblings, depth = 0, parentKey = 'root') => {
     const total = siblings.length;
     const locked = blockHasLockedField(block);
     const definition = getBlockDefinition(block.kind);
@@ -429,7 +475,7 @@ const BlockListPanel = ({
               { id: 'multiFieldSummary' },
               {
                 type: (
-                  <span className={style['block-summary-type']}>
+                  <span key="type" className={style['block-summary-type']}>
                     {createElement(getFieldTypeIcon(block.fieldType || 'Input'))}
                     {resolveFieldTypeLabel(block.fieldType, formatMessage)}
                   </span>
@@ -441,7 +487,7 @@ const BlockListPanel = ({
                 { id: 'matrixScaleSummary' },
                 {
                   type: (
-                    <span className={style['block-summary-type']}>
+                    <span key="type" className={style['block-summary-type']}>
                       {createElement(getFieldTypeIcon(block.fieldType || 'RadioGroup'))}
                       {resolveFieldTypeLabel(block.fieldType || 'RadioGroup', formatMessage)}
                     </span>
@@ -456,36 +502,61 @@ const BlockListPanel = ({
                 ? formatMessage({ id: 'fieldAndItemBlockCount' }, { fields: block.list?.length || 0, nests: nestCount })
                 : formatMessage({ id: 'fieldCount' }, { count: block.list?.length || 0 });
 
+    const collapsed = collapsedIds.has(block.id);
+    const canDragBlock = total > 1 && !locked;
+    const blockTitle = text(block.title) || text(block.label) || block.name || formatMessage({ id: 'untitledBlock' });
+
     return (
-      <section key={block.id} className={`${style['block-section']} ${style[`block-kind-${block.kind}`] || ''} ${depth > 0 ? style['block-section-nested'] : ''}`.trim()}>
+      <section key={block.id} className={`${style['block-section']} ${style[`block-kind-${block.kind}`] || ''} ${depth > 0 ? style['block-section-nested'] : ''} ${collapsed ? style['is-collapsed'] : ''}`.trim()}>
         <header className={style['block-section-header']}>
-          <div className={style['block-header-left']}>
+          <div className={style['block-header-meta']}>
+            <button
+              type="button"
+              className={`${style['block-collapse-btn']} ${collapsed ? '' : style['is-expanded']}`.trim()}
+              title={formatMessage({ id: collapsed ? 'expandBlock' : 'collapseBlock' })}
+              aria-expanded={!collapsed}
+              onClick={() => toggleCollapsed(block.id)}
+            >
+              <RightOutlined />
+            </button>
+            {isMobile && canDragBlock ? renderDragHandle(getBlockScope(parentKey), true) : null}
             <Tag bordered={false} color={definition?.color || 'default'} icon={BLOCK_KIND_ICONS[block.kind]}>
               {formatMessage({ id: `blockKind_${block.kind}` })}
             </Tag>
-            <Text strong ellipsis className={style['block-title']}>
-              {text(block.title) || text(block.label) || block.name || formatMessage({ id: 'untitledBlock' })}
-            </Text>
             <span className={style['block-summary']}>{summary}</span>
+            <Space size={4} className={style['block-header-actions']}>
+              <RowActions
+                isMobile={isMobile}
+                moreTitle={formatMessage({ id: 'moreActions' })}
+                prefix={!isMobile && canDragBlock ? renderDragHandle(getBlockScope(parentKey)) : null}
+                actions={orderActions(isMobile, [
+                  { key: 'up', label: formatMessage({ id: 'moveUp' }), icon: <ArrowUpOutlined />, disabled: blockIndex === 0 || locked || blockHasLockedField(siblings[blockIndex - 1]), onClick: () => onMoveBlock(block.id, 'up') },
+                  {
+                    key: 'down',
+                    label: formatMessage({ id: 'moveDown' }),
+                    icon: <ArrowDownOutlined />,
+                    disabled: blockIndex === total - 1 || locked || blockHasLockedField(siblings[blockIndex + 1]),
+                    onClick: () => onMoveBlock(block.id, 'down')
+                  },
+                  { key: 'setting', label: formatMessage({ id: 'editBlock' }), icon: <SettingOutlined />, onClick: () => onEditBlock(block) },
+                  locked ? null : { key: 'delete', label: formatMessage({ id: 'deleteBlock' }), icon: <DeleteOutlined />, danger: true, onClick: () => onDeleteBlock(block.id) }
+                ])}
+              />
+              {canAddField
+                ? renderAddFieldButton({
+                    menuKey: block.id,
+                    depth,
+                    onAddFieldClick: () => onAddField(block.id),
+                    onAddChildBlock: supportsChildModules ? kind => onAddBlock(kind, { parentBlockId: block.id }) : undefined
+                  })
+                : null}
+            </Space>
           </div>
-          <Space size={4} wrap className={style['block-header-actions']}>
-            <ActionGroup>
-              <IconBtn title={formatMessage({ id: 'moveUp' })} icon={<ArrowUpOutlined />} disabled={blockIndex === 0 || locked || blockHasLockedField(siblings[blockIndex - 1])} onClick={() => onMoveBlock(block.id, 'up')} />
-              <IconBtn title={formatMessage({ id: 'moveDown' })} icon={<ArrowDownOutlined />} disabled={blockIndex === total - 1 || locked || blockHasLockedField(siblings[blockIndex + 1])} onClick={() => onMoveBlock(block.id, 'down')} />
-              <IconBtn title={formatMessage({ id: 'editBlock' })} icon={<SettingOutlined />} onClick={() => onEditBlock(block)} />
-              {locked ? null : <IconBtn title={formatMessage({ id: 'deleteBlock' })} danger icon={<DeleteOutlined />} onClick={() => onDeleteBlock(block.id)} />}
-            </ActionGroup>
-            {canAddField
-              ? renderAddFieldButton({
-                  menuKey: block.id,
-                  depth,
-                  onAddFieldClick: () => onAddField(block.id),
-                  onAddChildBlock: supportsChildModules ? kind => onAddBlock(kind, { parentBlockId: block.id }) : undefined
-                })
-              : null}
-          </Space>
+          <div className={style['block-title']} title={blockTitle}>
+            {blockTitle}
+          </div>
         </header>
-        {renderBlockChildren(block, depth)}
+        {collapsed ? null : renderBlockChildren(block, depth)}
       </section>
     );
   };
@@ -516,7 +587,9 @@ const BlockListPanel = ({
       {!blocks.length ? (
         <Empty className={style['field-empty']} image={Empty.PRESENTED_IMAGE_SIMPLE} description={formatMessage({ id: 'emptyBlockList' })} />
       ) : (
-        <div className={style['block-list']}>{blocks.map((block, blockIndex) => renderBlockSection(block, blockIndex, blocks, 0))}</div>
+        <SortableList className={style['block-list']} scope={getBlockScope('root')} list={blocks} isFixed={blockHasLockedField} onMove={onMoveBlock}>
+          {blocks.map((block, blockIndex) => renderBlockSection(block, blockIndex, blocks, 0))}
+        </SortableList>
       )}
     </div>
   );

@@ -7,6 +7,7 @@ import { getFieldComponent, getFieldDefinition } from './fieldRegistry';
 import { createApiFromOptions } from './fields/optionsApi';
 import { MAX_BLOCK_DEPTH, normalizeSchema, collectBlockFieldNames } from './schema';
 import ChoiceBlock from './ChoiceBlock';
+import FocusSteps from './FocusSteps';
 import ConditionalFormInfo from './ConditionalFormInfo';
 import { collectTriggerNames, hasVisibleWhen } from './fieldCondition';
 import { createLocalizedRules } from './localizedRules';
@@ -306,13 +307,15 @@ export const renderBlockElement = (block, preview = false, ctx = {}) => {
       );
     }
     case 'steps': {
+      const isFocusSteps = block.stepsStyle === 'focus';
       return withBlockLayout(
-        createElement(Steps, {
+        createElement(isFocusSteps ? FocusSteps : Steps, {
           key: block.id,
           title: block.title || undefined,
           subtitle: block.subtitle || undefined,
           bordered,
           className: resolvePartRootClassName(depth),
+          ...(isFocusSteps ? { formatMessage } : null),
           prevIcon: createElement(ArrowLeftOutlined),
           nextIcon: createElement(ArrowRightOutlined),
           items: (block.items || []).map(step => {

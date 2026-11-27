@@ -6,6 +6,8 @@ import { useIsMobile } from '@kne/responsive-utils';
 import { formValuesToStep, stepToFormValues } from './blockRegistry';
 import { createStep } from './schema';
 import { LocaleInput } from './LocaleTextInput';
+import { getEditorColumn, getPropertyModalProps } from './editorLayout';
+import style from './style.module.scss';
 
 const StepEditorModal = ({ open, step, onCancel, onSave, renderModal }) => {
   const { formatMessage } = useIntl();
@@ -20,7 +22,7 @@ const StepEditorModal = ({ open, step, onCancel, onSave, renderModal }) => {
       title={formatMessage({ id: step?.id ? 'editStep' : 'addStep' })}
       open={open}
       onCancel={onCancel}
-      width={isMobile ? 'calc(100vw - 32px)' : 560}
+      {...getPropertyModalProps(isMobile, 560)}
       {...(renderModal ? { renderModal } : {})}
       formProps={{
         data: formData,
@@ -31,13 +33,15 @@ const StepEditorModal = ({ open, step, onCancel, onSave, renderModal }) => {
       okText={formatMessage({ id: 'confirm' })}
       cancelText={formatMessage({ id: 'cancel' })}
     >
-      <FormInfo
-        column={1}
-        list={[
-          <LocaleInput key="title" name="title" label={formatMessage({ id: 'stepTitle' })} rule="REQ" placeholder={formatMessage({ id: 'stepTitlePlaceholder' })} />,
-          <InputNumber key="column" name="column" label={formatMessage({ id: 'formColumnPlaceholder' })} min={1} max={4} />
-        ]}
-      />
+      <div className={`${style['field-editor-form']} ${style['is-plain']}`}>
+        <FormInfo
+          column={getEditorColumn(isMobile)}
+          list={[
+            <LocaleInput key="title" name="title" label={formatMessage({ id: 'stepTitle' })} rule="REQ" placeholder={formatMessage({ id: 'stepTitlePlaceholder' })} />,
+            <InputNumber key="column" name="column" label={formatMessage({ id: 'formColumnPlaceholder' })} min={1} max={4} />
+          ]}
+        />
+      </div>
     </FormModal>
   );
 };

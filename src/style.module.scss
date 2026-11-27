@@ -118,6 +118,13 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+
+  /* 与「添加模块」同高、同胶囊圆角 */
+  :global(.ant-btn-sm) {
+    height: 30px !important;
+    padding-inline: 12px !important;
+    border-radius: 999px !important;
+  }
 }
 
 .schema-content {
@@ -281,33 +288,160 @@
   }
 }
 
+/* 头部：元信息行（折叠 / 拖柄 / 类型 / 数量 / 操作）+ 独占整行的标题，长标题最多两行 */
 .block-section-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  flex-direction: column;
+  gap: 6px;
   min-width: 0;
 }
 
-.block-header-left {
+.block-header-meta {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 6px 8px;
+  gap: 6px;
   min-width: 0;
-  flex: 1;
+  min-height: 28px;
 
   :global(.ant-tag) {
     flex-shrink: 0;
+    margin-inline-end: 0;
   }
 }
 
 .block-title {
-  flex: 0 1 auto;
   min-width: 0;
-  max-width: 160px;
-  overflow: hidden;
+  padding-left: 26px;
+  color: rgba(0, 0, 0, 0.88);
   font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.block-collapse-btn {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(0, 0, 0, 0.45);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+
+  :global(.anticon) {
+    font-size: 10px;
+    transition: transform 0.2s ease;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: rgba(0, 0, 0, 0.88);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ant-color-primary, #4183f0);
+    outline-offset: 1px;
+  }
+
+  &.is-expanded :global(.anticon) {
+    transform: rotate(90deg);
+  }
+}
+
+.drag-handle {
+  flex: none;
+  touch-action: none;
+  width: 18px;
+  height: 22px;
+  border-radius: 4px;
+  color: rgba(0, 0, 0, 0.35);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: rgba(0, 0, 0, 0.75);
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+/* 移动端「⋯」更多操作 */
+.more-btn {
+  flex: none;
+  display: inline-flex;
+  --button-group-more-height: 28px;
+  --button-group-more-min-width: 28px;
+  --button-group-more-padding-inline: 0;
+
+  :global(.ant-btn) {
+    border-radius: 999px;
+    color: rgba(0, 0, 0, 0.55);
+
+    &:hover,
+    &:active {
+      background: rgba(0, 0, 0, 0.06);
+      color: rgba(0, 0, 0, 0.88);
+    }
+  }
+}
+
+/* 操作组内的拖柄：与 action-btn 同尺寸 */
+.drag-handle-action {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.55);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.85);
+    color: rgba(0, 0, 0, 0.88);
+  }
+}
+
+/* SortableJS：列表内占位为虚线空槽，跟随鼠标的浮层带投影 */
+.sortable-ghost {
+  background: rgba(65, 131, 240, 0.06) !important;
+  outline: 1.5px dashed rgba(65, 131, 240, 0.55);
+  outline-offset: -1.5px;
+  box-shadow: none !important;
+
+  > * {
+    opacity: 0;
+  }
+}
+
+/* 浮层靠 inline transform 跟随指针，继承行上的 transform 过渡会导致不跟手 */
+.sortable-drag {
+  opacity: 1 !important;
+  transition: none !important;
+  will-change: transform;
+  cursor: grabbing;
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.16),
+    0 2px 6px rgba(0, 0, 0, 0.08) !important;
+
+  .action-group,
+  .hover-reveal {
+    opacity: 0 !important;
+  }
 }
 
 .block-summary {
@@ -329,6 +463,7 @@
 
 .block-header-actions {
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .block-body {
@@ -459,6 +594,30 @@
   flex: 1;
   min-width: 0;
   max-width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+
+  .step-index {
+    flex: none;
+    margin-top: 1px;
+  }
+}
+
+.step-section-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  line-height: 22px;
+  word-break: break-word;
+}
+
+.step-section-count {
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .step-section-actions {
@@ -482,12 +641,13 @@
   font-weight: 600;
 }
 
-/* 填写项：白底块 */
+/* 填写项：白底块；操作组浮在右上角，不占标题宽度 */
 .field-row {
+  position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border-radius: 10px;
   background: #ffffff;
   transition:
@@ -498,14 +658,46 @@
     background: #fcfdff;
     transform: translateY(-0.5px);
   }
+
+  > .action-group {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 2;
+    background: #ffffff;
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.12),
+      0 0 0 1px rgba(0, 0, 0, 0.04);
+  }
 }
 
 .field-row-index {
+  position: relative;
   width: 18px;
+  height: 22px;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: #bfbfbf;
   font-size: 12px;
-  text-align: center;
+
+  .drag-handle {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    opacity: 0;
+  }
+}
+
+.field-row:hover .field-row-index.has-handle {
+  .field-row-index-num {
+    opacity: 0;
+  }
+
+  .drag-handle {
+    opacity: 1;
+  }
 }
 
 .field-row-main {
@@ -519,6 +711,8 @@
 
 .field-row-label {
   max-width: 100%;
+  font-weight: 500;
+  line-height: 22px;
   word-break: break-word;
 }
 
@@ -859,19 +1053,164 @@
   margin-top: 8px;
 }
 
+/* 属性弹窗：头尾固定，中间内容区独立滚动 */
+.property-modal {
+  :global(.ant-modal-body) {
+    max-height: calc(100vh - 220px);
+    margin-inline: -24px;
+    padding: 4px 24px 8px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+/* 弹窗顶部：当前编辑对象的类型与用途说明 */
+.editor-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f6f8fb;
+  color: rgba(0, 0, 0, 0.55);
+  font-size: 13px;
+  line-height: 22px;
+
+  :global(.ant-tag) {
+    flex: none;
+    margin: 0;
+  }
+}
+
+/* 属性分区：带序号的卡片，标题下附一句说明，按填写顺序自上而下 */
 .field-editor-form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding-top: 4px;
+  gap: 16px;
+  counter-reset: editor-section;
+
+  :global {
+    .part.ant-card {
+      border: 1px solid #edf0f5 !important;
+      border-radius: 12px !important;
+      background: #ffffff !important;
+      box-shadow: none !important;
+      overflow: hidden;
+    }
+
+    .part.ant-card:not(.no-title) {
+      counter-increment: editor-section;
+    }
+
+    .part.ant-card > .ant-card-head {
+      min-height: 0;
+      margin: 0 !important;
+      padding: 12px 16px !important;
+      border-bottom: 1px solid #f0f2f5 !important;
+      background: #fafbfc !important;
+    }
+
+    .part.ant-card > .ant-card-head .ant-card-head-title {
+      padding: 0;
+      white-space: normal;
+    }
+
+    .part.ant-card > .ant-card-head .part-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 !important;
+      color: rgba(0, 0, 0, 0.88);
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 22px;
+
+      &::before {
+        content: counter(editor-section);
+        position: static !important;
+        display: inline-flex;
+        flex: none;
+        align-items: center;
+        justify-content: center;
+        width: 20px !important;
+        height: 20px !important;
+        margin: 0 !important;
+        border-radius: 6px !important;
+        background: var(--primary-color, #1677ff) !important;
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: 600;
+        transform: none !important;
+      }
+    }
+
+    .part.ant-card > .ant-card-head .part-title-sub {
+      margin: 2px 0 0 28px !important;
+      padding: 0 !important;
+      color: rgba(0, 0, 0, 0.45);
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 20px;
+    }
+
+    /* 表单项自带 22px 下边距用于放校验信息，底部内边距相应收窄 */
+    .part.ant-card > .ant-card-body {
+      padding: 16px 16px 0 !important;
+    }
+
+    /* 分区内部再嵌套的 FormInfo（如树形选项、表格行）保持原有轻量样式 */
+    .part.ant-card .part.ant-card {
+      counter-increment: none;
+      border-radius: 8px !important;
+    }
+
+    .part.ant-card .part.ant-card > .ant-card-head .part-title::before {
+      content: none;
+      display: none;
+    }
+
+    .part.ant-card .part.ant-card > .ant-card-head .part-title-sub {
+      margin-left: 0 !important;
+    }
+  }
+}
+
+/* 分区内的开关组：无外框，与上方输入项隔开一行 */
+.field-editor-form .editor-toggles:global(.part.ant-card) {
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  overflow: visible;
+
+  > :global(.ant-card-body) {
+    padding: 0 !important;
+  }
+}
+
+/* 非表单项内容（选项列表等）没有 22px 校验预留，补齐分区底部留白 */
+.field-editor-form :global(.part.ant-card) {
+  .options-editor,
+  .columns-editor,
+  .table-rows-editor {
+    padding-bottom: 16px;
+  }
+}
+
+/* 只有一个无标题分区的小弹窗（步骤、选项）不需要卡片外框 */
+.field-editor-form.is-plain {
+  :global {
+    .part.ant-card {
+      border: none !important;
+    }
+
+    .part.ant-card.no-title > .ant-card-body {
+      padding: 0 !important;
+    }
+  }
 }
 
 .form-actions-editor {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding-top: 4px;
-
   :global {
     .ant-row {
       row-gap: 8px;
@@ -885,37 +1224,6 @@
       min-height: 32px;
       display: flex;
       align-items: center;
-    }
-  }
-}
-
-.form-actions-layout-panel {
-  padding: 14px 16px 18px;
-  border-radius: 10px;
-  background: #f7f8fa;
-  border: 1px solid rgba(0, 0, 0, 0.04);
-
-  :global {
-    .ant-card {
-      background: transparent !important;
-      border: none !important;
-      box-shadow: none !important;
-    }
-
-    .ant-card-head {
-      display: none;
-    }
-
-    .ant-card-body {
-      padding: 0 !important;
-    }
-
-    .ant-form-item {
-      margin-bottom: 14px;
-    }
-
-    .ant-form-item:last-child {
-      margin-bottom: 0;
     }
   }
 }
@@ -971,14 +1279,6 @@
       filter: brightness(1.08);
     }
   }
-}
-
-.form-actions-layout-title {
-  margin-bottom: 12px;
-  color: rgba(0, 0, 0, 0.65);
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
 }
 
 .form-actions-gap-slider {
@@ -1340,28 +1640,37 @@
       pointer-events: auto;
     }
 
-    .block-section-header {
-      flex-wrap: wrap;
-      align-items: flex-start;
-      gap: 8px;
+    /* 头部一行：折叠 / 拖柄 / 类型 / 数量 … 右侧图标添加 +「⋯」菜单 */
+    .block-header-meta {
+      gap: 4px;
     }
 
-    .block-header-left {
-      width: 100%;
-      flex-wrap: wrap;
-    }
-
-    .block-title {
-      max-width: 160px;
-      flex: 0 1 auto;
+    .block-header-meta .block-summary {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .block-header-actions {
-      width: 100%;
-      display: flex;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-      gap: 6px;
+      flex-shrink: 0;
+      margin-left: auto;
+      gap: 4px;
+    }
+
+    /* 触屏无 hover：可拖的填写项直接显示拖柄 */
+    .field-row-index.has-handle {
+      .field-row-index-num {
+        opacity: 0;
+      }
+
+      .drag-handle {
+        opacity: 1;
+      }
+    }
+
+    .drag-handle {
+      width: 22px;
+      height: 28px;
     }
 
     .block-summary {
@@ -1373,28 +1682,25 @@
     }
 
     .step-section-header {
+      flex-wrap: nowrap;
       align-items: flex-start;
       gap: 8px;
     }
 
-    /* 标题独占一行，避免与常显操作栏挤成竖排字 */
     .step-section-title {
-      flex: 0 0 100%;
-      width: 100%;
+      flex: 1 1 auto;
       min-width: 0;
-      max-width: 100%;
     }
 
     .step-section-actions {
-      width: 100%;
-      justify-content: flex-end;
-      gap: 6px;
+      flex-shrink: 0;
+      gap: 4px;
     }
 
+    /* 填写项单行：拖柄 | 标题与标签（点按编辑）| ⋯ */
     .field-row {
-      flex-wrap: wrap;
       gap: 8px;
-      padding: 8px;
+      padding: 8px 4px 8px 8px;
       transform: none;
 
       &:hover {
@@ -1402,13 +1708,20 @@
       }
     }
 
-    .field-row-main {
-      flex: 1 1 calc(100% - 28px);
-      min-width: 0;
+    .field-row-index {
+      width: 22px;
+      height: 28px;
     }
 
-    .field-row .action-group {
-      margin-left: auto;
+    .field-row-main {
+      flex: 1 1 auto;
+      min-width: 0;
+      padding-top: 3px;
+
+      &[role='button'] {
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
     }
 
     .add-block-dropdown {
@@ -1418,6 +1731,18 @@
     .add-inline-btn {
       height: 28px !important;
       padding: 0 12px !important;
+    }
+
+    .add-inline-btn.add-inline-btn-icon {
+      width: 28px !important;
+      min-width: 28px !important;
+      padding: 0 !important;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.85) !important;
+
+      :global(.anticon) {
+        font-size: 12px;
+      }
     }
 
     .action-btn {
@@ -1444,5 +1769,236 @@
         }
       }
     }
+  }
+}
+
+/*
+ * steps 聚焦样式（stepsStyle: 'focus'）：隐藏 antd 步骤条，只保留当前步骤 title 位，
+ * 由 FocusSteps 填入自绘头部：「02 / 05 · 下一步」+ 大标题（可换行）+ 分段进度。
+ * antd Steps 自带布局优先级高，结构性属性需 !important。
+ */
+*:has(> .steps-focus) {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.steps-focus:global(.ant-steps) {
+  display: block !important;
+  width: 100% !important;
+  overflow: visible !important;
+
+  :global {
+    .ant-steps-item:not(.ant-steps-item-active),
+    .ant-steps-item-icon,
+    .ant-steps-item-rail,
+    .ant-steps-item-subtitle,
+    .ant-steps-item-content {
+      display: none !important;
+    }
+
+    .ant-steps-item-active,
+    .ant-steps-item-active .ant-steps-item-wrapper,
+    .ant-steps-item-active .ant-steps-item-section,
+    .ant-steps-item-active .ant-steps-item-header {
+      display: block !important;
+      flex: none !important;
+      width: 100% !important;
+      max-width: none !important;
+      min-width: 0;
+      padding: 0 !important;
+      margin: 0 !important;
+      overflow: visible !important;
+    }
+
+    .ant-steps-item-active .ant-steps-item-title {
+      display: block !important;
+      width: 100%;
+      padding: 0 !important;
+      margin: 0 !important;
+      color: inherit !important;
+      font-size: inherit !important;
+      font-weight: inherit !important;
+      line-height: inherit !important;
+      white-space: normal !important;
+      overflow: visible !important;
+
+      &::after {
+        display: none !important;
+      }
+    }
+  }
+}
+
+.steps-focus-header {
+  --fc-step-primary: var(--ant-color-primary, #1677ff);
+  --fc-step-text: var(--ant-color-text, rgba(0, 0, 0, 0.88));
+  --fc-step-text-secondary: var(--ant-color-text-secondary, rgba(0, 0, 0, 0.65));
+  --fc-step-text-tertiary: var(--ant-color-text-tertiary, rgba(0, 0, 0, 0.45));
+  --fc-step-track: var(--ant-color-fill-secondary, rgba(0, 0, 0, 0.06));
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 20px 18px;
+  border-radius: 12px;
+  background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--fc-step-primary) 9%, transparent) 0%, transparent 60%), var(--ant-color-fill-quaternary, rgba(0, 0, 0, 0.02));
+  border: 1px solid color-mix(in srgb, var(--fc-step-primary) 12%, transparent);
+  text-align: left;
+}
+
+.steps-focus-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+}
+
+.steps-focus-count {
+  flex: none;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.steps-focus-count-current {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--fc-step-primary);
+}
+
+.steps-focus-count-total {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fc-step-text-tertiary);
+}
+
+.steps-focus-next {
+  min-width: 0;
+  max-width: 60%;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--fc-step-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.steps-focus-title {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--fc-step-text);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.steps-focus-track {
+  display: flex;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.steps-focus-segment {
+  flex: 1 1 0;
+  min-width: 6px;
+  height: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--fc-step-track);
+  cursor: default;
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease;
+
+  &.is-done {
+    background: color-mix(in srgb, var(--fc-step-primary) 45%, transparent);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--fc-step-primary);
+      transform: scaleY(1.5);
+    }
+  }
+
+  &.is-current {
+    background: var(--fc-step-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--fc-step-primary) 40%, transparent);
+    outline-offset: 2px;
+  }
+}
+
+.steps-focus-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--ant-color-border-secondary, #f0f0f0);
+}
+
+.steps-focus-actions-side {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+
+  &.is-end {
+    justify-content: flex-end;
+    flex: 1 1 auto;
+  }
+}
+
+.steps-focus-prev:global(.ant-btn) {
+  height: 36px;
+  padding-inline: 12px 16px;
+  border-radius: 999px;
+  color: var(--ant-color-text-secondary, rgba(0, 0, 0, 0.65));
+}
+
+.steps-focus-next-btn:global(.ant-btn) {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  height: 36px;
+  padding-inline: 18px 14px;
+  border-radius: 999px;
+  font-weight: 600;
+
+  .steps-focus-next-btn-icon {
+    flex: none;
+    font-size: 12px;
+    transition: transform 0.2s ease;
+  }
+
+  &:hover .steps-focus-next-btn-icon {
+    transform: translateX(3px);
+  }
+}
+
+.steps-focus-done-hint {
+  font-size: 12px;
+  color: var(--ant-color-text-tertiary, rgba(0, 0, 0, 0.45));
+}
+
+@include resp.mobile-container {
+  .steps-focus-header {
+    padding: 14px 14px 16px;
+  }
+
+  .steps-focus-title {
+    font-size: 16px;
+  }
+
+  .steps-focus-next {
+    max-width: 55%;
   }
 }

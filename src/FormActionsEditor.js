@@ -6,10 +6,12 @@ import { useIsMobile } from '@kne/responsive-utils';
 import { normalizeFormActions } from './schema';
 import style from './style.module.scss';
 import { LocaleInput } from './LocaleTextInput';
+import { getEditorColumn, getPropertyModalProps } from './editorLayout';
 
 const FormActionsEditor = ({ open, value, onCancel, onSave, renderModal }) => {
   const { formatMessage } = useIntl();
   const isMobile = useIsMobile();
+  const column = getEditorColumn(isMobile);
   const formData = useMemo(() => normalizeFormActions(value), [value, open]);
 
   const alignOptions = useMemo(
@@ -40,7 +42,7 @@ const FormActionsEditor = ({ open, value, onCancel, onSave, renderModal }) => {
       title={formatMessage({ id: 'formActionsSection' })}
       open={open}
       onCancel={onCancel}
-      width={isMobile ? 'calc(100vw - 32px)' : 520}
+      {...getPropertyModalProps(isMobile, 560)}
       {...(renderModal ? { renderModal } : {})}
       formProps={{
         data: formData,
@@ -51,9 +53,11 @@ const FormActionsEditor = ({ open, value, onCancel, onSave, renderModal }) => {
       okText={formatMessage({ id: 'confirm' })}
       cancelText={formatMessage({ id: 'cancel' })}
     >
-      <div className={style['form-actions-editor']}>
+      <div className={`${style['field-editor-form']} ${style['form-actions-editor']}`}>
         <FormInfo
-          column={2}
+          title={formatMessage({ id: 'formActionsButtonsSection' })}
+          subtitle={formatMessage({ id: 'formActionsButtonsSectionDesc' })}
+          column={column}
           list={[
             <Switch key="showSubmit" name="showSubmit" label={formatMessage({ id: 'formActionsShowSubmit' })} className={style['form-actions-switch-field']} />,
             <LocaleInput
@@ -62,19 +66,9 @@ const FormActionsEditor = ({ open, value, onCancel, onSave, renderModal }) => {
               label={formatMessage({ id: 'formActionsSubmitText' })}
               placeholder={formatMessage({ id: 'formActionsSubmitTextHint' })}
               display={({ openApi }) => Boolean(openApi?.data?.showSubmit)}
-            />
-          ]}
-        />
-        <FormInfo
-          column={2}
-          list={[
+            />,
             <Switch key="showReset" name="showReset" label={formatMessage({ id: 'formActionsShowReset' })} className={style['form-actions-switch-field']} />,
-            <LocaleInput key="resetText" name="resetText" label={formatMessage({ id: 'formActionsResetText' })} placeholder={formatMessage({ id: 'formActionsResetTextHint' })} display={({ openApi }) => Boolean(openApi?.data?.showReset)} />
-          ]}
-        />
-        <FormInfo
-          column={2}
-          list={[
+            <LocaleInput key="resetText" name="resetText" label={formatMessage({ id: 'formActionsResetText' })} placeholder={formatMessage({ id: 'formActionsResetTextHint' })} display={({ openApi }) => Boolean(openApi?.data?.showReset)} />,
             <Switch key="showCancel" name="showCancel" label={formatMessage({ id: 'formActionsShowCancel' })} className={style['form-actions-switch-field']} />,
             <LocaleInput
               key="cancelText"
@@ -85,16 +79,15 @@ const FormActionsEditor = ({ open, value, onCancel, onSave, renderModal }) => {
             />
           ]}
         />
-        <div className={style['form-actions-layout-panel']}>
-          <div className={style['form-actions-layout-title']}>{formatMessage({ id: 'formActionsLayoutSection' })}</div>
-          <FormInfo
-            column={1}
-            list={[
-              <RadioGroup key="align" name="align" label={formatMessage({ id: 'formActionsAlign' })} optionType="button" buttonStyle="solid" options={alignOptions} className={style['form-actions-align-group']} />,
-              <Slider key="gap" name="gap" label={formatMessage({ id: 'formActionsGap' })} min={0} max={64} step={1} marks={gapMarks} tooltip={{ formatter: v => `${v ?? 0}px` }} className={style['form-actions-gap-slider']} />
-            ]}
-          />
-        </div>
+        <FormInfo
+          title={formatMessage({ id: 'formActionsLayoutSection' })}
+          subtitle={formatMessage({ id: 'formActionsLayoutSectionDesc' })}
+          column={1}
+          list={[
+            <RadioGroup key="align" name="align" label={formatMessage({ id: 'formActionsAlign' })} optionType="button" buttonStyle="solid" options={alignOptions} className={style['form-actions-align-group']} />,
+            <Slider key="gap" name="gap" label={formatMessage({ id: 'formActionsGap' })} min={0} max={64} step={1} marks={gapMarks} tooltip={{ formatter: v => `${v ?? 0}px` }} className={style['form-actions-gap-slider']} />
+          ]}
+        />
       </div>
     </FormModal>
   );

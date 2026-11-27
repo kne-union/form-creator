@@ -417,6 +417,7 @@ const OptionsEditor = ({ value = [], onChange, allowDescription = false, allowCh
   return (
     <FormInfo
       title={formatMessage({ id: 'fieldOptions' })}
+      subtitle={formatMessage({ id: 'fieldOptionsDesc' })}
       column={1}
       list={[
         <div key="options-editor" block className={style['options-editor']}>
