@@ -4,6 +4,7 @@ import { Input, InputNumber, Select, Checkbox } from '@kne/react-form-antd';
 import { useIntl } from '@kne/react-intl';
 import { getFieldDefinition } from './fieldRegistry';
 import { LocaleInput } from './LocaleTextInput';
+import { arrangeEditorItems } from './editorLayout';
 
 const BUILTIN_PROP_TYPES = ['Input', 'TextArea', 'InputNumber', 'Select', 'DatePicker', 'Switch', 'RadioGroup', 'CheckboxGroup', 'RadioGroupOther', 'CheckboxGroupOther'];
 
@@ -151,7 +152,7 @@ const buildBuiltinList = (type, formatMessage) => {
   }
 };
 
-const FieldPropsEditor = ({ type, definition: definitionProp }) => {
+const FieldPropsEditor = ({ type, definition: definitionProp, column = 1 }) => {
   const { formatMessage } = useIntl();
   const definition = definitionProp || getFieldDefinition(type);
 
@@ -169,7 +170,7 @@ const FieldPropsEditor = ({ type, definition: definitionProp }) => {
     return null;
   }
 
-  return <FormInfo title={formatMessage({ id: 'fieldPropsSection' })} column={1} list={list} />;
+  return <FormInfo title={formatMessage({ id: 'fieldPropsSection' })} subtitle={formatMessage({ id: 'fieldPropsSectionDesc' })} column={column} list={arrangeEditorItems(list, column)} />;
 };
 
 export const hasFieldPropsEditor = (type, definition) => {

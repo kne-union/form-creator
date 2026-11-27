@@ -1,4 +1,4 @@
-import { Button, Space, Tag, Tooltip, Typography } from 'antd';
+import { Space, Tag, Tooltip, Typography } from 'antd';
 import {
   AlignLeftOutlined,
   ApartmentOutlined,
@@ -17,6 +17,7 @@ import {
   EyeInvisibleOutlined,
   FontSizeOutlined,
   FormOutlined,
+  HolderOutlined,
   LockOutlined,
   NumberOutlined,
   ShopOutlined,
@@ -25,6 +26,7 @@ import {
 } from '@ant-design/icons';
 import { useIntl } from '@kne/react-intl';
 import { getFieldDefinition, resolveFieldTypeLabel } from './fieldRegistry';
+import RowActions, { orderActions } from './RowActions';
 import style from './style.module.scss';
 import { resolveLocaleText } from './localeText';
 import { useLocaleTextLanguages } from './LocaleTextInput';
@@ -76,7 +78,7 @@ const TYPE_TAG_ICONS = {
 
 export const getFieldTypeIcon = type => TYPE_TAG_ICONS[type] || FormOutlined;
 
-const FieldRow = ({ field, index, total, onEdit, onDelete, onMove, prevLocked, nextLocked, conditionContext }) => {
+const FieldRow = ({ field, index, total, onEdit, onDelete, onMove, prevLocked, nextLocked, conditionContext, dragHandleProps, isMobile, className, ...rest }) => {
   const { formatMessage, locale } = useIntl();
   const languages = useLocaleTextLanguages();
   const definition = getFieldDefinition(field.type);
@@ -85,12 +87,31 @@ const FieldRow = ({ field, index, total, onEdit, onDelete, onMove, prevLocked, n
   const TypeIcon = getFieldTypeIcon(field.type);
 
   return (
-    <div className={style['field-row']}>
-      <span className={style['field-row-index']}>{index + 1}</span>
-      <div className={style['field-row-main']}>
-        <Text strong className={style['field-row-label']}>
-          {resolveLocaleText(field.label, locale, languages) || formatMessage({ id: 'untitledField' })}
-        </Text>
+    <div {...rest} className={`${style['field-row']} ${className || ''}`.trim()}>
+      <span className={`${style['field-row-index']} ${dragHandleProps ? style['has-handle'] : ''}`.trim()}>
+        <span className={style['field-row-index-num']}>{index + 1}</span>
+        {dragHandleProps ? (
+          <span className={style['drag-handle']} title={formatMessage({ id: 'dragSort' })} {...dragHandleProps}>
+            <HolderOutlined />
+          </span>
+        ) : null}
+      </span>
+      <div
+        className={style['field-row-main']}
+        {...(isMobile && !field.locked
+          ? {
+              role: 'button',
+              tabIndex: 0,
+              onClick: () => onEdit(field),
+              onKeyDown: e => {
+                if (e.key === 'Enter') {
+                  onEdit(field);
+                }
+              }
+            }
+          : null)}
+      >
+        <Text className={style['field-row-label']}>{resolveLocaleText(field.label, locale, languages) || formatMessage({ id: 'untitledField' })}</Text>
         <Space size={6} wrap>
           <Tag bordered={false} color={TYPE_TAG_COLORS[field.type] || 'default'} icon={<TypeIcon />}>
             {resolveFieldTypeLabel(definition || field.type, formatMessage)}
@@ -133,12 +154,16 @@ const FieldRow = ({ field, index, total, onEdit, onDelete, onMove, prevLocked, n
         </Space>
       </div>
       {field.locked ? null : (
-        <div className={style['action-group']}>
-          <Button type="text" size="small" className={style['action-btn']} title={formatMessage({ id: 'moveUp' })} icon={<ArrowUpOutlined />} disabled={index === 0 || prevLocked} onClick={() => onMove(field.id, 'up')} />
-          <Button type="text" size="small" className={style['action-btn']} title={formatMessage({ id: 'moveDown' })} icon={<ArrowDownOutlined />} disabled={index === total - 1 || nextLocked} onClick={() => onMove(field.id, 'down')} />
-          <Button type="text" size="small" className={style['action-btn']} title={formatMessage({ id: 'editField' })} icon={<EditOutlined />} onClick={() => onEdit(field)} />
-          <Button type="text" size="small" danger className={style['action-btn']} title={formatMessage({ id: 'deleteField' })} icon={<DeleteOutlined />} onClick={() => onDelete(field.id)} />
-        </div>
+        <RowActions
+          isMobile={isMobile}
+          moreTitle={formatMessage({ id: 'moreActions' })}
+          actions={orderActions(isMobile, [
+            { key: 'up', label: formatMessage({ id: 'moveUp' }), icon: <ArrowUpOutlined />, disabled: index === 0 || prevLocked, onClick: () => onMove(field.id, 'up') },
+            { key: 'down', label: formatMessage({ id: 'moveDown' }), icon: <ArrowDownOutlined />, disabled: index === total - 1 || nextLocked, onClick: () => onMove(field.id, 'down') },
+            { key: 'edit', label: formatMessage({ id: 'editField' }), icon: <EditOutlined />, onClick: () => onEdit(field) },
+            { key: 'delete', label: formatMessage({ id: 'deleteField' }), icon: <DeleteOutlined />, danger: true, onClick: () => onDelete(field.id) }
+          ])}
+        />
       )}
     </div>
   );

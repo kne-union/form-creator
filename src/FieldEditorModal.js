@@ -14,6 +14,7 @@ import FieldPropsEditor, { hasFieldPropsEditor } from './FieldPropsEditor';
 import style from './style.module.scss';
 import { LocaleInput, LocaleTextArea } from './LocaleTextInput';
 import VisibleWhenEditor, { validateVisibleWhenDraft } from './VisibleWhenEditor';
+import { getEditorColumn, getPropertyModalProps } from './editorLayout';
 
 const getDefaultSelectProps = () => ({
   single: false,
@@ -32,6 +33,7 @@ const omitColumns = ({ columns, ...rest } = {}) => rest;
 const FieldConfigFields = ({ initialType, options, onOptionsChange, columns, onColumnsChange, visibleWhen, onVisibleWhenChange, conditionProps }) => {
   const { formatMessage } = useIntl();
   const { openApi } = useFormContext();
+  const column = getEditorColumn(useIsMobile());
   const [fieldType, setFieldType] = useState(initialType);
   const fieldTypeOptions = useMemo(() => getFieldTypes(formatMessage), [formatMessage]);
   const definition = getFieldDefinition(fieldType);
@@ -58,7 +60,7 @@ const FieldConfigFields = ({ initialType, options, onOptionsChange, columns, onC
     });
   };
 
-  const list = [
+  const basicList = [
     <Select
       key="type"
       name="type"
@@ -73,23 +75,22 @@ const FieldConfigFields = ({ initialType, options, onOptionsChange, columns, onC
     <Input key="name" name="name" label={formatMessage({ id: 'fieldName' })} rule="REQ" placeholder={formatMessage({ id: 'fieldNamePlaceholder' })} />,
     <LocaleInput key="label" name="label" label={formatMessage({ id: 'fieldLabel' })} rule="REQ" placeholder={formatMessage({ id: 'fieldLabelPlaceholder' })} />,
     <LocaleInput key="tips" name="tips" label={formatMessage({ id: 'fieldTips' })} placeholder={formatMessage({ id: 'fieldTipsPlaceholder' })} />,
-    <LocaleTextArea key="description" name="description" label={formatMessage({ id: 'fieldDescription' })} placeholder={formatMessage({ id: 'fieldDescriptionPlaceholder' })} rows={2} />
+    <LocaleTextArea key="description" name="description" block label={formatMessage({ id: 'fieldDescription' })} placeholder={formatMessage({ id: 'fieldDescriptionPlaceholder' })} rows={2} />
   ];
 
-  list.push(
+  const displayList = [
     <Checkbox key="block" name="block">
       {formatMessage({ id: 'fieldBlock' })}
     </Checkbox>,
     <Checkbox key="hidden" name="hidden">
       {formatMessage({ id: 'fieldHidden' })}
     </Checkbox>
-  );
+  ];
 
   return (
     <div className={style['field-editor-form']}>
-      <FormInfo title={formatMessage({ id: 'fieldBasicSection' })} column={1} list={list} />
-      {definition?.isSuperSelect ? <SuperSelectPropsEditor definition={definition} /> : hasFieldPropsEditor(fieldType, definition) ? <FieldPropsEditor type={fieldType} definition={definition} /> : null}
-      <RulePresetEditor />
+      <FormInfo title={formatMessage({ id: 'fieldBasicSection' })} subtitle={formatMessage({ id: 'fieldBasicSectionDesc' })} column={column} list={basicList} />
+      {definition?.isSuperSelect ? <SuperSelectPropsEditor definition={definition} column={column} /> : hasFieldPropsEditor(fieldType, definition) ? <FieldPropsEditor type={fieldType} definition={definition} column={column} /> : null}
       {definition?.hasBuiltinData ? (
         <Text type="secondary">{formatMessage({ id: 'builtinDataHint' })}</Text>
       ) : definition?.hasOptions ? (
@@ -103,6 +104,8 @@ const FieldConfigFields = ({ initialType, options, onOptionsChange, columns, onC
           onColumnsChange={onColumnsChange}
         />
       ) : null}
+      <RulePresetEditor column={column} />
+      <FormInfo title={formatMessage({ id: 'fieldDisplaySection' })} subtitle={formatMessage({ id: 'fieldDisplaySectionDesc' })} column={column} list={displayList} />
       {conditionProps ? <VisibleWhenEditor {...conditionProps} value={visibleWhen} onChange={onVisibleWhenChange} /> : null}
     </div>
   );
@@ -192,7 +195,7 @@ const FieldEditorModal = ({ open, field, fieldList, conditionProps, onCancel, on
       title={formatMessage({ id: isEdit ? 'editField' : 'addField' })}
       open={open}
       onCancel={onCancel}
-      width={isMobile ? 'calc(100vw - 32px)' : 760}
+      {...getPropertyModalProps(isMobile, 760)}
       {...(renderModal ? { renderModal } : {})}
       formProps={{
         data: formData,

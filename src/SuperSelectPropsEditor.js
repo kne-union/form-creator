@@ -3,8 +3,9 @@ import FormInfo from '@kne/form-info';
 import { InputNumber, Checkbox, useFormContext } from '@kne/react-form-antd';
 import { useIntl } from '@kne/react-intl';
 import { LocaleInput } from './LocaleTextInput';
+import { arrangeEditorItems } from './editorLayout';
 
-const SuperSelectPropsEditor = ({ definition }) => {
+const SuperSelectPropsEditor = ({ definition, column = 1 }) => {
   const { formatMessage } = useIntl();
   const { openApi } = useFormContext();
 
@@ -55,7 +56,7 @@ const SuperSelectPropsEditor = ({ definition }) => {
     return items;
   }, [definition, formatMessage, openApi]);
 
-  return <FormInfo title={formatMessage({ id: 'superSelectPropsSection' })} column={1} list={list} />;
+  return <FormInfo title={formatMessage({ id: 'superSelectPropsSection' })} subtitle={formatMessage({ id: 'fieldPropsSectionDesc' })} column={column} list={arrangeEditorItems(list, column)} />;
 };
 
 export default SuperSelectPropsEditor;

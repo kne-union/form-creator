@@ -1,12 +1,55 @@
-const {default: FormCreator, defaultSchema, createBlock, createField, createStep, createChoiceOption} = _FormCreator;
+const {
+  default: FormCreator,
+  defaultSchema,
+  createBlock,
+  createField,
+  createStep,
+  createChoiceOption,
+  normalizeSchema
+} = _FormCreator;
 const {default: JsonView} = _JsonView;
-const {useState} = React;
-const {Typography} = antd;
+const {createWithRemoteLoader, preset: remoteLoaderPreset} = remoteLoader;
+const {useState, useRef} = React;
+const {Typography, Button, Space, Alert, message, Modal} = antd;
 
 const {Text} = Typography;
 
-const BaseExample = () => {
-    const [schema, setSchema] = useState(() => ({
+/** 仅在用到 JSONEditor 时声明 components-thirdparty（merge 进全局 remotes，不覆盖 core） */
+remoteLoaderPreset({
+  remotes: {
+    'components-thirdparty': {
+      url: 'https://uc.fatalent.cn',
+      tpl: '{{url}}/packages/@kne-components/{{remote}}/{{version}}/build',
+      remote: 'components-thirdparty',
+      defaultVersion: '0.1.64'
+    }
+  }
+});
+
+const SchemaJsonEditor = ({JSONEditorField, initialText, textRef}) => {
+  const [text, setText] = useState(initialText);
+  return (
+    <JSONEditorField
+      height={420}
+      value={text}
+      onChange={next => {
+        setText(next);
+        textRef.current = next;
+      }}
+    />
+  );
+};
+
+const BaseExample = createWithRemoteLoader({
+  // JSONEditor.Field：纯 UI（value/onChange）；默认 JSONEditor 是 FormInfo 字段
+  // Schema 弹窗用 antd Modal 受控打开（示例页未挂 ModalContextHolder，useModal 会静默无效果）
+  modules: ['components-thirdparty:JSONEditor.Field']
+})(({remoteModules}) => {
+  const [JSONEditorField] = remoteModules;
+  const [schemaJsonOpen, setSchemaJsonOpen] = useState(false);
+  const schemaJsonTextRef = useRef('');
+  const [schemaJsonInitial, setSchemaJsonInitial] = useState('');
+  const [schema, setSchema] = useState(() => ({
         ...defaultSchema(),
         actions: {
             showSubmit: true,
@@ -508,13 +551,90 @@ const BaseExample = () => {
         ]
     }));
 
-    return <div>
-        <FormCreator value={schema} onChange={setSchema} />
-        <div style={{marginTop: 16}}>
-            <JsonView data={schema} theme="light" collapsedFrom={2} searchable={false} />
-            <Text type="secondary">初始示例已包含表单分组、列表、表格列表、行内编辑列表、列表嵌套、选项切换、多字段、分步等模块。</Text>
-        </div>
-    </div>;
-};
+  const handleSchemaJson = () => {
+    const initialText = JSON.stringify(schema, null, 2);
+    schemaJsonTextRef.current = initialText;
+    setSchemaJsonInitial(initialText);
+    setSchemaJsonOpen(true);
+  };
+
+  const handleCopySchemaJson = () => {
+    const text = schemaJsonTextRef.current;
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(
+        () => message.success('已复制 Schema JSON'),
+        () => message.error('复制失败')
+      );
+    } else {
+      message.info(text);
+    }
+  };
+
+  const handleApplySchemaJson = () => {
+    const text = schemaJsonTextRef.current;
+    if (!String(text || '').trim()) {
+      message.warning('请先编辑 Schema JSON');
+      return;
+    }
+    try {
+      setSchema(normalizeSchema(JSON.parse(text)));
+      message.success('已应用 Schema');
+      setSchemaJsonOpen(false);
+    } catch (e) {
+      message.error('JSON 无效，请检查后再试');
+    }
+  };
+
+  return (
+    <Space direction="vertical" size={16} style={{width: '100%'}}>
+      <Alert
+        type="info"
+        showIcon
+        message="Schema JSON"
+        description={
+          <span>
+            工具栏「Schema JSON」打开弹窗（远程 <Text code>components-thirdparty:JSONEditor.Field</Text>
+            ）：「复制」导出当前内容，「应用」把修改写回编辑器（经 <Text code>normalizeSchema</Text>）。
+          </span>
+        }
+      />
+      <FormCreator
+        value={schema}
+        onChange={setSchema}
+        extraToolbar={
+          <Button size="small" onClick={handleSchemaJson}>
+            Schema JSON
+          </Button>
+        }
+      />
+      <Modal
+        title="Schema JSON"
+        open={schemaJsonOpen}
+        onCancel={() => setSchemaJsonOpen(false)}
+        width={860}
+        destroyOnHidden
+        footer={
+          <Space>
+            <Button onClick={() => setSchemaJsonOpen(false)}>取消</Button>
+            <Button onClick={handleCopySchemaJson}>复制</Button>
+            <Button type="primary" onClick={handleApplySchemaJson}>
+              应用
+            </Button>
+          </Space>
+        }
+      >
+        {schemaJsonOpen ? (
+          <SchemaJsonEditor key={schemaJsonInitial} JSONEditorField={JSONEditorField} initialText={schemaJsonInitial} textRef={schemaJsonTextRef} />
+        ) : null}
+      </Modal>
+      <div>
+        <JsonView data={schema} theme="light" collapsedFrom={2} searchable={false} />
+        <Text type="secondary">
+          初始示例已包含表单分组、列表、表格列表、行内编辑列表、列表嵌套、选项切换、多字段、分步、矩阵量表等模块。
+        </Text>
+      </div>
+    </Space>
+  );
+});
 
 render(<BaseExample />);
