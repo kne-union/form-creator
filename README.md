@@ -35,19 +35,62 @@ npm i --save @kne/form-creator
 #### 示例代码
 
 - 配置式表单搭建(全屏)
-- 通过模块列表添加/编辑/排序，右侧实时预览；默认示例含列表嵌套与选项切换
-- _FormCreator(@kne/current-lib_form-creator)[import * as _FormCreator from "@kne/form-creator"],(@kne/current-lib_form-creator/dist/index.css)[import "@kne/form-creator/dist/index.css"],_JsonView(@kne/json-view)[import * as _JsonView from "@kne/json-view"],(@kne/json-view/dist/index.css)[import "@kne/json-view/dist/index.css"],antd(antd)[import antd from "antd"],_FormInfo(@kne/form-info)[import * as _FormInfo from "@kne/form-info"]
+- 模块搭建与实时预览；工具栏可导入/导出 Schema JSON（弹窗内 JSONEditor）
+- _FormCreator(@kne/current-lib_form-creator)[import * as _FormCreator from "@kne/form-creator"],(@kne/current-lib_form-creator/dist/index.css)[import "@kne/form-creator/dist/index.css"],_JsonView(@kne/json-view)[import * as _JsonView from "@kne/json-view"],(@kne/json-view/dist/index.css)[import "@kne/json-view/dist/index.css"],antd(antd)[import antd from "antd"],remoteLoader(@kne/remote-loader)[import * as remoteLoader from "@kne/remote-loader"]
 
 ```jsx
-const {default: FormCreator, defaultSchema, createBlock, createField, createStep, createChoiceOption} = _FormCreator;
+const {
+  default: FormCreator,
+  defaultSchema,
+  createBlock,
+  createField,
+  createStep,
+  createChoiceOption,
+  normalizeSchema
+} = _FormCreator;
 const {default: JsonView} = _JsonView;
-const {useState} = React;
-const {Typography} = antd;
+const {createWithRemoteLoader, preset: remoteLoaderPreset} = remoteLoader;
+const {useState, useRef} = React;
+const {Typography, Button, Space, Alert, message, Modal} = antd;
 
 const {Text} = Typography;
 
-const BaseExample = () => {
-    const [schema, setSchema] = useState(() => ({
+/** 仅在用到 JSONEditor 时声明 components-thirdparty（merge 进全局 remotes，不覆盖 core） */
+remoteLoaderPreset({
+  remotes: {
+    'components-thirdparty': {
+      url: 'https://uc.fatalent.cn',
+      tpl: '{{url}}/packages/@kne-components/{{remote}}/{{version}}/build',
+      remote: 'components-thirdparty',
+      defaultVersion: '0.1.64'
+    }
+  }
+});
+
+const SchemaJsonEditor = ({JSONEditorField, initialText, textRef}) => {
+  const [text, setText] = useState(initialText);
+  return (
+    <JSONEditorField
+      height={420}
+      value={text}
+      onChange={next => {
+        setText(next);
+        textRef.current = next;
+      }}
+    />
+  );
+};
+
+const BaseExample = createWithRemoteLoader({
+  // JSONEditor.Field：纯 UI（value/onChange）；默认 JSONEditor 是 FormInfo 字段
+  // Schema 弹窗用 antd Modal 受控打开（示例页未挂 ModalContextHolder，useModal 会静默无效果）
+  modules: ['components-thirdparty:JSONEditor.Field']
+})(({remoteModules}) => {
+  const [JSONEditorField] = remoteModules;
+  const [schemaJsonOpen, setSchemaJsonOpen] = useState(false);
+  const schemaJsonTextRef = useRef('');
+  const [schemaJsonInitial, setSchemaJsonInitial] = useState('');
+  const [schema, setSchema] = useState(() => ({
         ...defaultSchema(),
         actions: {
             showSubmit: true,
@@ -549,14 +592,91 @@ const BaseExample = () => {
         ]
     }));
 
-    return <div>
-        <FormCreator value={schema} onChange={setSchema} />
-        <div style={{marginTop: 16}}>
-            <JsonView data={schema} theme="light" collapsedFrom={2} searchable={false} />
-            <Text type="secondary">初始示例已包含表单分组、列表、表格列表、行内编辑列表、列表嵌套、选项切换、多字段、分步等模块。</Text>
-        </div>
-    </div>;
-};
+  const handleSchemaJson = () => {
+    const initialText = JSON.stringify(schema, null, 2);
+    schemaJsonTextRef.current = initialText;
+    setSchemaJsonInitial(initialText);
+    setSchemaJsonOpen(true);
+  };
+
+  const handleCopySchemaJson = () => {
+    const text = schemaJsonTextRef.current;
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(
+        () => message.success('已复制 Schema JSON'),
+        () => message.error('复制失败')
+      );
+    } else {
+      message.info(text);
+    }
+  };
+
+  const handleApplySchemaJson = () => {
+    const text = schemaJsonTextRef.current;
+    if (!String(text || '').trim()) {
+      message.warning('请先编辑 Schema JSON');
+      return;
+    }
+    try {
+      setSchema(normalizeSchema(JSON.parse(text)));
+      message.success('已应用 Schema');
+      setSchemaJsonOpen(false);
+    } catch (e) {
+      message.error('JSON 无效，请检查后再试');
+    }
+  };
+
+  return (
+    <Space direction="vertical" size={16} style={{width: '100%'}}>
+      <Alert
+        type="info"
+        showIcon
+        message="Schema JSON"
+        description={
+          <span>
+            工具栏「Schema JSON」打开弹窗（远程 <Text code>components-thirdparty:JSONEditor.Field</Text>
+            ）：「复制」导出当前内容，「应用」把修改写回编辑器（经 <Text code>normalizeSchema</Text>）。
+          </span>
+        }
+      />
+      <FormCreator
+        value={schema}
+        onChange={setSchema}
+        extraToolbar={
+          <Button size="small" onClick={handleSchemaJson}>
+            Schema JSON
+          </Button>
+        }
+      />
+      <Modal
+        title="Schema JSON"
+        open={schemaJsonOpen}
+        onCancel={() => setSchemaJsonOpen(false)}
+        width={860}
+        destroyOnHidden
+        footer={
+          <Space>
+            <Button onClick={() => setSchemaJsonOpen(false)}>取消</Button>
+            <Button onClick={handleCopySchemaJson}>复制</Button>
+            <Button type="primary" onClick={handleApplySchemaJson}>
+              应用
+            </Button>
+          </Space>
+        }
+      >
+        {schemaJsonOpen ? (
+          <SchemaJsonEditor key={schemaJsonInitial} JSONEditorField={JSONEditorField} initialText={schemaJsonInitial} textRef={schemaJsonTextRef} />
+        ) : null}
+      </Modal>
+      <div>
+        <JsonView data={schema} theme="light" collapsedFrom={2} searchable={false} />
+        <Text type="secondary">
+          初始示例已包含表单分组、列表、表格列表、行内编辑列表、列表嵌套、选项切换、多字段、分步、矩阵量表等模块。
+        </Text>
+      </div>
+    </Space>
+  );
+});
 
 render(<BaseExample />);
 
@@ -661,6 +781,118 @@ const SchemaRenderExample = () => {
 };
 
 render(<SchemaRenderExample />);
+
+```
+
+- 步骤展示样式
+- steps 模块的 stepsStyle：default 完整步骤条（默认），focus 突出当前步骤标题与分段进度
+- _FormCreator(@kne/current-lib_form-creator)[import * as _FormCreator from "@kne/form-creator"],(@kne/current-lib_form-creator/dist/index.css)[import "@kne/form-creator/dist/index.css"],antd(antd)[import antd from "antd"]
+
+```jsx
+const { SchemaRenderer, createBlock, createField, createStep } = _FormCreator;
+const { useMemo, useState } = React;
+const { Alert, Flex, Segmented, Typography } = antd;
+const { Text } = Typography;
+
+const createOnboardingSteps = stepsStyle =>
+  createBlock('steps', {
+    title: '入职信息登记',
+    subtitle: '按步骤完成，每步校验通过后进入下一步',
+    stepsStyle,
+    items: [
+      createStep({
+        title: '个人信息',
+        column: 2,
+        list: [
+          createField({ type: 'Input', name: 'name', label: '姓名', rule: 'REQ', props: { placeholder: '请输入姓名' } }),
+          createField({ type: 'Input', name: 'mobile', label: '手机号', rule: 'REQ TEL', props: { placeholder: '请输入手机号' } }),
+          createField({ type: 'Input', name: 'email', label: '邮箱', rule: 'REQ EMAIL', props: { placeholder: 'name@company.com' } }),
+          createField({ type: 'DatePicker', name: 'birthday', label: '出生日期', props: { placeholder: '请选择日期' } })
+        ]
+      }),
+      createStep({
+        title: '岗位与入职安排（含所属部门、岗位名称与入职日期确认，请与 HR 沟通后填写）',
+        column: 2,
+        list: [
+          createField({
+            type: 'Select',
+            name: 'department',
+            label: '所属部门',
+            rule: 'REQ',
+            props: {
+              placeholder: '请选择部门',
+              options: [
+                { label: '产品研发中心', value: 'rd' },
+                { label: '市场营销部', value: 'marketing' },
+                { label: '人力资源部', value: 'hr' }
+              ]
+            }
+          }),
+          createField({ type: 'Input', name: 'position', label: '岗位名称', rule: 'REQ', props: { placeholder: '例如：高级前端工程师' } }),
+          createField({ type: 'DatePicker', name: 'joinDate', label: '入职日期', rule: 'REQ', props: { placeholder: '请选择日期' } })
+        ]
+      }),
+      createStep({
+        title: '紧急联系人',
+        column: 2,
+        list: [
+          createField({ type: 'Input', name: 'contactName', label: '联系人姓名', rule: 'REQ', props: { placeholder: '请输入姓名' } }),
+          createField({ type: 'Input', name: 'contactMobile', label: '联系人电话', rule: 'REQ TEL', props: { placeholder: '请输入手机号' } })
+        ]
+      }),
+      createStep({
+        title: '银行卡与薪资账户',
+        column: 2,
+        list: [
+          createField({ type: 'Input', name: 'bankName', label: '开户银行', rule: 'REQ', props: { placeholder: '例如：招商银行上海分行' } }),
+          createField({ type: 'Input', name: 'bankAccount', label: '银行卡号', rule: 'REQ', props: { placeholder: '请输入银行卡号' } })
+        ]
+      }),
+      createStep({
+        title: '其他说明',
+        column: 1,
+        list: [createField({ type: 'TextArea', name: 'remark', label: '备注', block: true, props: { rows: 3, placeholder: '如有特殊情况请说明' } })]
+      })
+    ]
+  });
+
+const StepsStyleExample = () => {
+  const [stepsStyle, setStepsStyle] = useState('focus');
+  const schema = useMemo(
+    () => ({
+      actions: { showSubmit: true, showReset: true, submitText: '提交登记' },
+      blocks: [createOnboardingSteps(stepsStyle)]
+    }),
+    [stepsStyle]
+  );
+
+  return (
+    <Flex vertical gap={16}>
+      <Alert
+        type="info"
+        showIcon
+        message="步骤展示样式"
+        description={
+          <span>
+            steps 模块通过 <Text code>stepsStyle</Text> 切换导航样式：<Text code>default</Text>（默认）为完整步骤条；
+            <Text code>focus</Text> 突出当前步骤标题（长标题自动换行）与分段进度，已完成的进度段可点击回退，适合步骤多、标题长或窄屏场景。编辑器中可在「编辑模块」里配置。
+          </span>
+        }
+      />
+      <Segmented
+        value={stepsStyle}
+        onChange={setStepsStyle}
+        options={[
+          { label: '聚焦当前步骤（focus）', value: 'focus' },
+          { label: '完整步骤条（default）', value: 'default' }
+        ]}
+      />
+      <SchemaRenderer key={stepsStyle} schema={schema} />
+    </Flex>
+  );
+};
+
+render(<StepsStyleExample />);
 
 ```
 
@@ -2145,6 +2377,7 @@ import { SchemaContent, SchemaContentInner } from '@kne/form-creator';
     name?, label?, addText?, addPosition?, maxLength?, minLength?, fieldType?, autoStep?,
     layout?, rowTitle?, rule?, rows?, columns?, // matrixScale
     mode?, selectorName?, selectorInData?, discriminator?,
+    stepsStyle?: 'default' | 'focus', // steps 导航样式，默认 default
     list?: [{ id, type, name, label, tips?, description?, rule?, block?, hidden?, locked?, visibleWhen?, props? }],
     itemBlocks?: Block[], // list / editableList：列表项内子模块
     blocks?: Block[], // formInfo / object：子模块
@@ -2244,7 +2477,7 @@ FormCreator 不传 `languages` 时为单语言输入（与改造前一致，存�
 | choice | 选项分支 | title, **mode**(`single`\|`multiple`), **minLength** / **maxLength**（仅多选：最少/最多选几项）, selectorName, selectorInData, options[{ title, list, **blocks** }] |
 | multiField | 同类型多值 | name, label, fieldType, addText（不支持子模块） |
 | matrixScale | 矩阵量表（`@kne/form-info` MatrixScale）：每行共用同一 `fieldType` | name, title, **rowTitle**, **layout**（`options` 选项矩阵 \| `columns` 单元格矩阵 \| `field` 每行一个字段）, fieldType（默认 RadioGroup）, rule（如 `REQ`）, **rows**`[{ label, name }]`, **options**（layout=options）, **columns**`[{ label, name }]`（layout=columns）；不支持子模块 |
-| steps | 步骤表单 | title, subtitle, bordered, autoStep, items[{ title, column, list, **blocks** }] |
+| steps | 步骤表单 | title, subtitle, bordered, autoStep, stepsStyle（`default` 完整步骤条 / `focus` 突出当前步骤标题与分段进度）, items[{ title, column, list, **blocks** }] |
 
 `choice`：顶部同一条选项 UI；`single` 只挂载当前选项内容，`multiple` 平铺所有选中项。多选时可配置 `minLength` / `maxLength` 限制最少、最多选择几个（提交时校验；达到上限后未选项禁用）。JSON Schema 的 oneOf/anyOf 可分别映射为 `mode: 'single'/'multiple'`。`allOf` 无需独立 kind，展开为多个 sibling blocks 即可。
 
